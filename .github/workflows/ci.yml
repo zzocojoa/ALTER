@@ -1,0 +1,34 @@
+name: ALTER foundation
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      TZ: UTC
+      CI: "true"
+      PLAYWRIGHT_BROWSERS_PATH: "0"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      - name: 공식 스타터의 lockfile 설치
+        run: npm run install:ci
+      - name: 프로젝트 Chromium 설치
+        run: npm run test:browser:install -- --with-deps
+      - name: 타입·정적 분석·단위·로컬 저장소·브라우저·Worker 검증
+        run: npm run verify
+      - name: 실패 종료 계약 검사
+        run: npm run test:failure-gates
+      - name: 검증된 빌드 증거 보관
+        uses: actions/upload-artifact@v4
+        with:
+          name: alter-worker-verification
+          path: outputs/build-verification.json
+          if-no-files-found: error

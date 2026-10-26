@@ -1,0 +1,43 @@
+import { createHash } from "node:crypto";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { download, exists, run } from "./native-build-tools.mts";
+
+type PdfDependencies = Readonly<{ qpdf: Readonly<{ version: string; url: string; sha256: string }>; zlib: Readonly<{ version: string; emscriptenPort: string; sha512: string }>; toolchainManifest: string }>;
+type Toolchain = Readonly<{ emsdk: Readonly<{ version: string; commit: string }>; libjpeg: Readonly<{ version: string }> }>;
+const root: string = process.cwd();
+const dependencies: PdfDependencies = JSON.parse(await readFile("native/pdf/dependencies.json", "utf8"));
+const toolchain: Toolchain = JSON.parse(await readFile(dependencies.toolchainManifest, "utf8"));
+const jpegCache: string = path.join(root, ".sites-runtime/jpeg-build");
+const sdk: string = path.join(jpegCache, `emsdk-${toolchain.emsdk.commit}`);
+const emscripten: string = path.join(sdk, "upstream/emscripten");
+const cmake: string = path.join(jpegCache, "cmake/cmake/data/bin/cmake");
+if (!await exists(cmake) || !await exists(path.join(jpegCache, "jpeg-build/libjpeg.a"))) throw new Error("PDF 빌드 도구가 없습니다. 먼저 npm run build:jpeg를 실행하세요.");
+const cache: string = path.join(root, ".sites-runtime/pdf-build");
+const source: string = path.join(cache, `qpdf-${dependencies.qpdf.version}`);
+const build: string = path.join(cache, "qpdf-wasm");
+const output: string = path.join(root, "lib/materials/pdf-wasm");
+await mkdir(cache, { recursive: true });
+await mkdir(output, { recursive: true });
+const archive: string = path.join(cache, `${dependencies.qpdf.sha256}.tar.gz`);
+await download(dependencies.qpdf.url, archive, dependencies.qpdf.sha256);
+const patch: Buffer = await readFile("native/pdf/strict-bounded.patch");
+const patchSha256: string = createHash("sha256").update(patch).digest("hex");
+const marker: string = path.join(source, ".alter-patch-sha256");
+if (!await exists(marker) || (await readFile(marker, "utf8")).trim() !== patchSha256) {
+  run("tar", ["-xzf", archive, "-C", cache], root, process.env);
+  run("patch", ["--batch", "--forward", "-p1", "-i", path.join(root, "native/pdf/strict-bounded.patch")], source, process.env);
+  await writeFile(marker, patchSha256 + "\n");
+}
+const environment: NodeJS.ProcessEnv = { ...process.env, EM_CONFIG: path.join(sdk, ".emscripten"), PATH: `${path.dirname(cmake)}:${emscripten}:${process.env.PATH ?? ""}` };
+const zlibPort: string = await readFile(path.join(emscripten, "tools/ports/zlib.py"), "utf8");
+if (!zlibPort.includes(`VERSION = '${dependencies.zlib.version}'`) || !zlibPort.includes(dependencies.zlib.sha512)) throw new Error("고정 zlib 포트 버전·해시와 빌드 도구가 일치하지 않습니다.");
+run(path.join(emscripten, "emcc"), ["-sUSE_ZLIB=1", "-x", "c", "-c", "/dev/null", "-o", path.join(cache, "zlib-port.o")], root, environment);
+run(path.join(emscripten, "emcmake"), [cmake, "-S", source, "-B", build, "-DCMAKE_BUILD_TYPE=Release", "-DBUILD_SHARED_LIBS=OFF", "-DBUILD_STATIC_LIBS=ON", "-DBUILD_DOC=OFF", "-DINSTALL_EXAMPLES=OFF", "-DUSE_IMPLICIT_CRYPTO=OFF", "-DREQUIRE_CRYPTO_NATIVE=ON", "-DDEFAULT_CRYPTO=native", "-DPKG_CONFIG_EXECUTABLE=/usr/bin/false", "-Dpc_zlib_FOUND=FALSE", "-Dpc_libjpeg_FOUND=FALSE", `-DZLIB_H_PATH=${emscripten}/cache/sysroot/include`, `-DZLIB_LIB_PATH=${emscripten}/cache/sysroot/lib/wasm32-emscripten/libz.a`, `-DLIBJPEG_H_PATH=${jpegCache}/libjpeg-turbo-${toolchain.libjpeg.version}/src`, `-DLIBJPEG_LIB_PATH=${jpegCache}/jpeg-build/libjpeg.a`, `-DCMAKE_CXX_FLAGS=-fexceptions -I${jpegCache}/jpeg-build`, `-DCMAKE_C_FLAGS=-I${jpegCache}/jpeg-build`], root, environment);
+run(cmake, ["--build", build, "--target", "libqpdf", "-j", "4"], root, environment);
+run(path.join(emscripten, "em++"), ["native/pdf/validator.cc", path.join(build, "libqpdf/libqpdf.a"), path.join(jpegCache, "jpeg-build/libjpeg.a"), "-I", path.join(source, "include"), "-I", path.join(build, "include"), "-std=c++20", "-fexceptions", "-O2", "-sUSE_ZLIB=1", "-sMODULARIZE=1", "-sEXPORT_ES6=1", "-sENVIRONMENT=web,worker", "-sFILESYSTEM=0", "-sASYNCIFY=1", "-sASYNCIFY_STACK_SIZE=1048576", "-sALLOW_MEMORY_GROWTH=1", "-sINITIAL_MEMORY=8388608", "-sMAXIMUM_MEMORY=67108864", "-sSTACK_SIZE=262144", "-sABORTING_MALLOC=0", "-sEXPORTED_RUNTIME_METHODS=ccall,HEAPU8", "-o", path.join(output, "validator.js")], root, environment);
+await copyFile(path.join(source, "LICENSE.txt"), path.join(output, "LICENSE.txt"));
+await copyFile(path.join(source, "NOTICE.md"), path.join(output, "NOTICE.md"));
+const digests = await Promise.all(["validator.js", "validator.wasm"].map(async (file: string): Promise<Readonly<{ file: string; bytes: number; sha256: string }>> => { const bytes: Buffer = await readFile(path.join(output, file)); return { file, bytes: bytes.byteLength, sha256: createHash("sha256").update(bytes).digest("hex") }; }));
+await writeFile(path.join(output, "build.json"), JSON.stringify({ qpdf: dependencies.qpdf, zlib: dependencies.zlib, emscripten: toolchain.emsdk.version, wrapperSha256: createHash("sha256").update(await readFile("native/pdf/validator.cc")).digest("hex"), patchSha256, inputWindowBytes: 65536, maximumWasmBytes: 67108864, maximumFlateOutputBytes: 16777216, maximumUnpredictedImageSampleBytes: 128000000, maximumTotalImageSampleBytes: 1073741824, encodedImagePixelDecodeClaimed: false, files: digests }, null, 2) + "\n");
+console.log(JSON.stringify({ event: "pdf_validator_built", files: digests }));

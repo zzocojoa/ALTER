@@ -1,0 +1,86 @@
+[
+  {
+    "id": "maximum-pixels-baseline",
+    "title": "일반 JPEG 최대 픽셀",
+    "url": "/diagnostics/jpeg/maximum-pixels-baseline.jpg",
+    "bytes": 250627,
+    "sha256": "09aa6152df30cf711b1e575bfa85a63499c6bbad53009c0da43948a93124b864",
+    "status": 200,
+    "field": "",
+    "pixels": 16000000,
+    "decodedBytes": 48000000,
+    "scanlineSha256": "26c80b61b51fea9a07a2ad8097da0bdc21e9e627a9bb44dd26d31dfe08e10932"
+  },
+  {
+    "id": "maximum-pixels-progressive",
+    "title": "점진형 JPEG 최대 픽셀",
+    "url": "/diagnostics/jpeg/maximum-pixels-progressive.jpg",
+    "bytes": 94359,
+    "sha256": "bdc9ba8e8ceb6d69a0ba67a0b88e9124eb0f7dd053da8c09751d95a083b7eee6",
+    "status": 200,
+    "field": "",
+    "pixels": 16000000,
+    "decodedBytes": 48000000,
+    "scanlineSha256": "26c80b61b51fea9a07a2ad8097da0bdc21e9e627a9bb44dd26d31dfe08e10932"
+  },
+  {
+    "id": "progressive-420",
+    "title": "점진형 JPEG 픽셀 대조",
+    "url": "/diagnostics/jpeg/progressive-420.jpg",
+    "bytes": 1266,
+    "sha256": "c1c2f69c2266ba5b1bee23e5ec191086429c0a993a9bc048bf8d6db22a342200",
+    "status": 200,
+    "field": "",
+    "pixels": 899,
+    "decodedBytes": 2697,
+    "scanlineSha256": "c1eb9aa87f7e3e2734af0731ddba8c468adc1f2a9a2a566b19304c4a0e64716d"
+  },
+  {
+    "id": "coefficient-limit",
+    "title": "점진형 메모리 초과 거부",
+    "url": "/diagnostics/jpeg/coefficient-limit.jpg",
+    "bytes": 188177,
+    "sha256": "94cc11fc6ef3a45459afc6edd97c088027512f84cfa93b8e337a89b81b83f71a",
+    "status": 422,
+    "field": "jpeg:coefficient-memory-limit",
+    "pixels": 16000000,
+    "decodedBytes": 48000000,
+    "scanlineSha256": null
+  },
+  {
+    "id": "pixel-limit",
+    "title": "픽셀 초과 거부",
+    "url": "/diagnostics/jpeg/pixel-limit.jpg",
+    "bytes": 251627,
+    "sha256": "5e45f3c385cc7a07e238816f06e5a27325d54285f6b1f8c0dfb54cb1f9908c31",
+    "status": 422,
+    "field": "jpeg:pixel-limit",
+    "pixels": 16004000,
+    "decodedBytes": 48012000,
+    "scanlineSha256": null
+  },
+  {
+    "id": "arithmetic",
+    "title": "미지원 산술 JPEG 거부",
+    "url": "/diagnostics/jpeg/arithmetic.jpg",
+    "bytes": 896,
+    "sha256": "580ea2e8ce46a7db80819c8a33aeb00ee4292e1b473c1e0afc3bcae31372c746",
+    "status": 422,
+    "field": "jpeg:unsupported-arithmetic-coding",
+    "pixels": 899,
+    "decodedBytes": 2697,
+    "scanlineSha256": null
+  },
+  {
+    "id": "trailing-jpeg",
+    "title": "JPEG 뒤의 추가 파일 거부",
+    "url": "/diagnostics/jpeg/trailing-jpeg.jpg",
+    "bytes": 1204,
+    "sha256": "02e629b2565b1b18af0b473ddfb315f4a1f5af8bb08cce40c2805f85228758eb",
+    "status": 422,
+    "field": "jpeg:trailing-bytes",
+    "pixels": 0,
+    "decodedBytes": 0,
+    "scanlineSha256": null
+  }
+]

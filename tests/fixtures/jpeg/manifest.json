@@ -1,0 +1,215 @@
+{
+  "encoderVersion": "libjpeg-turbo version 3.1.3 (build 20251210)",
+  "oracleVersion": "libjpeg-turbo version 3.1.3 (build 20251210)",
+  "oracleOptions": [
+    "-nosmooth",
+    "-dct",
+    "int",
+    "-pnm"
+  ],
+  "officialSource": "https://github.com/libjpeg-turbo/libjpeg-turbo/releases/tag/3.2.0",
+  "syntheticFixtures": "ALTER에서 생성한 PGM/PPM 패턴",
+  "fixtures": [
+    {
+      "name": "gray",
+      "width": 17,
+      "height": 19,
+      "channels": 1,
+      "options": [],
+      "expectedStatus": 200,
+      "bytes": 602,
+      "sha256": "f2403db5f5c757c0190f8ce426a03f0b833b9a34a1728c3b5afc0bb7cfd61fd5",
+      "scanlineSha256": "fd83eaa92a697bb169ec425fc0e9fead4d812309b398e7c29d8e3cc1509c09cc"
+    },
+    {
+      "name": "rgb-444",
+      "width": 31,
+      "height": 29,
+      "channels": 3,
+      "options": [
+        "-sample",
+        "1x1"
+      ],
+      "expectedStatus": 200,
+      "bytes": 1993,
+      "sha256": "fbbf14b7415c235f77b5690af694b66fc7100882a515491a63fa0ebb2f456bb5",
+      "scanlineSha256": "170d35c6a759e4ce64b0a92e13b13aa2328169da52a2d8f4f66436cc6880e009"
+    },
+    {
+      "name": "rgb-420",
+      "width": 31,
+      "height": 29,
+      "channels": 3,
+      "options": [],
+      "expectedStatus": 200,
+      "bytes": 1338,
+      "sha256": "768d914f0ecc3f834c69c8945c85260b79a13933522ac9ff568cd1b3864c28a8",
+      "scanlineSha256": "c1eb9aa87f7e3e2734af0731ddba8c468adc1f2a9a2a566b19304c4a0e64716d"
+    },
+    {
+      "name": "progressive-gray",
+      "width": 17,
+      "height": 19,
+      "channels": 1,
+      "options": [
+        "-progressive"
+      ],
+      "expectedStatus": 200,
+      "bytes": 562,
+      "sha256": "6588c458d3588594534bb257623ff30545b43975688a2b6ed27406f601416422",
+      "scanlineSha256": "fd83eaa92a697bb169ec425fc0e9fead4d812309b398e7c29d8e3cc1509c09cc"
+    },
+    {
+      "name": "progressive-420",
+      "width": 31,
+      "height": 29,
+      "channels": 3,
+      "options": [
+        "-progressive"
+      ],
+      "expectedStatus": 200,
+      "bytes": 1266,
+      "sha256": "c1c2f69c2266ba5b1bee23e5ec191086429c0a993a9bc048bf8d6db22a342200",
+      "scanlineSha256": "c1eb9aa87f7e3e2734af0731ddba8c468adc1f2a9a2a566b19304c4a0e64716d"
+    },
+    {
+      "name": "progressive-444",
+      "width": 31,
+      "height": 29,
+      "channels": 3,
+      "options": [
+        "-progressive",
+        "-sample",
+        "1x1"
+      ],
+      "expectedStatus": 200,
+      "bytes": 1889,
+      "sha256": "b1837ad7fb6e68da326921f25fc74f5ff75ede13ad74049320bf4c95313dfd14",
+      "scanlineSha256": "170d35c6a759e4ce64b0a92e13b13aa2328169da52a2d8f4f66436cc6880e009"
+    },
+    {
+      "name": "arithmetic",
+      "width": 31,
+      "height": 29,
+      "channels": 3,
+      "options": [
+        "-arithmetic"
+      ],
+      "expectedStatus": 422,
+      "bytes": 896,
+      "sha256": "580ea2e8ce46a7db80819c8a33aeb00ee4292e1b473c1e0afc3bcae31372c746",
+      "scanlineSha256": null
+    },
+    {
+      "name": "arithmetic-progressive",
+      "width": 31,
+      "height": 29,
+      "channels": 3,
+      "options": [
+        "-arithmetic",
+        "-progressive"
+      ],
+      "expectedStatus": 422,
+      "bytes": 1037,
+      "sha256": "d45da2a8d737b31d6609f9234077a41243feeefc7a8d671ff03ac4b1d502496d",
+      "scanlineSha256": null
+    },
+    {
+      "name": "restart",
+      "width": 61,
+      "height": 59,
+      "channels": 3,
+      "options": [
+        "-restart",
+        "1B"
+      ],
+      "expectedStatus": 200,
+      "bytes": 3476,
+      "sha256": "0604b3c42689a746521b005220a0a64740fcaf54a91f109a6834c225cf4a67ba",
+      "scanlineSha256": "f0266fb2c815b63abbc30f32fe4192c53f76c5b2e52272129aa11da81487ca2a"
+    },
+    {
+      "name": "maximum-pixels-baseline",
+      "width": 4000,
+      "height": 4000,
+      "channels": 3,
+      "options": [],
+      "expectedStatus": 200,
+      "bytes": 250627,
+      "sha256": "09aa6152df30cf711b1e575bfa85a63499c6bbad53009c0da43948a93124b864",
+      "scanlineSha256": "26c80b61b51fea9a07a2ad8097da0bdc21e9e627a9bb44dd26d31dfe08e10932"
+    },
+    {
+      "name": "maximum-pixels-progressive",
+      "width": 4000,
+      "height": 4000,
+      "channels": 3,
+      "options": [
+        "-progressive"
+      ],
+      "expectedStatus": 200,
+      "bytes": 94359,
+      "sha256": "bdc9ba8e8ceb6d69a0ba67a0b88e9124eb0f7dd053da8c09751d95a083b7eee6",
+      "scanlineSha256": "26c80b61b51fea9a07a2ad8097da0bdc21e9e627a9bb44dd26d31dfe08e10932"
+    },
+    {
+      "name": "coefficient-limit",
+      "width": 4000,
+      "height": 4000,
+      "channels": 3,
+      "options": [
+        "-progressive",
+        "-sample",
+        "1x1"
+      ],
+      "expectedStatus": 422,
+      "bytes": 188177,
+      "sha256": "94cc11fc6ef3a45459afc6edd97c088027512f84cfa93b8e337a89b81b83f71a",
+      "scanlineSha256": null
+    },
+    {
+      "name": "pixel-limit",
+      "width": 4001,
+      "height": 4000,
+      "channels": 3,
+      "options": [],
+      "expectedStatus": 422,
+      "bytes": 251627,
+      "sha256": "5e45f3c385cc7a07e238816f06e5a27325d54285f6b1f8c0dfb54cb1f9908c31",
+      "scanlineSha256": null
+    },
+    {
+      "name": "testorig",
+      "width": 227,
+      "height": 149,
+      "channels": 3,
+      "options": [],
+      "expectedStatus": 200,
+      "bytes": 5770,
+      "sha256": "acc6ec555d41d15b368320edaa3b20958ee6fa97cb6e4a18d1213d5ae8bec73b",
+      "scanlineSha256": "980b3bbe9fb686da631ccb97994b74662773ce36cdc8e99c9acf4183c4329758"
+    },
+    {
+      "name": "testimgari",
+      "width": 227,
+      "height": 149,
+      "channels": 3,
+      "options": [],
+      "expectedStatus": 422,
+      "bytes": 5126,
+      "sha256": "4672c7f08864cd0a8c73a4fa4b66ca32b635d38464551c1ecf06564ae8c89b38",
+      "scanlineSha256": "a2bbe2290dd46a5d5b2597f11aa793d1a2f6e9163b470993cfb6449f64673005"
+    },
+    {
+      "name": "testimgint",
+      "width": 227,
+      "height": 149,
+      "channels": 3,
+      "options": [],
+      "expectedStatus": 200,
+      "bytes": 5756,
+      "sha256": "491679b8057739b3c8e5bacd1e918efb1691d271cbbd69820ff8d480dcb90963",
+      "scanlineSha256": "a2bbe2290dd46a5d5b2597f11aa793d1a2f6e9163b470993cfb6449f64673005"
+    }
+  ]
+}

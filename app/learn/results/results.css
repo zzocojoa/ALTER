@@ -1,0 +1,9 @@
+.result-card { padding:1.5rem; background:var(--surface,#e9eee4); margin:1.5rem 0; overflow-wrap:anywhere; }
+.result-card section { border-top:1px solid #becabb; padding:1rem 0; }
+.result-card small { display:block; color:#526457; }
+.result-actions { display:flex; flex-wrap:wrap; gap:1rem; align-items:center; margin-top:1.5rem; }
+.result-actions button { padding:.8rem 1rem; border:1px solid #809885; border-radius:.4rem; }
+.result-actions button:first-child { background:#245b49; color:white; }
+.result-actions button:disabled { opacity:.55; }
+.result-card details { margin:1rem 0; }
+.result-history { width:100%; max-width:40rem; padding:.75rem; }

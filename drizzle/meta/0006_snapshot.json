@@ -1,0 +1,5835 @@
+{
+  "id": "f34dd367-896c-4381-af1c-cdd61800cb81",
+  "prevId": "7a6a2f15-b1e3-45c7-913a-ee2979863ed7",
+  "version": "6",
+  "dialect": "sqlite",
+  "tables": {
+    "owner_enrollment": {
+      "name": "owner_enrollment",
+      "columns": {
+        "slot": {
+          "name": "slot",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "requested_at": {
+          "name": "requested_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "answer_drafts": {
+      "name": "answer_drafts",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attempt_id": {
+          "name": "attempt_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "answer_drafts_ref_0": {
+          "name": "answer_drafts_ref_0",
+          "columns": [
+            "owner_id",
+            "attempt_id"
+          ],
+          "isUnique": false
+        },
+        "answer_drafts_unique_0": {
+          "name": "answer_drafts_unique_0",
+          "columns": [
+            "owner_id",
+            "attempt_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "answer_drafts_owner_id_attempt_id_attempts_owner_id_id_fk": {
+          "name": "answer_drafts_owner_id_attempt_id_attempts_owner_id_id_fk",
+          "tableFrom": "answer_drafts",
+          "columnsFrom": [
+            "owner_id",
+            "attempt_id"
+          ],
+          "tableTo": "attempts",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "answer_drafts_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "answer_drafts_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "answer_drafts_check_0": {
+          "name": "answer_drafts_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        }
+      }
+    },
+    "answers": {
+      "name": "answers",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attempt_id": {
+          "name": "attempt_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "answers_ref_0": {
+          "name": "answers_ref_0",
+          "columns": [
+            "owner_id",
+            "attempt_id"
+          ],
+          "isUnique": false
+        },
+        "answers_unique_0": {
+          "name": "answers_unique_0",
+          "columns": [
+            "owner_id",
+            "attempt_id",
+            "ordinal"
+          ],
+          "isUnique": true
+        },
+        "answers_unique_1": {
+          "name": "answers_unique_1",
+          "columns": [
+            "owner_id",
+            "id",
+            "attempt_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "answers_owner_id_attempt_id_attempts_owner_id_id_fk": {
+          "name": "answers_owner_id_attempt_id_attempts_owner_id_id_fk",
+          "tableFrom": "answers",
+          "columnsFrom": [
+            "owner_id",
+            "attempt_id"
+          ],
+          "tableTo": "attempts",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "answers_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "answers_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "answers_check_0": {
+          "name": "answers_check_0",
+          "value": "ordinal >= 1"
+        },
+        "answers_check_1": {
+          "name": "answers_check_1",
+          "value": "length(text) > 0"
+        }
+      }
+    },
+    "atomic_checks": {
+      "name": "atomic_checks",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "step": {
+          "name": "step",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "matched": {
+          "name": "matched",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "atomic_checks_ref_0": {
+          "name": "atomic_checks_ref_0",
+          "columns": [
+            "owner_id",
+            "request_id"
+          ],
+          "isUnique": false
+        },
+        "atomic_checks_unique_0": {
+          "name": "atomic_checks_unique_0",
+          "columns": [
+            "owner_id",
+            "request_id",
+            "step"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "atomic_checks_owner_id_request_id_atomic_requests_owner_id_id_fk": {
+          "name": "atomic_checks_owner_id_request_id_atomic_requests_owner_id_id_fk",
+          "tableFrom": "atomic_checks",
+          "columnsFrom": [
+            "owner_id",
+            "request_id"
+          ],
+          "tableTo": "atomic_requests",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "atomic_checks_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "atomic_checks_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "atomic_checks_check_0": {
+          "name": "atomic_checks_check_0",
+          "value": "matched = 1"
+        }
+      }
+    },
+    "atomic_requests": {
+      "name": "atomic_requests",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "request_key": {
+          "name": "request_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content_hash": {
+          "name": "content_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "result_json": {
+          "name": "result_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "atomic_requests_unique_0": {
+          "name": "atomic_requests_unique_0",
+          "columns": [
+            "owner_id",
+            "scope",
+            "request_key"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "atomic_requests_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "atomic_requests_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "atomic_requests_check_0": {
+          "name": "atomic_requests_check_0",
+          "value": "length(content_hash) = 64"
+        },
+        "atomic_requests_check_1": {
+          "name": "atomic_requests_check_1",
+          "value": "json_valid(result_json)"
+        }
+      }
+    },
+    "attempts": {
+      "name": "attempts",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "question_id": {
+          "name": "question_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "original_question_id": {
+          "name": "original_question_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "mode": {
+          "name": "mode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "hidden_material": {
+          "name": "hidden_material",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "attempts_ref_0": {
+          "name": "attempts_ref_0",
+          "columns": [
+            "owner_id",
+            "question_id",
+            "session_id"
+          ],
+          "isUnique": false
+        },
+        "attempts_ref_1": {
+          "name": "attempts_ref_1",
+          "columns": [
+            "owner_id",
+            "original_question_id"
+          ],
+          "isUnique": false
+        },
+        "attempts_unique_0": {
+          "name": "attempts_unique_0",
+          "columns": [
+            "owner_id",
+            "id",
+            "session_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "attempts_owner_id_question_id_session_id_questions_owner_id_id_session_id_fk": {
+          "name": "attempts_owner_id_question_id_session_id_questions_owner_id_id_session_id_fk",
+          "tableFrom": "attempts",
+          "columnsFrom": [
+            "owner_id",
+            "question_id",
+            "session_id"
+          ],
+          "tableTo": "questions",
+          "columnsTo": [
+            "owner_id",
+            "id",
+            "session_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "attempts_owner_id_original_question_id_questions_owner_id_id_fk": {
+          "name": "attempts_owner_id_original_question_id_questions_owner_id_id_fk",
+          "tableFrom": "attempts",
+          "columnsFrom": [
+            "owner_id",
+            "original_question_id"
+          ],
+          "tableTo": "questions",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "attempts_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "attempts_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "attempts_check_0": {
+          "name": "attempts_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "attempts_check_1": {
+          "name": "attempts_check_1",
+          "value": "mode IN ('initial','new-condition','delayed-recall')"
+        },
+        "attempts_check_2": {
+          "name": "attempts_check_2",
+          "value": "(mode = 'new-condition') = (original_question_id IS NOT NULL)"
+        },
+        "attempts_check_3": {
+          "name": "attempts_check_3",
+          "value": "original_question_id IS NULL OR original_question_id != question_id"
+        },
+        "attempts_check_4": {
+          "name": "attempts_check_4",
+          "value": "hidden_material IN (0,1)"
+        },
+        "attempts_check_5": {
+          "name": "attempts_check_5",
+          "value": "status IN ('awaiting-answer','awaiting-revision','ready')"
+        }
+      }
+    },
+    "confirmed_results": {
+      "name": "confirmed_results",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "result_id": {
+          "name": "result_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "answer_id": {
+          "name": "answer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "progress": {
+          "name": "progress",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "performance": {
+          "name": "performance",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "confirmed_at": {
+          "name": "confirmed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "correction_id": {
+          "name": "correction_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "confirmed_results_ref_0": {
+          "name": "confirmed_results_ref_0",
+          "columns": [
+            "owner_id",
+            "result_id"
+          ],
+          "isUnique": false
+        },
+        "confirmed_results_ref_1": {
+          "name": "confirmed_results_ref_1",
+          "columns": [
+            "owner_id",
+            "answer_id"
+          ],
+          "isUnique": false
+        },
+        "confirmed_results_unique_0": {
+          "name": "confirmed_results_unique_0",
+          "columns": [
+            "owner_id",
+            "result_id",
+            "ordinal"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "confirmed_results_owner_id_result_id_learning_results_owner_id_id_fk": {
+          "name": "confirmed_results_owner_id_result_id_learning_results_owner_id_id_fk",
+          "tableFrom": "confirmed_results",
+          "columnsFrom": [
+            "owner_id",
+            "result_id"
+          ],
+          "tableTo": "learning_results",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "confirmed_results_owner_id_answer_id_answers_owner_id_id_fk": {
+          "name": "confirmed_results_owner_id_answer_id_answers_owner_id_id_fk",
+          "tableFrom": "confirmed_results",
+          "columnsFrom": [
+            "owner_id",
+            "answer_id"
+          ],
+          "tableTo": "answers",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "confirmed_results_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "confirmed_results_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "confirmed_results_check_0": {
+          "name": "confirmed_results_check_0",
+          "value": "ordinal >= 1"
+        },
+        "confirmed_results_check_1": {
+          "name": "confirmed_results_check_1",
+          "value": "progress IN ('미시작','진행 중','완료')"
+        },
+        "confirmed_results_check_2": {
+          "name": "confirmed_results_check_2",
+          "value": "performance IN ('미확인','설명 필요','도움받아 수행','독립 수행','지연 재현')"
+        }
+      }
+    },
+    "conversations": {
+      "name": "conversations",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "role": {
+          "name": "role",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "conversations_ref_0": {
+          "name": "conversations_ref_0",
+          "columns": [
+            "owner_id",
+            "session_id"
+          ],
+          "isUnique": false
+        },
+        "conversations_unique_0": {
+          "name": "conversations_unique_0",
+          "columns": [
+            "owner_id",
+            "session_id",
+            "ordinal"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "conversations_owner_id_session_id_sessions_owner_id_id_fk": {
+          "name": "conversations_owner_id_session_id_sessions_owner_id_id_fk",
+          "tableFrom": "conversations",
+          "columnsFrom": [
+            "owner_id",
+            "session_id"
+          ],
+          "tableTo": "sessions",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "conversations_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "conversations_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "conversations_check_0": {
+          "name": "conversations_check_0",
+          "value": "ordinal >= 1"
+        },
+        "conversations_check_1": {
+          "name": "conversations_check_1",
+          "value": "role IN ('learner','coach','system')"
+        }
+      }
+    },
+    "correction_impacts": {
+      "name": "correction_impacts",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "correction_id": {
+          "name": "correction_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "review_id": {
+          "name": "review_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "old_version": {
+          "name": "old_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "new_version": {
+          "name": "new_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "old_question": {
+          "name": "old_question",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "old_explanation": {
+          "name": "old_explanation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "old_next_action": {
+          "name": "old_next_action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "correction_impacts_ref_0": {
+          "name": "correction_impacts_ref_0",
+          "columns": [
+            "owner_id",
+            "correction_id"
+          ],
+          "isUnique": false
+        },
+        "correction_impacts_ref_1": {
+          "name": "correction_impacts_ref_1",
+          "columns": [
+            "owner_id",
+            "review_id"
+          ],
+          "isUnique": false
+        },
+        "correction_impacts_unique_0": {
+          "name": "correction_impacts_unique_0",
+          "columns": [
+            "owner_id",
+            "correction_id",
+            "review_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "correction_impacts_owner_id_correction_id_corrections_owner_id_id_fk": {
+          "name": "correction_impacts_owner_id_correction_id_corrections_owner_id_id_fk",
+          "tableFrom": "correction_impacts",
+          "columnsFrom": [
+            "owner_id",
+            "correction_id"
+          ],
+          "tableTo": "corrections",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "correction_impacts_owner_id_review_id_review_items_owner_id_id_fk": {
+          "name": "correction_impacts_owner_id_review_id_review_items_owner_id_id_fk",
+          "tableFrom": "correction_impacts",
+          "columnsFrom": [
+            "owner_id",
+            "review_id"
+          ],
+          "tableTo": "review_items",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "correction_impacts_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "correction_impacts_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "correction_impacts_check_0": {
+          "name": "correction_impacts_check_0",
+          "value": "new_version = old_version + 1"
+        }
+      }
+    },
+    "corrections": {
+      "name": "corrections",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "error_id": {
+          "name": "error_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "concept": {
+          "name": "concept",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source_ref_id": {
+          "name": "source_ref_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "answer_id": {
+          "name": "answer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "study_date": {
+          "name": "study_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "evidence": {
+          "name": "evidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "corrections_ref_0": {
+          "name": "corrections_ref_0",
+          "columns": [
+            "owner_id",
+            "error_id"
+          ],
+          "isUnique": false
+        },
+        "corrections_ref_1": {
+          "name": "corrections_ref_1",
+          "columns": [
+            "owner_id",
+            "source_ref_id"
+          ],
+          "isUnique": false
+        },
+        "corrections_ref_2": {
+          "name": "corrections_ref_2",
+          "columns": [
+            "owner_id",
+            "answer_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "corrections_owner_id_error_id_errors_owner_id_id_fk": {
+          "name": "corrections_owner_id_error_id_errors_owner_id_id_fk",
+          "tableFrom": "corrections",
+          "columnsFrom": [
+            "owner_id",
+            "error_id"
+          ],
+          "tableTo": "errors",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "corrections_owner_id_source_ref_id_source_references_owner_id_id_fk": {
+          "name": "corrections_owner_id_source_ref_id_source_references_owner_id_id_fk",
+          "tableFrom": "corrections",
+          "columnsFrom": [
+            "owner_id",
+            "source_ref_id"
+          ],
+          "tableTo": "source_references",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "corrections_owner_id_answer_id_answers_owner_id_id_fk": {
+          "name": "corrections_owner_id_answer_id_answers_owner_id_id_fk",
+          "tableFrom": "corrections",
+          "columnsFrom": [
+            "owner_id",
+            "answer_id"
+          ],
+          "tableTo": "answers",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "corrections_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "corrections_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "corrections_check_0": {
+          "name": "corrections_check_0",
+          "value": "length(trim(reason)) > 0"
+        },
+        "corrections_check_1": {
+          "name": "corrections_check_1",
+          "value": "length(trim(evidence)) > 0"
+        }
+      }
+    },
+    "cost_reservations": {
+      "name": "cost_reservations",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "window_id": {
+          "name": "window_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "request_business_key": {
+          "name": "request_business_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "model": {
+          "name": "model",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "amount_units": {
+          "name": "amount_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actual_units": {
+          "name": "actual_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "cost_reservations_ref_0": {
+          "name": "cost_reservations_ref_0",
+          "columns": [
+            "owner_id",
+            "window_id"
+          ],
+          "isUnique": false
+        },
+        "cost_reservations_unique_0": {
+          "name": "cost_reservations_unique_0",
+          "columns": [
+            "owner_id",
+            "window_id",
+            "request_business_key"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "cost_reservations_owner_id_window_id_cost_windows_owner_id_id_fk": {
+          "name": "cost_reservations_owner_id_window_id_cost_windows_owner_id_id_fk",
+          "tableFrom": "cost_reservations",
+          "columnsFrom": [
+            "owner_id",
+            "window_id"
+          ],
+          "tableTo": "cost_windows",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cost_reservations_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "cost_reservations_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "cost_reservations_check_0": {
+          "name": "cost_reservations_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "cost_reservations_check_1": {
+          "name": "cost_reservations_check_1",
+          "value": "amount_units >= 0 AND amount_units <= 9007199254740991"
+        },
+        "cost_reservations_check_2": {
+          "name": "cost_reservations_check_2",
+          "value": "actual_units IS NULL OR (actual_units >= 0 AND actual_units <= amount_units)"
+        },
+        "cost_reservations_check_3": {
+          "name": "cost_reservations_check_3",
+          "value": "state IN ('reserved','settled','released','unknown')"
+        },
+        "cost_reservations_check_4": {
+          "name": "cost_reservations_check_4",
+          "value": "model = 'gpt-6-luna' OR model = 'operations'"
+        }
+      }
+    },
+    "cost_usage": {
+      "name": "cost_usage",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reservation_id": {
+          "name": "reservation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actual_units": {
+          "name": "actual_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_receipt": {
+          "name": "provider_receipt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "cost_usage_ref_0": {
+          "name": "cost_usage_ref_0",
+          "columns": [
+            "owner_id",
+            "reservation_id"
+          ],
+          "isUnique": false
+        },
+        "cost_usage_unique_0": {
+          "name": "cost_usage_unique_0",
+          "columns": [
+            "owner_id",
+            "reservation_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "cost_usage_owner_id_reservation_id_cost_reservations_owner_id_id_fk": {
+          "name": "cost_usage_owner_id_reservation_id_cost_reservations_owner_id_id_fk",
+          "tableFrom": "cost_usage",
+          "columnsFrom": [
+            "owner_id",
+            "reservation_id"
+          ],
+          "tableTo": "cost_reservations",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "cost_usage_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "cost_usage_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "cost_usage_check_0": {
+          "name": "cost_usage_check_0",
+          "value": "actual_units >= 0"
+        }
+      }
+    },
+    "cost_windows": {
+      "name": "cost_windows",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "category": {
+          "name": "category",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "period_start": {
+          "name": "period_start",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reset_at": {
+          "name": "reset_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "currency": {
+          "name": "currency",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scale": {
+          "name": "scale",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "limit_units": {
+          "name": "limit_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reserved_units": {
+          "name": "reserved_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "settled_units": {
+          "name": "settled_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "cost_windows_unique_0": {
+          "name": "cost_windows_unique_0",
+          "columns": [
+            "owner_id",
+            "category",
+            "period_start",
+            "reset_at"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "cost_windows_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "cost_windows_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "cost_windows_check_0": {
+          "name": "cost_windows_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "cost_windows_check_1": {
+          "name": "cost_windows_check_1",
+          "value": "category IN ('ai','operations')"
+        },
+        "cost_windows_check_2": {
+          "name": "cost_windows_check_2",
+          "value": "currency = 'KRW'"
+        },
+        "cost_windows_check_3": {
+          "name": "cost_windows_check_3",
+          "value": "scale = 1000000"
+        },
+        "cost_windows_check_4": {
+          "name": "cost_windows_check_4",
+          "value": "period_start < reset_at"
+        },
+        "cost_windows_check_5": {
+          "name": "cost_windows_check_5",
+          "value": "reserved_units >= 0"
+        },
+        "cost_windows_check_6": {
+          "name": "cost_windows_check_6",
+          "value": "settled_units >= 0"
+        },
+        "cost_windows_check_7": {
+          "name": "cost_windows_check_7",
+          "value": "limit_units >= 0 AND limit_units <= 9007199254740991"
+        },
+        "cost_windows_check_8": {
+          "name": "cost_windows_check_8",
+          "value": "reserved_units <= limit_units - settled_units"
+        },
+        "cost_windows_check_9": {
+          "name": "cost_windows_check_9",
+          "value": "(category = 'ai' AND limit_units <= 7000000000) OR (category = 'operations' AND limit_units <= 10000000000)"
+        }
+      }
+    },
+    "courses": {
+      "name": "courses",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "courses_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "courses_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "courses_check_0": {
+          "name": "courses_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "courses_check_1": {
+          "name": "courses_check_1",
+          "value": "length(title) > 0"
+        }
+      }
+    },
+    "errors": {
+      "name": "errors",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "unit_id": {
+          "name": "unit_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "answer_id": {
+          "name": "answer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "concept": {
+          "name": "concept",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "errors_ref_0": {
+          "name": "errors_ref_0",
+          "columns": [
+            "owner_id",
+            "unit_id"
+          ],
+          "isUnique": false
+        },
+        "errors_ref_1": {
+          "name": "errors_ref_1",
+          "columns": [
+            "owner_id",
+            "answer_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "errors_owner_id_unit_id_units_owner_id_id_fk": {
+          "name": "errors_owner_id_unit_id_units_owner_id_id_fk",
+          "tableFrom": "errors",
+          "columnsFrom": [
+            "owner_id",
+            "unit_id"
+          ],
+          "tableTo": "units",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "errors_owner_id_answer_id_answers_owner_id_id_fk": {
+          "name": "errors_owner_id_answer_id_answers_owner_id_id_fk",
+          "tableFrom": "errors",
+          "columnsFrom": [
+            "owner_id",
+            "answer_id"
+          ],
+          "tableTo": "answers",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "errors_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "errors_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "errors_check_0": {
+          "name": "errors_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        }
+      }
+    },
+    "external_attempts": {
+      "name": "external_attempts",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "step_id": {
+          "name": "step_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "evidence": {
+          "name": "evidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "external_attempts_ref_0": {
+          "name": "external_attempts_ref_0",
+          "columns": [
+            "owner_id",
+            "step_id"
+          ],
+          "isUnique": false
+        },
+        "external_attempts_unique_0": {
+          "name": "external_attempts_unique_0",
+          "columns": [
+            "owner_id",
+            "step_id",
+            "ordinal"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "external_attempts_owner_id_step_id_external_steps_owner_id_id_fk": {
+          "name": "external_attempts_owner_id_step_id_external_steps_owner_id_id_fk",
+          "tableFrom": "external_attempts",
+          "columnsFrom": [
+            "owner_id",
+            "step_id"
+          ],
+          "tableTo": "external_steps",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "external_attempts_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "external_attempts_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "external_attempts_check_0": {
+          "name": "external_attempts_check_0",
+          "value": "ordinal >= 1"
+        },
+        "external_attempts_check_1": {
+          "name": "external_attempts_check_1",
+          "value": "outcome IN ('sent','unknown','confirmed','conflict','not-sent')"
+        }
+      }
+    },
+    "external_jobs": {
+      "name": "external_jobs",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "weekly_version_id": {
+          "name": "weekly_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "business_key": {
+          "name": "business_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "external_jobs_ref_0": {
+          "name": "external_jobs_ref_0",
+          "columns": [
+            "owner_id",
+            "weekly_version_id"
+          ],
+          "isUnique": false
+        },
+        "external_jobs_unique_0": {
+          "name": "external_jobs_unique_0",
+          "columns": [
+            "owner_id",
+            "kind",
+            "business_key"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "external_jobs_owner_id_weekly_version_id_weekly_versions_owner_id_id_fk": {
+          "name": "external_jobs_owner_id_weekly_version_id_weekly_versions_owner_id_id_fk",
+          "tableFrom": "external_jobs",
+          "columnsFrom": [
+            "owner_id",
+            "weekly_version_id"
+          ],
+          "tableTo": "weekly_versions",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "external_jobs_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "external_jobs_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "external_jobs_check_0": {
+          "name": "external_jobs_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "external_jobs_check_1": {
+          "name": "external_jobs_check_1",
+          "value": "kind IN ('weekly-export','calendar')"
+        },
+        "external_jobs_check_2": {
+          "name": "external_jobs_check_2",
+          "value": "state IN ('pending','running','partial','complete','conflict')"
+        }
+      }
+    },
+    "external_steps": {
+      "name": "external_steps",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "lease_until": {
+          "name": "lease_until",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "external_id": {
+          "name": "external_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "evidence": {
+          "name": "evidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "external_steps_ref_0": {
+          "name": "external_steps_ref_0",
+          "columns": [
+            "owner_id",
+            "job_id"
+          ],
+          "isUnique": false
+        },
+        "external_steps_unique_0": {
+          "name": "external_steps_unique_0",
+          "columns": [
+            "owner_id",
+            "job_id",
+            "ordinal"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "external_steps_owner_id_job_id_external_jobs_owner_id_id_fk": {
+          "name": "external_steps_owner_id_job_id_external_jobs_owner_id_id_fk",
+          "tableFrom": "external_steps",
+          "columnsFrom": [
+            "owner_id",
+            "job_id"
+          ],
+          "tableTo": "external_jobs",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "external_steps_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "external_steps_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "external_steps_check_0": {
+          "name": "external_steps_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "external_steps_check_1": {
+          "name": "external_steps_check_1",
+          "value": "ordinal >= 1"
+        },
+        "external_steps_check_2": {
+          "name": "external_steps_check_2",
+          "value": "state IN ('pending','leased','unknown','confirmed','conflict')"
+        },
+        "external_steps_check_3": {
+          "name": "external_steps_check_3",
+          "value": "state != 'confirmed' OR (external_id IS NOT NULL AND evidence IS NOT NULL)"
+        }
+      }
+    },
+    "feedback": {
+      "name": "feedback",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "answer_id": {
+          "name": "answer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "position": {
+          "name": "position",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "feedback_ref_0": {
+          "name": "feedback_ref_0",
+          "columns": [
+            "owner_id",
+            "answer_id"
+          ],
+          "isUnique": false
+        },
+        "feedback_unique_0": {
+          "name": "feedback_unique_0",
+          "columns": [
+            "owner_id",
+            "answer_id",
+            "position"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "feedback_owner_id_answer_id_answers_owner_id_id_fk": {
+          "name": "feedback_owner_id_answer_id_answers_owner_id_id_fk",
+          "tableFrom": "feedback",
+          "columnsFrom": [
+            "owner_id",
+            "answer_id"
+          ],
+          "tableTo": "answers",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "feedback_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "feedback_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "feedback_check_0": {
+          "name": "feedback_check_0",
+          "value": "position BETWEEN 1 AND 2"
+        },
+        "feedback_check_1": {
+          "name": "feedback_check_1",
+          "value": "length(content) > 0"
+        }
+      }
+    },
+    "google_connections": {
+      "name": "google_connections",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "google_subject": {
+          "name": "google_subject",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scopes": {
+          "name": "scopes",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expires_at": {
+          "name": "expires_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "reconnect_required": {
+          "name": "reconnect_required",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "google_connections_unique_0": {
+          "name": "google_connections_unique_0",
+          "columns": [
+            "owner_id",
+            "google_subject"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "google_connections_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "google_connections_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "google_connections_check_0": {
+          "name": "google_connections_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "google_connections_check_1": {
+          "name": "google_connections_check_1",
+          "value": "json_valid(scopes)"
+        },
+        "google_connections_check_2": {
+          "name": "google_connections_check_2",
+          "value": "reconnect_required IN (0,1)"
+        }
+      }
+    },
+    "google_tokens": {
+      "name": "google_tokens",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "connection_id": {
+          "name": "connection_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "algorithm": {
+          "name": "algorithm",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ciphertext": {
+          "name": "ciphertext",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "nonce": {
+          "name": "nonce",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "key_version": {
+          "name": "key_version",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "google_tokens_ref_0": {
+          "name": "google_tokens_ref_0",
+          "columns": [
+            "owner_id",
+            "connection_id"
+          ],
+          "isUnique": false
+        },
+        "google_tokens_unique_0": {
+          "name": "google_tokens_unique_0",
+          "columns": [
+            "owner_id",
+            "connection_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "google_tokens_owner_id_connection_id_google_connections_owner_id_id_fk": {
+          "name": "google_tokens_owner_id_connection_id_google_connections_owner_id_id_fk",
+          "tableFrom": "google_tokens",
+          "columnsFrom": [
+            "owner_id",
+            "connection_id"
+          ],
+          "tableTo": "google_connections",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "google_tokens_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "google_tokens_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "google_tokens_check_0": {
+          "name": "google_tokens_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "google_tokens_check_1": {
+          "name": "google_tokens_check_1",
+          "value": "algorithm = 'AES-GCM'"
+        },
+        "google_tokens_check_2": {
+          "name": "google_tokens_check_2",
+          "value": "length(ciphertext) >= 24"
+        },
+        "google_tokens_check_3": {
+          "name": "google_tokens_check_3",
+          "value": "length(nonce) = 16"
+        }
+      }
+    },
+    "help_events": {
+      "name": "help_events",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "attempt_id": {
+          "name": "attempt_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "level": {
+          "name": "level",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "shown_at": {
+          "name": "shown_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "help_events_ref_0": {
+          "name": "help_events_ref_0",
+          "columns": [
+            "owner_id",
+            "attempt_id"
+          ],
+          "isUnique": false
+        },
+        "help_events_unique_0": {
+          "name": "help_events_unique_0",
+          "columns": [
+            "owner_id",
+            "attempt_id",
+            "ordinal"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "help_events_owner_id_attempt_id_attempts_owner_id_id_fk": {
+          "name": "help_events_owner_id_attempt_id_attempts_owner_id_id_fk",
+          "tableFrom": "help_events",
+          "columnsFrom": [
+            "owner_id",
+            "attempt_id"
+          ],
+          "tableTo": "attempts",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "help_events_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "help_events_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "help_events_check_0": {
+          "name": "help_events_check_0",
+          "value": "ordinal >= 1"
+        },
+        "help_events_check_1": {
+          "name": "help_events_check_1",
+          "value": "level BETWEEN 1 AND 3"
+        },
+        "help_events_check_2": {
+          "name": "help_events_check_2",
+          "value": "kind IN ('hint','answer','explanation')"
+        }
+      }
+    },
+    "learning_results": {
+      "name": "learning_results",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "unit_id": {
+          "name": "unit_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "current_version_id": {
+          "name": "current_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "learning_results_ref_0": {
+          "name": "learning_results_ref_0",
+          "columns": [
+            "owner_id",
+            "unit_id"
+          ],
+          "isUnique": false
+        },
+        "learning_results_unique_0": {
+          "name": "learning_results_unique_0",
+          "columns": [
+            "owner_id",
+            "unit_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "learning_results_owner_id_unit_id_units_owner_id_id_fk": {
+          "name": "learning_results_owner_id_unit_id_units_owner_id_id_fk",
+          "tableFrom": "learning_results",
+          "columnsFrom": [
+            "owner_id",
+            "unit_id"
+          ],
+          "tableTo": "units",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "learning_results_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "learning_results_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "learning_results_check_0": {
+          "name": "learning_results_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        }
+      }
+    },
+    "material_pages": {
+      "name": "material_pages",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "material_id": {
+          "name": "material_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "upload_id": {
+          "name": "upload_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_page": {
+          "name": "file_page",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "printed_page": {
+          "name": "printed_page",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "material_pages_ref_0": {
+          "name": "material_pages_ref_0",
+          "columns": [
+            "owner_id",
+            "upload_id",
+            "material_id"
+          ],
+          "isUnique": false
+        },
+        "material_pages_unique_0": {
+          "name": "material_pages_unique_0",
+          "columns": [
+            "owner_id",
+            "upload_id",
+            "file_page"
+          ],
+          "isUnique": true
+        },
+        "material_pages_unique_1": {
+          "name": "material_pages_unique_1",
+          "columns": [
+            "owner_id",
+            "id",
+            "material_id",
+            "upload_id",
+            "file_page"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "material_pages_owner_id_upload_id_material_id_uploads_owner_id_id_material_id_fk": {
+          "name": "material_pages_owner_id_upload_id_material_id_uploads_owner_id_id_material_id_fk",
+          "tableFrom": "material_pages",
+          "columnsFrom": [
+            "owner_id",
+            "upload_id",
+            "material_id"
+          ],
+          "tableTo": "uploads",
+          "columnsTo": [
+            "owner_id",
+            "id",
+            "material_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "material_pages_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "material_pages_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "material_pages_check_0": {
+          "name": "material_pages_check_0",
+          "value": "file_page >= 1"
+        }
+      }
+    },
+    "materials": {
+      "name": "materials",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "course_id": {
+          "name": "course_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "origin": {
+          "name": "origin",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "original_id": {
+          "name": "original_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "modified_at": {
+          "name": "modified_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "materials_ref_0": {
+          "name": "materials_ref_0",
+          "columns": [
+            "owner_id",
+            "course_id"
+          ],
+          "isUnique": false
+        },
+        "materials_unique_0": {
+          "name": "materials_unique_0",
+          "columns": [
+            "owner_id",
+            "id",
+            "course_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "materials_owner_id_course_id_courses_owner_id_id_fk": {
+          "name": "materials_owner_id_course_id_courses_owner_id_id_fk",
+          "tableFrom": "materials",
+          "columnsFrom": [
+            "owner_id",
+            "course_id"
+          ],
+          "tableTo": "courses",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "materials_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "materials_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "materials_check_0": {
+          "name": "materials_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "materials_check_1": {
+          "name": "materials_check_1",
+          "value": "origin IN ('upload','google')"
+        },
+        "materials_check_2": {
+          "name": "materials_check_2",
+          "value": "origin != 'google' OR (original_id IS NOT NULL AND modified_at IS NOT NULL)"
+        }
+      }
+    },
+    "plan_drafts": {
+      "name": "plan_drafts",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "plan_id": {
+          "name": "plan_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "plan_drafts_ref_0": {
+          "name": "plan_drafts_ref_0",
+          "columns": [
+            "owner_id",
+            "plan_id"
+          ],
+          "isUnique": false
+        },
+        "plan_drafts_unique_0": {
+          "name": "plan_drafts_unique_0",
+          "columns": [
+            "owner_id",
+            "plan_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "plan_drafts_owner_id_plan_id_plans_owner_id_id_fk": {
+          "name": "plan_drafts_owner_id_plan_id_plans_owner_id_id_fk",
+          "tableFrom": "plan_drafts",
+          "columnsFrom": [
+            "owner_id",
+            "plan_id"
+          ],
+          "tableTo": "plans",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "plan_drafts_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "plan_drafts_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "plan_drafts_check_0": {
+          "name": "plan_drafts_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "plan_drafts_check_1": {
+          "name": "plan_drafts_check_1",
+          "value": "json_valid(content)"
+        }
+      }
+    },
+    "plan_versions": {
+      "name": "plan_versions",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "plan_id": {
+          "name": "plan_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "course_id": {
+          "name": "course_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "confirmed_at": {
+          "name": "confirmed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "plan_versions_ref_0": {
+          "name": "plan_versions_ref_0",
+          "columns": [
+            "owner_id",
+            "plan_id",
+            "course_id"
+          ],
+          "isUnique": false
+        },
+        "plan_versions_unique_0": {
+          "name": "plan_versions_unique_0",
+          "columns": [
+            "owner_id",
+            "plan_id",
+            "ordinal"
+          ],
+          "isUnique": true
+        },
+        "plan_versions_unique_1": {
+          "name": "plan_versions_unique_1",
+          "columns": [
+            "owner_id",
+            "id",
+            "course_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "plan_versions_owner_id_plan_id_course_id_plans_owner_id_id_course_id_fk": {
+          "name": "plan_versions_owner_id_plan_id_course_id_plans_owner_id_id_course_id_fk",
+          "tableFrom": "plan_versions",
+          "columnsFrom": [
+            "owner_id",
+            "plan_id",
+            "course_id"
+          ],
+          "tableTo": "plans",
+          "columnsTo": [
+            "owner_id",
+            "id",
+            "course_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "plan_versions_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "plan_versions_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "plan_versions_check_0": {
+          "name": "plan_versions_check_0",
+          "value": "ordinal >= 1"
+        },
+        "plan_versions_check_1": {
+          "name": "plan_versions_check_1",
+          "value": "json_valid(content)"
+        }
+      }
+    },
+    "plans": {
+      "name": "plans",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "course_id": {
+          "name": "course_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "plans_ref_0": {
+          "name": "plans_ref_0",
+          "columns": [
+            "owner_id",
+            "course_id"
+          ],
+          "isUnique": false
+        },
+        "plans_unique_0": {
+          "name": "plans_unique_0",
+          "columns": [
+            "owner_id",
+            "id",
+            "course_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "plans_owner_id_course_id_courses_owner_id_id_fk": {
+          "name": "plans_owner_id_course_id_courses_owner_id_id_fk",
+          "tableFrom": "plans",
+          "columnsFrom": [
+            "owner_id",
+            "course_id"
+          ],
+          "tableTo": "courses",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "plans_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "plans_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "plans_check_0": {
+          "name": "plans_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        }
+      }
+    },
+    "questions": {
+      "name": "questions",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "session_id": {
+          "name": "session_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source_ref_id": {
+          "name": "source_ref_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "prompt": {
+          "name": "prompt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "questions_ref_0": {
+          "name": "questions_ref_0",
+          "columns": [
+            "owner_id",
+            "session_id"
+          ],
+          "isUnique": false
+        },
+        "questions_ref_1": {
+          "name": "questions_ref_1",
+          "columns": [
+            "owner_id",
+            "source_ref_id"
+          ],
+          "isUnique": false
+        },
+        "questions_unique_0": {
+          "name": "questions_unique_0",
+          "columns": [
+            "owner_id",
+            "id",
+            "session_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "questions_owner_id_session_id_sessions_owner_id_id_fk": {
+          "name": "questions_owner_id_session_id_sessions_owner_id_id_fk",
+          "tableFrom": "questions",
+          "columnsFrom": [
+            "owner_id",
+            "session_id"
+          ],
+          "tableTo": "sessions",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "questions_owner_id_source_ref_id_source_references_owner_id_id_fk": {
+          "name": "questions_owner_id_source_ref_id_source_references_owner_id_id_fk",
+          "tableFrom": "questions",
+          "columnsFrom": [
+            "owner_id",
+            "source_ref_id"
+          ],
+          "tableTo": "source_references",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "questions_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "questions_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "questions_check_0": {
+          "name": "questions_check_0",
+          "value": "length(prompt) > 0"
+        }
+      }
+    },
+    "quota_reservations": {
+      "name": "quota_reservations",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "window_id": {
+          "name": "window_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "business_key": {
+          "name": "business_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "method": {
+          "name": "method",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "weight": {
+          "name": "weight",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actual_units": {
+          "name": "actual_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "quota_reservations_ref_0": {
+          "name": "quota_reservations_ref_0",
+          "columns": [
+            "owner_id",
+            "window_id"
+          ],
+          "isUnique": false
+        },
+        "quota_reservations_unique_0": {
+          "name": "quota_reservations_unique_0",
+          "columns": [
+            "owner_id",
+            "window_id",
+            "business_key"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "quota_reservations_owner_id_window_id_quota_windows_owner_id_id_fk": {
+          "name": "quota_reservations_owner_id_window_id_quota_windows_owner_id_id_fk",
+          "tableFrom": "quota_reservations",
+          "columnsFrom": [
+            "owner_id",
+            "window_id"
+          ],
+          "tableTo": "quota_windows",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "quota_reservations_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "quota_reservations_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "quota_reservations_check_0": {
+          "name": "quota_reservations_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "quota_reservations_check_1": {
+          "name": "quota_reservations_check_1",
+          "value": "weight > 0 AND weight <= 9007199254740991"
+        },
+        "quota_reservations_check_2": {
+          "name": "quota_reservations_check_2",
+          "value": "actual_units IS NULL OR (actual_units >= 0 AND actual_units <= weight)"
+        },
+        "quota_reservations_check_3": {
+          "name": "quota_reservations_check_3",
+          "value": "state IN ('reserved','settled','released','unknown')"
+        }
+      }
+    },
+    "quota_usage": {
+      "name": "quota_usage",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reservation_id": {
+          "name": "reservation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actual_units": {
+          "name": "actual_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_receipt": {
+          "name": "provider_receipt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "occurred_at": {
+          "name": "occurred_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "request_id": {
+          "name": "request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "quota_usage_ref_0": {
+          "name": "quota_usage_ref_0",
+          "columns": [
+            "owner_id",
+            "reservation_id"
+          ],
+          "isUnique": false
+        },
+        "quota_usage_unique_0": {
+          "name": "quota_usage_unique_0",
+          "columns": [
+            "owner_id",
+            "reservation_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "quota_usage_owner_id_reservation_id_quota_reservations_owner_id_id_fk": {
+          "name": "quota_usage_owner_id_reservation_id_quota_reservations_owner_id_id_fk",
+          "tableFrom": "quota_usage",
+          "columnsFrom": [
+            "owner_id",
+            "reservation_id"
+          ],
+          "tableTo": "quota_reservations",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "quota_usage_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "quota_usage_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "quota_usage_check_0": {
+          "name": "quota_usage_check_0",
+          "value": "actual_units >= 0"
+        }
+      }
+    },
+    "quota_windows": {
+      "name": "quota_windows",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "api": {
+          "name": "api",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "project_key": {
+          "name": "project_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_user": {
+          "name": "provider_user",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "quota_unit": {
+          "name": "quota_unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "period_start": {
+          "name": "period_start",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reset_at": {
+          "name": "reset_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "limit_units": {
+          "name": "limit_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reserved_units": {
+          "name": "reserved_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "settled_units": {
+          "name": "settled_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "quota_windows_unique_0": {
+          "name": "quota_windows_unique_0",
+          "columns": [
+            "owner_id",
+            "api",
+            "project_key",
+            "provider_user",
+            "quota_unit",
+            "period_start",
+            "reset_at"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "quota_windows_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "quota_windows_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "quota_windows_check_0": {
+          "name": "quota_windows_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "quota_windows_check_1": {
+          "name": "quota_windows_check_1",
+          "value": "period_start < reset_at"
+        },
+        "quota_windows_check_2": {
+          "name": "quota_windows_check_2",
+          "value": "limit_units BETWEEN 0 AND 9007199254740991"
+        },
+        "quota_windows_check_3": {
+          "name": "quota_windows_check_3",
+          "value": "reserved_units >= 0"
+        },
+        "quota_windows_check_4": {
+          "name": "quota_windows_check_4",
+          "value": "settled_units >= 0"
+        },
+        "quota_windows_check_5": {
+          "name": "quota_windows_check_5",
+          "value": "reserved_units <= limit_units - settled_units"
+        }
+      }
+    },
+    "reference_selections": {
+      "name": "reference_selections",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "connection_id": {
+          "name": "connection_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "material_id": {
+          "name": "material_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "external_id": {
+          "name": "external_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "modified_at": {
+          "name": "modified_at",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "reference_selections_ref_0": {
+          "name": "reference_selections_ref_0",
+          "columns": [
+            "owner_id",
+            "connection_id"
+          ],
+          "isUnique": false
+        },
+        "reference_selections_ref_1": {
+          "name": "reference_selections_ref_1",
+          "columns": [
+            "owner_id",
+            "material_id"
+          ],
+          "isUnique": false
+        },
+        "reference_selections_unique_0": {
+          "name": "reference_selections_unique_0",
+          "columns": [
+            "owner_id",
+            "connection_id",
+            "external_id"
+          ],
+          "isUnique": true
+        },
+        "reference_selections_unique_1": {
+          "name": "reference_selections_unique_1",
+          "columns": [
+            "owner_id",
+            "material_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "reference_selections_owner_id_connection_id_google_connections_owner_id_id_fk": {
+          "name": "reference_selections_owner_id_connection_id_google_connections_owner_id_id_fk",
+          "tableFrom": "reference_selections",
+          "columnsFrom": [
+            "owner_id",
+            "connection_id"
+          ],
+          "tableTo": "google_connections",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "reference_selections_owner_id_material_id_materials_owner_id_id_fk": {
+          "name": "reference_selections_owner_id_material_id_materials_owner_id_id_fk",
+          "tableFrom": "reference_selections",
+          "columnsFrom": [
+            "owner_id",
+            "material_id"
+          ],
+          "tableTo": "materials",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "reference_selections_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "reference_selections_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "review_attempts": {
+      "name": "review_attempts",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "review_id": {
+          "name": "review_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "correction_id": {
+          "name": "correction_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "answer_id": {
+          "name": "answer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "performed_at": {
+          "name": "performed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "review_attempts_ref_0": {
+          "name": "review_attempts_ref_0",
+          "columns": [
+            "owner_id",
+            "review_id"
+          ],
+          "isUnique": false
+        },
+        "review_attempts_ref_1": {
+          "name": "review_attempts_ref_1",
+          "columns": [
+            "owner_id",
+            "correction_id"
+          ],
+          "isUnique": false
+        },
+        "review_attempts_ref_2": {
+          "name": "review_attempts_ref_2",
+          "columns": [
+            "owner_id",
+            "answer_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "review_attempts_owner_id_review_id_review_items_owner_id_id_fk": {
+          "name": "review_attempts_owner_id_review_id_review_items_owner_id_id_fk",
+          "tableFrom": "review_attempts",
+          "columnsFrom": [
+            "owner_id",
+            "review_id"
+          ],
+          "tableTo": "review_items",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "review_attempts_owner_id_correction_id_corrections_owner_id_id_fk": {
+          "name": "review_attempts_owner_id_correction_id_corrections_owner_id_id_fk",
+          "tableFrom": "review_attempts",
+          "columnsFrom": [
+            "owner_id",
+            "correction_id"
+          ],
+          "tableTo": "corrections",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "review_attempts_owner_id_answer_id_answers_owner_id_id_fk": {
+          "name": "review_attempts_owner_id_answer_id_answers_owner_id_id_fk",
+          "tableFrom": "review_attempts",
+          "columnsFrom": [
+            "owner_id",
+            "answer_id"
+          ],
+          "tableTo": "answers",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "review_attempts_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "review_attempts_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "review_attempts_check_0": {
+          "name": "review_attempts_check_0",
+          "value": "kind IN ('variable','delayed-recall')"
+        }
+      }
+    },
+    "review_items": {
+      "name": "review_items",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "error_id": {
+          "name": "error_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "source_ref_id": {
+          "name": "source_ref_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "question": {
+          "name": "question",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "explanation": {
+          "name": "explanation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "next_action": {
+          "name": "next_action",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "correction_id": {
+          "name": "correction_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "recheck_state": {
+          "name": "recheck_state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "review_items_ref_0": {
+          "name": "review_items_ref_0",
+          "columns": [
+            "owner_id",
+            "error_id"
+          ],
+          "isUnique": false
+        },
+        "review_items_ref_1": {
+          "name": "review_items_ref_1",
+          "columns": [
+            "owner_id",
+            "source_ref_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "review_items_owner_id_error_id_errors_owner_id_id_fk": {
+          "name": "review_items_owner_id_error_id_errors_owner_id_id_fk",
+          "tableFrom": "review_items",
+          "columnsFrom": [
+            "owner_id",
+            "error_id"
+          ],
+          "tableTo": "errors",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "review_items_owner_id_source_ref_id_source_references_owner_id_id_fk": {
+          "name": "review_items_owner_id_source_ref_id_source_references_owner_id_id_fk",
+          "tableFrom": "review_items",
+          "columnsFrom": [
+            "owner_id",
+            "source_ref_id"
+          ],
+          "tableTo": "source_references",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "review_items_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "review_items_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "review_items_check_0": {
+          "name": "review_items_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "review_items_check_1": {
+          "name": "review_items_check_1",
+          "value": "recheck_state IN ('required','independent','delayed')"
+        }
+      }
+    },
+    "revisions": {
+      "name": "revisions",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "answer_id": {
+          "name": "answer_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "feedback_id": {
+          "name": "feedback_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "text": {
+          "name": "text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "submitted_at": {
+          "name": "submitted_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "revisions_ref_0": {
+          "name": "revisions_ref_0",
+          "columns": [
+            "owner_id",
+            "answer_id"
+          ],
+          "isUnique": false
+        },
+        "revisions_ref_1": {
+          "name": "revisions_ref_1",
+          "columns": [
+            "owner_id",
+            "feedback_id"
+          ],
+          "isUnique": false
+        },
+        "revisions_unique_0": {
+          "name": "revisions_unique_0",
+          "columns": [
+            "owner_id",
+            "feedback_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "revisions_owner_id_answer_id_answers_owner_id_id_fk": {
+          "name": "revisions_owner_id_answer_id_answers_owner_id_id_fk",
+          "tableFrom": "revisions",
+          "columnsFrom": [
+            "owner_id",
+            "answer_id"
+          ],
+          "tableTo": "answers",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "revisions_owner_id_feedback_id_feedback_owner_id_id_fk": {
+          "name": "revisions_owner_id_feedback_id_feedback_owner_id_id_fk",
+          "tableFrom": "revisions",
+          "columnsFrom": [
+            "owner_id",
+            "feedback_id"
+          ],
+          "tableTo": "feedback",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "revisions_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "revisions_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "revisions_check_0": {
+          "name": "revisions_check_0",
+          "value": "length(text) > 0"
+        },
+        "revisions_check_1": {
+          "name": "revisions_check_1",
+          "value": "length(trim(reason)) > 0"
+        }
+      }
+    },
+    "sessions": {
+      "name": "sessions",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "course_id": {
+          "name": "course_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "unit_id": {
+          "name": "unit_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "plan_version_id": {
+          "name": "plan_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "study_date": {
+          "name": "study_date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "sessions_ref_0": {
+          "name": "sessions_ref_0",
+          "columns": [
+            "owner_id",
+            "unit_id",
+            "course_id"
+          ],
+          "isUnique": false
+        },
+        "sessions_ref_1": {
+          "name": "sessions_ref_1",
+          "columns": [
+            "owner_id",
+            "plan_version_id",
+            "course_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "sessions_owner_id_unit_id_course_id_units_owner_id_id_course_id_fk": {
+          "name": "sessions_owner_id_unit_id_course_id_units_owner_id_id_course_id_fk",
+          "tableFrom": "sessions",
+          "columnsFrom": [
+            "owner_id",
+            "unit_id",
+            "course_id"
+          ],
+          "tableTo": "units",
+          "columnsTo": [
+            "owner_id",
+            "id",
+            "course_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "sessions_owner_id_plan_version_id_course_id_plan_versions_owner_id_id_course_id_fk": {
+          "name": "sessions_owner_id_plan_version_id_course_id_plan_versions_owner_id_id_course_id_fk",
+          "tableFrom": "sessions",
+          "columnsFrom": [
+            "owner_id",
+            "plan_version_id",
+            "course_id"
+          ],
+          "tableTo": "plan_versions",
+          "columnsTo": [
+            "owner_id",
+            "id",
+            "course_id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "sessions_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "sessions_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "sessions_check_0": {
+          "name": "sessions_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "sessions_check_1": {
+          "name": "sessions_check_1",
+          "value": "status IN ('active','paused','finished')"
+        },
+        "sessions_check_2": {
+          "name": "sessions_check_2",
+          "value": "length(study_date) = 10"
+        }
+      }
+    },
+    "source_references": {
+      "name": "source_references",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "material_id": {
+          "name": "material_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "upload_id": {
+          "name": "upload_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "page_id": {
+          "name": "page_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "file_page": {
+          "name": "file_page",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "printed_page": {
+          "name": "printed_page",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "span_start": {
+          "name": "span_start",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "span_end": {
+          "name": "span_end",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "evidence": {
+          "name": "evidence",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "source_references_ref_0": {
+          "name": "source_references_ref_0",
+          "columns": [
+            "owner_id",
+            "page_id",
+            "material_id",
+            "upload_id",
+            "file_page"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {
+        "source_references_owner_id_page_id_material_id_upload_id_file_page_material_pages_owner_id_id_material_id_upload_id_file_page_fk": {
+          "name": "source_references_owner_id_page_id_material_id_upload_id_file_page_material_pages_owner_id_id_material_id_upload_id_file_page_fk",
+          "tableFrom": "source_references",
+          "columnsFrom": [
+            "owner_id",
+            "page_id",
+            "material_id",
+            "upload_id",
+            "file_page"
+          ],
+          "tableTo": "material_pages",
+          "columnsTo": [
+            "owner_id",
+            "id",
+            "material_id",
+            "upload_id",
+            "file_page"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "source_references_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "source_references_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "source_references_check_0": {
+          "name": "source_references_check_0",
+          "value": "span_start >= 0"
+        },
+        "source_references_check_1": {
+          "name": "source_references_check_1",
+          "value": "span_end > span_start"
+        },
+        "source_references_check_2": {
+          "name": "source_references_check_2",
+          "value": "length(evidence) > 0"
+        }
+      }
+    },
+    "units": {
+      "name": "units",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "course_id": {
+          "name": "course_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "units_ref_0": {
+          "name": "units_ref_0",
+          "columns": [
+            "owner_id",
+            "course_id"
+          ],
+          "isUnique": false
+        },
+        "units_unique_0": {
+          "name": "units_unique_0",
+          "columns": [
+            "owner_id",
+            "course_id",
+            "ordinal"
+          ],
+          "isUnique": true
+        },
+        "units_unique_1": {
+          "name": "units_unique_1",
+          "columns": [
+            "owner_id",
+            "id",
+            "course_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "units_owner_id_course_id_courses_owner_id_id_fk": {
+          "name": "units_owner_id_course_id_courses_owner_id_id_fk",
+          "tableFrom": "units",
+          "columnsFrom": [
+            "owner_id",
+            "course_id"
+          ],
+          "tableTo": "courses",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "units_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "units_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "units_check_0": {
+          "name": "units_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "units_check_1": {
+          "name": "units_check_1",
+          "value": "ordinal >= 1"
+        },
+        "units_check_2": {
+          "name": "units_check_2",
+          "value": "length(title) > 0"
+        }
+      }
+    },
+    "uploads": {
+      "name": "uploads",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "material_id": {
+          "name": "material_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "object_key": {
+          "name": "object_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "upload_id": {
+          "name": "upload_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expected_hash": {
+          "name": "expected_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "verified_hash": {
+          "name": "verified_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "bytes": {
+          "name": "bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "recovery_at": {
+          "name": "recovery_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "uploads_ref_0": {
+          "name": "uploads_ref_0",
+          "columns": [
+            "owner_id",
+            "material_id"
+          ],
+          "isUnique": false
+        },
+        "uploads_unique_0": {
+          "name": "uploads_unique_0",
+          "columns": [
+            "owner_id",
+            "object_key"
+          ],
+          "isUnique": true
+        },
+        "uploads_unique_1": {
+          "name": "uploads_unique_1",
+          "columns": [
+            "owner_id",
+            "upload_id"
+          ],
+          "isUnique": true
+        },
+        "uploads_unique_2": {
+          "name": "uploads_unique_2",
+          "columns": [
+            "owner_id",
+            "id",
+            "material_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "uploads_owner_id_material_id_materials_owner_id_id_fk": {
+          "name": "uploads_owner_id_material_id_materials_owner_id_id_fk",
+          "tableFrom": "uploads",
+          "columnsFrom": [
+            "owner_id",
+            "material_id"
+          ],
+          "tableTo": "materials",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "uploads_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "uploads_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "uploads_check_0": {
+          "name": "uploads_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "uploads_check_1": {
+          "name": "uploads_check_1",
+          "value": "state IN ('reserved','object-written','verified','unknown','missing','quarantined')"
+        },
+        "uploads_check_2": {
+          "name": "uploads_check_2",
+          "value": "state != 'verified' OR verified_hash = expected_hash"
+        },
+        "uploads_check_3": {
+          "name": "uploads_check_3",
+          "value": "bytes >= 0"
+        },
+        "uploads_check_4": {
+          "name": "uploads_check_4",
+          "value": "length(expected_hash) = 64"
+        }
+      }
+    },
+    "verification_runs": {
+      "name": "verification_runs",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "verification_runs_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "verification_runs_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "verification_runs_check_0": {
+          "name": "verification_runs_check_0",
+          "value": "owner_id = 'verification:' || id"
+        },
+        "verification_runs_check_1": {
+          "name": "verification_runs_check_1",
+          "value": "state IN ('running','cleaning')"
+        }
+      }
+    },
+    "weekly_drafts": {
+      "name": "weekly_drafts",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "summary_id": {
+          "name": "summary_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "weekly_drafts_ref_0": {
+          "name": "weekly_drafts_ref_0",
+          "columns": [
+            "owner_id",
+            "summary_id"
+          ],
+          "isUnique": false
+        },
+        "weekly_drafts_unique_0": {
+          "name": "weekly_drafts_unique_0",
+          "columns": [
+            "owner_id",
+            "summary_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "weekly_drafts_owner_id_summary_id_weekly_summaries_owner_id_id_fk": {
+          "name": "weekly_drafts_owner_id_summary_id_weekly_summaries_owner_id_id_fk",
+          "tableFrom": "weekly_drafts",
+          "columnsFrom": [
+            "owner_id",
+            "summary_id"
+          ],
+          "tableTo": "weekly_summaries",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "weekly_drafts_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "weekly_drafts_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "weekly_drafts_check_0": {
+          "name": "weekly_drafts_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "weekly_drafts_check_1": {
+          "name": "weekly_drafts_check_1",
+          "value": "json_valid(content)"
+        }
+      }
+    },
+    "weekly_evidence": {
+      "name": "weekly_evidence",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "weekly_version_id": {
+          "name": "weekly_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "result_version_id": {
+          "name": "result_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "correction_id": {
+          "name": "correction_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "weekly_evidence_ref_0": {
+          "name": "weekly_evidence_ref_0",
+          "columns": [
+            "owner_id",
+            "weekly_version_id"
+          ],
+          "isUnique": false
+        },
+        "weekly_evidence_ref_1": {
+          "name": "weekly_evidence_ref_1",
+          "columns": [
+            "owner_id",
+            "result_version_id"
+          ],
+          "isUnique": false
+        },
+        "weekly_evidence_ref_2": {
+          "name": "weekly_evidence_ref_2",
+          "columns": [
+            "owner_id",
+            "correction_id"
+          ],
+          "isUnique": false
+        },
+        "weekly_evidence_unique_0": {
+          "name": "weekly_evidence_unique_0",
+          "columns": [
+            "owner_id",
+            "weekly_version_id",
+            "result_version_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "weekly_evidence_owner_id_weekly_version_id_weekly_versions_owner_id_id_fk": {
+          "name": "weekly_evidence_owner_id_weekly_version_id_weekly_versions_owner_id_id_fk",
+          "tableFrom": "weekly_evidence",
+          "columnsFrom": [
+            "owner_id",
+            "weekly_version_id"
+          ],
+          "tableTo": "weekly_versions",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "weekly_evidence_owner_id_result_version_id_confirmed_results_owner_id_id_fk": {
+          "name": "weekly_evidence_owner_id_result_version_id_confirmed_results_owner_id_id_fk",
+          "tableFrom": "weekly_evidence",
+          "columnsFrom": [
+            "owner_id",
+            "result_version_id"
+          ],
+          "tableTo": "confirmed_results",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "weekly_evidence_owner_id_correction_id_corrections_owner_id_id_fk": {
+          "name": "weekly_evidence_owner_id_correction_id_corrections_owner_id_id_fk",
+          "tableFrom": "weekly_evidence",
+          "columnsFrom": [
+            "owner_id",
+            "correction_id"
+          ],
+          "tableTo": "corrections",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "weekly_evidence_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "weekly_evidence_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "weekly_summaries": {
+      "name": "weekly_summaries",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "version": {
+          "name": "version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "last_request_id": {
+          "name": "last_request_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "period_start": {
+          "name": "period_start",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "period_end": {
+          "name": "period_end",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "course_id": {
+          "name": "course_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "weekly_summaries_ref_0": {
+          "name": "weekly_summaries_ref_0",
+          "columns": [
+            "owner_id",
+            "course_id"
+          ],
+          "isUnique": false
+        },
+        "weekly_summaries_unique_0": {
+          "name": "weekly_summaries_unique_0",
+          "columns": [
+            "owner_id",
+            "course_id",
+            "period_start",
+            "period_end"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "weekly_summaries_owner_id_course_id_courses_owner_id_id_fk": {
+          "name": "weekly_summaries_owner_id_course_id_courses_owner_id_id_fk",
+          "tableFrom": "weekly_summaries",
+          "columnsFrom": [
+            "owner_id",
+            "course_id"
+          ],
+          "tableTo": "courses",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "weekly_summaries_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "weekly_summaries_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "weekly_summaries_check_0": {
+          "name": "weekly_summaries_check_0",
+          "value": "version >= 1 AND version <= 9007199254740991"
+        },
+        "weekly_summaries_check_1": {
+          "name": "weekly_summaries_check_1",
+          "value": "period_start <= period_end"
+        }
+      }
+    },
+    "weekly_versions": {
+      "name": "weekly_versions",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "summary_id": {
+          "name": "summary_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "ordinal": {
+          "name": "ordinal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "plan_version_id": {
+          "name": "plan_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "achievements": {
+          "name": "achievements",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "difficulties": {
+          "name": "difficulties",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "improvements": {
+          "name": "improvements",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "next_actions": {
+          "name": "next_actions",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "confirmed_at": {
+          "name": "confirmed_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "weekly_versions_ref_0": {
+          "name": "weekly_versions_ref_0",
+          "columns": [
+            "owner_id",
+            "summary_id"
+          ],
+          "isUnique": false
+        },
+        "weekly_versions_ref_1": {
+          "name": "weekly_versions_ref_1",
+          "columns": [
+            "owner_id",
+            "plan_version_id"
+          ],
+          "isUnique": false
+        },
+        "weekly_versions_unique_0": {
+          "name": "weekly_versions_unique_0",
+          "columns": [
+            "owner_id",
+            "summary_id",
+            "ordinal"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "weekly_versions_owner_id_summary_id_weekly_summaries_owner_id_id_fk": {
+          "name": "weekly_versions_owner_id_summary_id_weekly_summaries_owner_id_id_fk",
+          "tableFrom": "weekly_versions",
+          "columnsFrom": [
+            "owner_id",
+            "summary_id"
+          ],
+          "tableTo": "weekly_summaries",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "weekly_versions_owner_id_plan_version_id_plan_versions_owner_id_id_fk": {
+          "name": "weekly_versions_owner_id_plan_version_id_plan_versions_owner_id_id_fk",
+          "tableFrom": "weekly_versions",
+          "columnsFrom": [
+            "owner_id",
+            "plan_version_id"
+          ],
+          "tableTo": "plan_versions",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "weekly_versions_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "weekly_versions_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "weekly_versions_check_0": {
+          "name": "weekly_versions_check_0",
+          "value": "ordinal >= 1"
+        }
+      }
+    },
+    "write_targets": {
+      "name": "write_targets",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "connection_id": {
+          "name": "connection_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "external_id": {
+          "name": "external_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "app_created": {
+          "name": "app_created",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "approved_at": {
+          "name": "approved_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "write_targets_ref_0": {
+          "name": "write_targets_ref_0",
+          "columns": [
+            "owner_id",
+            "connection_id"
+          ],
+          "isUnique": false
+        },
+        "write_targets_unique_0": {
+          "name": "write_targets_unique_0",
+          "columns": [
+            "owner_id",
+            "connection_id",
+            "external_id",
+            "kind"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "write_targets_owner_id_connection_id_google_connections_owner_id_id_fk": {
+          "name": "write_targets_owner_id_connection_id_google_connections_owner_id_id_fk",
+          "tableFrom": "write_targets",
+          "columnsFrom": [
+            "owner_id",
+            "connection_id"
+          ],
+          "tableTo": "google_connections",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "write_targets_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "write_targets_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "write_targets_check_0": {
+          "name": "write_targets_check_0",
+          "value": "app_created IN (0,1)"
+        },
+        "write_targets_check_1": {
+          "name": "write_targets_check_1",
+          "value": "kind IN ('docs','sheets','calendar')"
+        },
+        "write_targets_check_2": {
+          "name": "write_targets_check_2",
+          "value": "kind != 'calendar' OR app_created = 1"
+        }
+      }
+    },
+    "ai_budget_blocks": {
+      "name": "ai_budget_blocks",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reservation_id": {
+          "name": "reservation_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "actual_units": {
+          "name": "actual_units",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ai_block_reservation": {
+          "name": "ai_block_reservation",
+          "columns": [
+            "owner_id",
+            "reservation_id"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "ai_budget_blocks_owner_id_reservation_id_cost_reservations_owner_id_id_fk": {
+          "name": "ai_budget_blocks_owner_id_reservation_id_cost_reservations_owner_id_id_fk",
+          "tableFrom": "ai_budget_blocks",
+          "columnsFrom": [
+            "owner_id",
+            "reservation_id"
+          ],
+          "tableTo": "cost_reservations",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "ai_budget_blocks_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "ai_budget_blocks_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "ai_block_actual": {
+          "name": "ai_block_actual",
+          "value": "typeof(actual_units) = 'integer' AND actual_units >= 0 AND actual_units <= 9007199254740991"
+        }
+      }
+    },
+    "ai_cost_intents": {
+      "name": "ai_cost_intents",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "scope": {
+          "name": "scope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "request_key": {
+          "name": "request_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "request_fingerprint": {
+          "name": "request_fingerprint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "pricing_version_id": {
+          "name": "pricing_version_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "bound": {
+          "name": "bound",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "ai_cost_intent_key": {
+          "name": "ai_cost_intent_key",
+          "columns": [
+            "owner_id",
+            "scope",
+            "request_key"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {
+        "ai_cost_intents_owner_id_id_cost_reservations_owner_id_id_fk": {
+          "name": "ai_cost_intents_owner_id_id_cost_reservations_owner_id_id_fk",
+          "tableFrom": "ai_cost_intents",
+          "columnsFrom": [
+            "owner_id",
+            "id"
+          ],
+          "tableTo": "cost_reservations",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        },
+        "ai_cost_intents_owner_id_pricing_version_id_ai_pricing_versions_owner_id_id_fk": {
+          "name": "ai_cost_intents_owner_id_pricing_version_id_ai_pricing_versions_owner_id_id_fk",
+          "tableFrom": "ai_cost_intents",
+          "columnsFrom": [
+            "owner_id",
+            "pricing_version_id"
+          ],
+          "tableTo": "ai_pricing_versions",
+          "columnsTo": [
+            "owner_id",
+            "id"
+          ],
+          "onUpdate": "no action",
+          "onDelete": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {
+        "ai_cost_intents_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "ai_cost_intents_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "ai_cost_bound": {
+          "name": "ai_cost_bound",
+          "value": "json_valid(bound) AND json_extract(bound,'$.requestFingerprint') = request_fingerprint AND json_extract(bound,'$.amount.pricingVersionId') = pricing_version_id"
+        }
+      }
+    },
+    "ai_pricing_versions": {
+      "name": "ai_pricing_versions",
+      "columns": {
+        "owner_id": {
+          "name": "owner_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "fingerprint": {
+          "name": "fingerprint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "snapshot": {
+          "name": "snapshot",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "ai_pricing_versions_owner_id_id_pk": {
+          "columns": [
+            "owner_id",
+            "id"
+          ],
+          "name": "ai_pricing_versions_owner_id_id_pk"
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraints": {
+        "ai_pricing_snapshot": {
+          "name": "ai_pricing_snapshot",
+          "value": "json_valid(snapshot) AND json_extract(snapshot,'$.id') = id AND json_extract(snapshot,'$.model') = 'gpt-6-luna'"
+        }
+      }
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

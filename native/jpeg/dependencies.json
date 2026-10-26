@@ -1,0 +1,5 @@
+{
+  "libjpeg": {"version":"3.2.0","url":"https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.2.0/libjpeg-turbo-3.2.0.tar.gz","sha256":"6f30092cef9fb839779646608f4ee14ae3cbac989c47fa05e841b0841f09878e"},
+  "emsdk": {"version":"4.0.22","commit":"15915cad554b707837024dc2758b6a1c5b94b036","url":"https://codeload.github.com/emscripten-core/emsdk/tar.gz/15915cad554b707837024dc2758b6a1c5b94b036","sha256":"b61f041e9cb38a0d439d8ad62c6c4459028348ed2c1d25d090e6fa65b629d358"},
+  "cmake": {"version":"4.2.0","macosWheel":"https://files.pythonhosted.org/packages/b1/3f/8c6419e6cde2dec09701f8542abb1b6cedabc9e5290ac9c896cec2c12dd0/cmake-4.2.0-py3-none-macosx_10_10_universal2.whl","sha256":"28595ec42fb6f81128b7a9bdbdfcb7b785ad197dbfb1b785cec5727a97a521f4"}
+}

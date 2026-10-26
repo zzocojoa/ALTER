@@ -1,0 +1,108 @@
+import { createEditorRevisit } from "../../db/repositories/editor-revisit";
+import { tutorOutputFixture } from "./tutor-output";
+import { beginStoredTutorAi,tutorRequest } from "../../lib/tutor/ai";
+import { dispatchTutorAction,submitStoredTutorAnswer } from "../../db/repositories/tutor-actions";
+import { tutorIndependentCandidate } from "../../lib/tutor/variation";
+import { publicEditorView } from "../../lib/editor/view";
+import { beginStoredEditorReview,saveStoredEditorReview } from "../../db/repositories/editor-review";
+import { cancelEditorEvaluation } from "../../lib/editor/review";
+import { saveTutorTransition } from "../../db/repositories/tutor";
+import { emptyTutorPlan } from "../../db/repositories/tutor-actions";
+import { readEditorRechecks } from "../../db/repositories/editor-history";
+import { validateEditorHistory } from "../../lib/editor/history";
+import { saveStoredEditorRevisionDraft,submitStoredEditorRevision } from "../../db/repositories/editor-revision";
+import { learningRuntimeFixture } from "./learning-ai-runtime";
+import { editorFeedbackFixture,editorNeedsRevisionFixture,editorResolvedFixture } from "./editor-output";
+import { beginStoredEditorFeedback } from "../../db/repositories/editor-feedback";
+import { editorRequest } from "../../lib/editor/request";
+import { tutorContext,processTutorAi,dispatchTutor } from "../../lib/tutor/ai";
+import { runLibrarianFixture } from "./librarian-worker";
+import { recordId } from "../../lib/domain/contracts";
+import type { Command,SiteIdentity } from "../../lib/domain/contracts";
+import { createEditor,submitStoredEditorDraft } from "../../db/repositories/editor";
+import { getTutor } from "../../db/repositories/tutor";
+import { saveStoredTutorDraft } from "../../db/repositories/tutor-actions";
+import { requireMaterialVisibility } from "../../db/repositories/material-access";
+function check(value:boolean,message:string):void {if(!value) throw new Error(message);}
+async function denied(action:()=>Promise<unknown>,code:string):Promise<void> {try{await action();}catch(error:unknown){if(error instanceof Error && "code" in error && error.code===code) return;throw error;}throw new Error(`거부되지 않음: ${code}`);}
+async function verify(db:D1Database,bucket:R2Bucket,owner:SiteIdentity,scopeId:string):Promise<readonly string[]> {
+  const id=():ReturnType<typeof recordId.parse>=>recordId.parse(crypto.randomUUID());const cmd=(expectedVersion:number):Command=>({owner,expectedVersion,requestKey:crypto.randomUUID()});
+  const input={id:id(),scopeId,questionId:id(),attemptId:id()};const start=cmd(1);await createEditor(db,bucket,start,input,Date.now());await createEditor(db,bucket,start,input,Date.now());
+  await denied(()=>getTutor(db,{realm:"sites",userId:"other"},input.id),"reference_conflict");await denied(()=>requireMaterialVisibility(db,owner),"material_access_required");
+  let state=await getTutor(db,owner,input.id);check(state.question.prompt===state.start.bundle.exercise.text && state.editor?.phase==="draft","초기 과제 연결 실패");
+  const draft={text:"내가 먼저 쓴 초안",fileIds:[]};await saveStoredTutorDraft(db,bucket,cmd(state.version),input.id,draft);state=await getTutor(db,owner,input.id);
+  const attemptVersion=await db.prepare("SELECT version FROM attempts WHERE owner_id=? AND id=?").bind(owner.userId,state.question.attemptId).first<number>("version");
+  await denied(()=>submitStoredEditorDraft(db,bucket,cmd(state.version),input.id,id(),{text:"사진 오류",fileIds:[id()]},Date.now()),"material_access_required");
+  await db.prepare("CREATE TRIGGER editor_save_failure BEFORE INSERT ON tutor_events WHEN NEW.version=3 BEGIN SELECT RAISE(ABORT,'editor_save_failure'); END").run();
+  await denied(()=>submitStoredEditorDraft(db,bucket,cmd(state.version),input.id,id(),draft,Date.now()),"reference_conflict");
+  await db.prepare("DROP TRIGGER editor_save_failure").run();
+  check((await getTutor(db,owner,input.id)).version===state.version && await db.prepare("SELECT count(*) FROM answers WHERE owner_id=? AND attempt_id=?").bind(owner.userId,state.question.attemptId).first<number>("count(*)")===0,"답안 부분 저장");
+  check(await db.prepare("SELECT version FROM attempts WHERE owner_id=? AND id=?").bind(owner.userId,state.question.attemptId).first<number>("version")===attemptVersion,"실패 후 attempt 버전 전진");
+  const submit=cmd(state.version);const answerId=id();await submitStoredEditorDraft(db,bucket,submit,input.id,answerId,draft,Date.now());await submitStoredEditorDraft(db,bucket,submit,input.id,answerId,draft,Date.now());
+  await denied(()=>submitStoredEditorDraft(db,bucket,cmd(state.version),input.id,id(),{text:"오래된 탭",fileIds:[]},Date.now()),"version_conflict");
+  state=await getTutor(db,owner,input.id);check(state.editor?.versions.length===1 && state.editor.versions[0].answerId===answerId && state.editor.versions[0].text===draft.text && state.editor.versions[0].planVersionId===state.start.bundle.unit.planVersionId,"최초 초안 또는 기준 버전 유실");
+  check(state.pending===null && await db.prepare("SELECT count(*) FROM answers WHERE owner_id=? AND attempt_id=?").bind(owner.userId,state.question.attemptId).first<number>("count(*)")===1,"중복 답안 또는 선행 AI");
+  await beginStoredEditorFeedback(db,bucket,cmd(state.version),input.id);state=await getTutor(db,owner,input.id);
+  const ai=learningRuntimeFixture(db,owner,async ()=>tutorContext(await getTutor(db,owner,input.id)),async ()=>{const current=await getTutor(db,owner,input.id);if(current.pending?.kind.startsWith("tutor-")) return tutorOutputFixture(current);return current.pending?.kind==="editor-draft-feedback" ? editorFeedbackFixture(current) : current.editor?.reviews.length===0 ? editorNeedsRevisionFixture(current) : editorResolvedFixture(current);});
+  await db.prepare(`CREATE TRIGGER editor_feedback_failure BEFORE INSERT ON tutor_events WHEN NEW.version=${state.version+1} BEGIN SELECT RAISE(ABORT,'editor_feedback_failure'); END`).run();
+  await denied(()=>processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,editorRequest(state,[]),dispatchTutor,new AbortController().signal),"reference_conflict");
+  await db.prepare("DROP TRIGGER editor_feedback_failure").run();
+  check((await getTutor(db,owner,input.id)).editor?.feedbacks.length===0 && await db.prepare("SELECT count(*) FROM help_events h JOIN attempts a ON a.owner_id=h.owner_id AND a.id=h.attempt_id WHERE a.owner_id=? AND a.question_id=?").bind(owner.userId,state.question.id).first<number>("count(*)")===0,"실패한 피드백 또는 도움 사건 노출");
+  state=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,editorRequest(state,[]),dispatchTutor,new AbortController().signal);
+  check(ai.generations()===1 && state.editor?.phase==="awaiting-revision" && state.editor.feedbacks.length===1,"재생성 또는 피드백 대기 상태 오류");
+  check(await db.prepare("SELECT count(*) FROM feedback WHERE owner_id=? AND answer_id=?").bind(owner.userId,answerId).first<number>("count(*)")===1 && await db.prepare("SELECT count(*) FROM help_events h JOIN attempts a ON a.owner_id=h.owner_id AND a.id=h.attempt_id WHERE a.owner_id=? AND a.question_id=?").bind(owner.userId,state.question.id).first<number>("count(*)")===1,"피드백 제공 전 사건 저장 누락");
+  const revisionDraft={text:"전체를 같은 크기로 나눈 부분입니다.",fileIds:[]};const reason="전체와 부분의 관계를 분명하게 고쳤다";
+  await saveStoredEditorRevisionDraft(db,bucket,cmd(state.version),input.id,revisionDraft,reason);state=await getTutor(db,owner,input.id);check(state.editor?.draftReason===reason && state.editor.phase==="awaiting-revision","수정 중 자동 완료 또는 이유 유실");
+  const revision={answerId:id(),attemptId:id(),draft:revisionDraft,reason,submittedAt:Date.now()};const revisionCmd=cmd(state.version);
+  await db.prepare("CREATE TRIGGER editor_revision_failure BEFORE INSERT ON revisions BEGIN SELECT RAISE(ABORT,'editor_revision_failure'); END").run();
+  await denied(()=>submitStoredEditorRevision(db,bucket,revisionCmd,input.id,revision),"reference_conflict");await db.prepare("DROP TRIGGER editor_revision_failure").run();
+  check((await getTutor(db,owner,input.id)).version===state.version && await db.prepare("SELECT count(*) FROM answers WHERE owner_id=? AND id=?").bind(owner.userId,revision.answerId).first<number>("count(*)")===0,"수정본 부분 커밋");
+  await submitStoredEditorRevision(db,bucket,revisionCmd,input.id,revision);await submitStoredEditorRevision(db,bucket,revisionCmd,input.id,revision);
+  await denied(()=>submitStoredEditorRevision(db,bucket,cmd(state.version),input.id,{...revision,answerId:id(),attemptId:id()}),"version_conflict");
+  state=await getTutor(db,owner,input.id);check(state.editor?.versions.length===2 && state.editor.phase==="revision-saved" && state.answers.at(-1)?.helped===true && state.pending===null,"수정본 대기 또는 도움 이력 오류");
+  check(await db.prepare("SELECT count(*) FROM revisions WHERE owner_id=? AND answer_id=?").bind(owner.userId,answerId).first<number>("count(*)")===1,"수정 이유 중복 또는 유실");
+  await beginStoredEditorReview(db,bucket,cmd(state.version),input.id);state=await getTutor(db,owner,input.id);const cancelled=cancelEditorEvaluation(state);await saveTutorTransition(db,cmd(state.version),cancelled,"editor-cancel",{id:input.id},emptyTutorPlan);
+  await denied(()=>saveStoredEditorReview(db,bucket,owner,state,editorNeedsRevisionFixture(state),Date.now()),"version_conflict");state=await getTutor(db,owner,input.id);
+  await beginStoredEditorReview(db,bucket,cmd(state.version),input.id);state=await getTutor(db,owner,input.id);
+  await db.prepare(`CREATE TRIGGER editor_review_failure BEFORE INSERT ON tutor_events WHEN NEW.version=${state.version+1} BEGIN SELECT RAISE(ABORT,'editor_review_failure'); END`).run();
+  await denied(()=>processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,editorRequest(state,[]),dispatchTutor,new AbortController().signal),"reference_conflict");await db.prepare("DROP TRIGGER editor_review_failure").run();check((await getTutor(db,owner,input.id)).editor?.reviews.length===0,"실패한 평가 부분 저장");
+  state=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,editorRequest(state,[]),dispatchTutor,new AbortController().signal);check(ai.generations()===2 && state.editor?.phase==="awaiting-revision","재평가 재생성 또는 미해결 조기 완료");
+  await submitStoredEditorRevision(db,bucket,cmd(state.version),input.id,{answerId:id(),attemptId:id(),draft:{text:"전체를 같은 크기로 나눈 것 중 선택한 부분을 분수로 나타냅니다.",fileIds:[]},reason:"같은 크기로 나눠야 하는 조건을 추가했다",submittedAt:Date.now()});state=await getTutor(db,owner,input.id);
+  await beginStoredEditorReview(db,bucket,cmd(state.version),input.id);state=await getTutor(db,owner,input.id);state=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,editorRequest(state,[]),dispatchTutor,new AbortController().signal);
+  check(state.editor?.phase==="ready-for-recheck" && state.editor.versions.length===3 && state.editor.reviews.length===2 && state.diagnosis===null && state.answers.at(-1)?.helped===true,"개선 판정 또는 버전 이력 오류");validateEditorHistory(state);
+  const confirmedBefore=await db.prepare("SELECT count(*) FROM confirmed_results WHERE owner_id=?").bind(owner.userId).first<number>("count(*)");
+  await beginStoredTutorAi(db,bucket,cmd(state.version),input.id,"variation");state=await getTutor(db,owner,input.id);state=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,tutorRequest(state,[]),dispatchTutor,new AbortController().signal);
+  check(state.variations[0].helpEventIds.length===3 && publicEditorView(state).versions.length===0 && publicEditorView(state).feedbacks.length===0,"변형 질문의 원과제 노출 또는 도움 참조 유실");
+  const callsBeforeFailedSave=ai.generations();await db.prepare("CREATE TRIGGER editor_transfer_failure BEFORE INSERT ON answers BEGIN SELECT RAISE(ABORT,'editor_transfer_failure'); END").run();
+  await denied(()=>submitStoredTutorAnswer(db,bucket,cmd(state.version),input.id,id(),{text:"2/5",fileIds:[]},Date.now()),"reference_conflict");await db.prepare("DROP TRIGGER editor_transfer_failure").run();check(ai.generations()===callsBeforeFailedSave && (await getTutor(db,owner,input.id)).phase==="awaiting-answer","답안 저장 전 평가 실행");
+  for(const text of [revisionDraft.text,"모르겠습니다","2/5"]) {
+    if(state.phase!=="awaiting-answer"){await dispatchTutorAction(db,bucket,cmd(state.version),{action:"revise",id:input.id,expectedVersion:state.version,attemptId:id()},Date.now());state=await getTutor(db,owner,input.id);}
+    await submitStoredTutorAnswer(db,bucket,cmd(state.version),input.id,id(),{text,fileIds:[]},Date.now());state=await getTutor(db,owner,input.id);await beginStoredTutorAi(db,bucket,cmd(state.version),input.id,"diagnose");state=await getTutor(db,owner,input.id);state=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,tutorRequest(state,[]),dispatchTutor,new AbortController().signal);
+    check((tutorIndependentCandidate(state)!==null)===(text==="2/5"),"동일 답안·오답·무도움 성공 구분 실패");
+  }
+  await dispatchTutorAction(db,bucket,cmd(state.version),{action:"revise",id:input.id,expectedVersion:state.version,attemptId:id()},Date.now());state=await getTutor(db,owner,input.id);await submitStoredTutorAnswer(db,bucket,cmd(state.version),input.id,id(),{text:"모르겠습니다",fileIds:[]},Date.now());state=await getTutor(db,owner,input.id);await beginStoredTutorAi(db,bucket,cmd(state.version),input.id,"diagnose");state=await getTutor(db,owner,input.id);state=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,tutorRequest(state,[]),dispatchTutor,new AbortController().signal);
+  await beginStoredTutorAi(db,bucket,cmd(state.version),input.id,"help");state=await getTutor(db,owner,input.id);state=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,tutorRequest(state,[]),dispatchTutor,new AbortController().signal);
+  await submitStoredTutorAnswer(db,bucket,cmd(state.version),input.id,id(),{text:"2/5",fileIds:[]},Date.now());state=await getTutor(db,owner,input.id);await beginStoredTutorAi(db,bucket,cmd(state.version),input.id,"diagnose");state=await getTutor(db,owner,input.id);state=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,tutorRequest(state,[]),dispatchTutor,new AbortController().signal);
+  check(tutorIndependentCandidate(state)===null && state.answers.at(-1)?.helped===true && state.editor?.versions.length===3,"도움 받은 새 답안의 독립 수행 오인");
+  check(await db.prepare("SELECT count(*) FROM confirmed_results WHERE owner_id=?").bind(owner.userId).first<number>("count(*)")===confirmedBefore,"수정 평가가 확정 수행 기록을 변경함");
+  const revisitInput={id:id(),originalId:input.id,originalVersion:state.version,questionId:id(),attemptId:id()};
+  await denied(()=>createEditorRevisit(db,bucket,cmd(1),revisitInput,Date.now()),"version_conflict");
+  await dispatchTutorAction(db,bucket,cmd(state.version),{action:"finish",id:input.id,expectedVersion:state.version},Date.now());
+  const original=await getTutor(db,owner,input.id);const nextInput={...revisitInput,originalVersion:original.version};const revisitCmd=cmd(1);
+  await denied(()=>createEditorRevisit(db,bucket,{...revisitCmd,owner:{realm:"sites",userId:"other"}},nextInput,Date.now()),"reference_conflict");
+  await createEditorRevisit(db,bucket,revisitCmd,nextInput,Date.now());await createEditorRevisit(db,bucket,revisitCmd,nextInput,Date.now());
+  let revisited=await getTutor(db,owner,nextInput.id);
+  check(revisited.version===1 && revisited.editor?.versions.length===0 && revisited.start.latest?.resultVersionId===original.start.latest?.resultVersionId && revisited.question.prompt===original.start.bundle.exercise.text,"새 첨삭의 빈 초안·최신 기준·과제 오류");
+  check(JSON.stringify(await getTutor(db,owner,input.id))===JSON.stringify(original) && await db.prepare("SELECT count(*) FROM confirmed_results WHERE owner_id=?").bind(owner.userId).first<number>("count(*)")===confirmedBefore,"다시 연습이 과거 이력 또는 확정 기록을 변경함");
+  await submitStoredEditorDraft(db,bucket,cmd(revisited.version),nextInput.id,id(),{text:"재연습 저장 검사",fileIds:[]},Date.now());revisited=await getTutor(db,owner,nextInput.id);await dispatchTutorAction(db,bucket,cmd(revisited.version),{action:"finish",id:nextInput.id,expectedVersion:revisited.version},Date.now());
+  return ["editor-revisit-finished-only-owner-idempotent-history-preserved","editor-transfer-original-help-linked-and-history-hidden","editor-transfer-save-before-ai-failure","editor-transfer-duplicate-wrong-unassisted-helped-separated","editor-review-not-confirmed-performance","editor-review-late-response-cas-rejected","editor-review-recovery-no-regeneration","editor-two-revisions-and-reasons-preserved","editor-improvement-not-independent","editor-revision-reason-persisted-and-waits","editor-revision-atomic-no-partial-answer","editor-revision-idempotent-stale-rejected","editor-feedback-real-sdk-mock-budget-and-recovery","editor-feedback-atomic-before-help-display","editor-owner-access","editor-initial-practice-hidden","editor-draft-restored","editor-file-failure-no-answer","editor-event-failure-rolls-back-answer-and-attempt","editor-duplicate-request-single-version","editor-stale-cas-full-rollback","editor-answer-and-criterion-version-linked"];
+}
+async function fetch(request:Request,env:Readonly<{DB:D1Database;BUCKET:R2Bucket}>):Promise<Response> {
+  const result=await runLibrarianFixture(request,env,verify);
+  const row=await env.DB.prepare("SELECT owner_id,id FROM tutor_sessions WHERE json_type(state,'$.editor')='object' LIMIT 1").first<{owner_id:string;id:string}>();if(!row) throw new Error("Editor 검증 상태 없음");
+  const owner={realm:"sites" as const,userId:row.owner_id};const state=await getTutor(env.DB,owner,row.id);validateEditorHistory(state);
+  const checks=await readEditorRechecks(env.DB,env.BUCKET,owner,state);check(checks.length===3 && checks.every((item)=>item.reason!==null) && state.editor?.versions.length===3,"정정 후 재검토 또는 과거 이력 유실");
+  await denied(()=>createEditorRevisit(env.DB,env.BUCKET,{owner,expectedVersion:1,requestKey:crypto.randomUUID()},{id:crypto.randomUUID(),originalId:state.id,originalVersion:state.version,questionId:crypto.randomUUID(),attemptId:crypto.randomUUID()},Date.now()),"reference_conflict");
+  const report=await result.json() as Readonly<{checks:readonly string[]}>;return Response.json({...report,checks:[...report.checks,"editor-source-and-plan-correction-mark-recheck-history-preserved","editor-revisit-rejects-changed-plan-or-source"]});
+}
+const worker={fetch};export default worker;

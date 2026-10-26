@@ -1,0 +1,12 @@
+ .backup-tools { display: grid; gap: 1.5rem; max-width: 54rem; margin-block: 2rem; }
+.backup-tools h2 { font-size: 1.35rem; font-weight: 650; margin-bottom: .75rem; }
+.backup-tools p { line-height: 1.7; margin-block: .6rem; }
+.backup-tools label { display: grid; gap: .5rem; margin-block: 1rem; font-weight: 600; }
+.backup-tools input, .backup-tools textarea { width: 100%; min-width: 0; padding: .75rem; border: 1px solid #98a99a; border-radius: .4rem; background: #fffefa; color: #233c34; font: inherit; }
+.backup-tools textarea { min-height: 9rem; overflow-wrap: anywhere; }
+.backup-tools button, .backup-tools a[download] { display: inline-block; padding: .75rem 1rem; min-height: 44px; border: 1px solid #245846; border-radius: .4rem; background: #245846; color: #fff; font: inherit; cursor: pointer; }
+.backup-tools button:disabled { opacity: .65; cursor: wait; }
+.backup-tools :focus-visible { outline: 3px solid #1c614b; outline-offset: 3px; }
+.backup-tools [role="alert"] { padding: .75rem; border-left: 4px solid #934321; background: #fff0e7; color: #713116; overflow-wrap: anywhere; }
+.backup-tools pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 1rem; background: #e4e9df; }
+.backup-tools .backup-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }

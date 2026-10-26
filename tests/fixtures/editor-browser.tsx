@@ -1,0 +1,10 @@
+import { createRoot } from "react-dom/client";
+import { EditorClient } from "../../app/learn/editor/editor-client";
+import { tutorOverview } from "../../lib/tutor/overview";
+import { editorView } from "../../lib/editor/view";
+import "../../app/learn/tutor/tutor.css";
+import "../../app/learn/editor/editor.css";
+const element=document.getElementById("editor-fixture");const data=document.getElementById("editor-initial");
+if(!element || !data) throw new Error("화면 검사 입력이 없습니다.");
+const parsed=JSON.parse(data.textContent ?? "");
+createRoot(element).render(<EditorClient initial={tutorOverview.parse(parsed.overview)} initialView={parsed.view===null ? null : editorView.parse(parsed.view)}/>);

@@ -1,0 +1,21 @@
+export type JpegModule = Readonly<{
+  HEAPU8: Uint8Array;
+  _alter_jpeg_create: () => number;
+  _alter_jpeg_destroy: (decoder: number) => void;
+  _alter_jpeg_incoming: (decoder: number) => number;
+  _alter_jpeg_row: (decoder: number) => number;
+  _alter_jpeg_error: (decoder: number) => number;
+  _alter_jpeg_width: (decoder: number) => number;
+  _alter_jpeg_height: (decoder: number) => number;
+  _alter_jpeg_row_bytes: (decoder: number) => number;
+  _alter_jpeg_rows: (decoder: number) => number;
+  _alter_jpeg_retained: (decoder: number) => number;
+  _alter_jpeg_coefficients: (decoder: number) => number;
+  _alter_jpeg_progressive: (decoder: number) => number;
+  _alter_jpeg_space: (decoder: number) => number;
+  _alter_jpeg_feed: (decoder: number, length: number) => number;
+  _alter_jpeg_end: (decoder: number) => number;
+  _alter_jpeg_step: (decoder: number) => number;
+}>;
+type JpegModuleOptions = Readonly<{ instantiateWasm: (imports: WebAssembly.Imports, receive: (instance: WebAssembly.Instance, module: WebAssembly.Module) => void) => WebAssembly.Exports }>;
+export default function createJpegModule(options: JpegModuleOptions): Promise<JpegModule>;

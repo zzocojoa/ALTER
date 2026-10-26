@@ -1,0 +1,43 @@
+import assert from "node:assert/strict";
+import { readFile, writeFile } from "node:fs/promises";
+import { Miniflare } from "miniflare";
+import { recordId } from "../lib/domain/contracts.ts";
+import type { Command, SiteIdentity } from "../lib/domain/contracts.ts";
+import { createCourse } from "../db/repositories/courses.ts";
+import { initializeMaterialInventory, getMaterialUsage } from "../db/repositories/material-transfers.ts";
+import { startMaterialTransfer } from "../lib/materials/start.ts";
+import { materialPolicy } from "../lib/materials/policy.ts";
+import type { MaterialRuntimeEvidence } from "../lib/materials/policy.ts";
+import type { MaterialStartInput } from "../lib/materials/request.ts";
+
+const runtime: Miniflare = new Miniflare({ modules: true, script: "export default {fetch() {return new Response('material-start');}}", compatibilityDate: "2026-05-15", d1Databases: ["DB"], d1Persist: false, cf: false });
+const checks: string[] = [];
+try {
+  const db: D1Database = await runtime.getD1Database("DB") as unknown as D1Database;
+  const journal: { entries: { tag: string }[] } = JSON.parse(await readFile("drizzle/meta/_journal.json", "utf8"));
+  for (const entry of journal.entries) for (const statement of (await readFile(`drizzle/${entry.tag}.sql`, "utf8")).split("--> statement-breakpoint").map((part: string): string => part.trim()).filter(Boolean)) await db.prepare(statement).run();
+  const owner: SiteIdentity = { realm: "sites", userId: `start-test:${crypto.randomUUID()}` };
+  const context = (): Command => ({ owner, requestKey: crypto.randomUUID(), expectedVersion: 1 });
+  const now: number = Date.now();
+  const courseId = recordId.parse(crypto.randomUUID());
+  await createCourse(db, context(), { id: courseId, title: "입력 검사" });
+  const evidence: MaterialRuntimeEvidence = { policyVersion: materialPolicy.version, deploymentId: "synthetic-start-fixture", checkedAt: now, validUntil: now + 3600000, acceptedBodyBytes: 20971520, maximumBufferedBytes: 65536, workerMemoryLimitBytes: 134217728, contentValidation: { pdf: true, image: true, text: true }, privateRangeReadVerified: true, storageVerification: materialPolicy.storageVerification, r2WriteReadVerified: true, accountRemainingQuota: "unavailable", additionalPaidResources: false };
+  const input: MaterialStartInput = { courseId, metadata: { title: "텍스트", edition: "", kind: "text", role: "reference", filename: "원본.txt", mime: "text/plain", bytes: 10, sha256: "a".repeat(64) } };
+  await assert.rejects(startMaterialTransfer(db, owner, crypto.randomUUID(), input, now), /reference_conflict/); checks.push("uninitialized-inventory-blocks-start");
+  await initializeMaterialInventory(db, context(), crypto.randomUUID(), materialPolicy.maximumStorageBytes - 10, evidence, now);
+  await assert.rejects(startMaterialTransfer(db, owner, crypto.randomUUID(), { ...input, metadata: { ...input.metadata, bytes: 11 } }, now), /material_storage_unavailable/); checks.push("capacity-fails-before-reserving");
+  await assert.rejects(startMaterialTransfer(db, owner, crypto.randomUUID(), { ...input, courseId: recordId.parse(crypto.randomUUID()) }, now), /material_not_found/);
+  await assert.rejects(startMaterialTransfer(db, { realm: "sites", userId: "other" }, crypto.randomUUID(), input, now), /material_not_found/); checks.push("missing-and-cross-owner-course-denied");
+  const key: string = crypto.randomUUID();
+  const concurrent = await Promise.all(Array.from({ length: 4 }, (): Promise<Awaited<ReturnType<typeof startMaterialTransfer>>> => startMaterialTransfer(db, owner, key, input, now)));
+  assert.equal(new Set(concurrent.map((transfer): string => transfer.id)).size, 1);
+  assert.equal(await db.prepare("SELECT COUNT(*) AS n FROM material_transfers").first<number>("n"), 1);
+  assert.equal((await getMaterialUsage(db, owner)).reservedBytes, 10); checks.push("concurrent-identical-requests-reuse-one-server-id");
+  assert.equal((await startMaterialTransfer(db, owner, key, input, now + 1000)).id, concurrent[0].id); checks.push("replay-preserves-original-reservation-time");
+  await assert.rejects(startMaterialTransfer(db, owner, key, { ...input, metadata: { ...input.metadata, title: "변경" } }, now), /request_key_reused/); checks.push("same-key-different-payload-rejected");
+  await assert.rejects(startMaterialTransfer(db, owner, crypto.randomUUID(), input, now), /material_storage_unavailable/); checks.push("another-request-cannot-bypass-active-reservation");
+  assert.equal(concurrent[0].objectKey, `learning/${concurrent[0].materialId}/${concurrent[0].uploadId}/${concurrent[0].id}`); checks.push("server-generated-private-object-key");
+  const result = { status: "passed", environment: "local-workerd", checks, realR2Writes: 0, database: "isolated-ephemeral" };
+  await writeFile(".taskmaster/reports/task-5-start-local.json", JSON.stringify(result, null, 2) + "\n");
+  console.log(JSON.stringify(result));
+} finally { await runtime.dispose(); }

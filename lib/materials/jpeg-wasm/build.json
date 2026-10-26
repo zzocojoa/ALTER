@@ -1,0 +1,24 @@
+{
+  "libjpeg": {
+    "version": "3.2.0",
+    "url": "https://github.com/libjpeg-turbo/libjpeg-turbo/releases/download/3.2.0/libjpeg-turbo-3.2.0.tar.gz",
+    "sha256": "6f30092cef9fb839779646608f4ee14ae3cbac989c47fa05e841b0841f09878e"
+  },
+  "emsdk": "4.0.22",
+  "wrapperSha256": "c6f8735bd80c99e2016f4892c0a5124eda339233fa5e095b6eea0bb5f430aeb6",
+  "supported": "8-bit Huffman sequential and progressive; arithmetic, lossless, and other precisions rejected",
+  "maximumMemoryBytes": 67108864,
+  "inputWindowBytes": 65536,
+  "files": [
+    {
+      "file": "decoder.js",
+      "sha256": "a9ffdfd0785d0a7d97d95a6a5151fa68bdb1021ed91ffb2d61c2b2ba68e4e308",
+      "bytes": 13272
+    },
+    {
+      "file": "decoder.wasm",
+      "sha256": "d8d3e7aaafc8e9b8d821a51e217a22992144d77bcf3bd9f75589a07331fb3d07",
+      "bytes": 267616
+    }
+  ]
+}

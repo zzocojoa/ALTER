@@ -1,0 +1,106 @@
+{
+  "source": "Independent libvips/libpng decode through installed sharp; 8-bit unassociated grayscale or sRGB rows without filter bytes",
+  "decoderVersions": {
+    "aom": "3.15.0",
+    "archive": "3.8.9",
+    "cairo": "1.18.4",
+    "cgif": "0.5.3",
+    "exif": "0.6.26",
+    "expat": "2.8.3",
+    "ffi": "3.8.0",
+    "fontconfig": "2.18.3",
+    "freetype": "2.14.3",
+    "fribidi": "1.0.16",
+    "glib": "2.89.4",
+    "harfbuzz": "14.3.1",
+    "heif": "1.23.2",
+    "highway": "1.4.0",
+    "imagequant": "2.4.1",
+    "lcms": "2.19.1",
+    "mozjpeg": "0826579",
+    "pango": "1.58.2",
+    "pixman": "0.46.4",
+    "png": "1.6.58",
+    "proxy-libintl": "0.5",
+    "rsvg": "2.62.91",
+    "tiff": "4.7.2",
+    "uhdr": "2.0.2",
+    "vips": "8.18.6",
+    "webp": "1.6.0",
+    "xml2": "2.15.3",
+    "zlib-ng": "2.3.3",
+    "sharp": "0.35.4"
+  },
+  "fixtures": [
+    {
+      "file": "f00n0g08.png",
+      "width": 32,
+      "height": 32,
+      "channels": 1,
+      "scanlineSha256": "7ba6cb6da925cf1aa5c00575ecaaba8e87689639d54cdc19aa1bdc7c7b851f6e"
+    },
+    {
+      "file": "f01n0g08.png",
+      "width": 32,
+      "height": 32,
+      "channels": 1,
+      "scanlineSha256": "6722cab2e71779b316ef8eda1314dc314e6c02b07e4896e5ed0cafe30284a927"
+    },
+    {
+      "file": "f02n0g08.png",
+      "width": 32,
+      "height": 32,
+      "channels": 1,
+      "scanlineSha256": "b188c36f926b7284ecc9981dd054aec56af32846b2fb4434260b7bba57c3a6da"
+    },
+    {
+      "file": "f03n0g08.png",
+      "width": 32,
+      "height": 32,
+      "channels": 1,
+      "scanlineSha256": "b1bf13e1d1d30fd33f3b4222e239ef3b2cc35a7db2143246bb7a20231fc3ee2e"
+    },
+    {
+      "file": "f04n0g08.png",
+      "width": 32,
+      "height": 32,
+      "channels": 1,
+      "scanlineSha256": "31dd33123e9c84b0ba4ac794bb1b4f93d84793e314ccd7b2d8f69e7993477a9e"
+    },
+    {
+      "file": "f00n2c08.png",
+      "width": 32,
+      "height": 32,
+      "channels": 3,
+      "scanlineSha256": "48ebbeec090aeee19eaf5c530de7206558ebeb7e764b3d64622b23f7d35d8c34"
+    },
+    {
+      "file": "f01n2c08.png",
+      "width": 32,
+      "height": 32,
+      "channels": 3,
+      "scanlineSha256": "83c42af816dfbfe062ab0556496475918886770ae49282f0cf9772a0c0429006"
+    },
+    {
+      "file": "f02n2c08.png",
+      "width": 32,
+      "height": 32,
+      "channels": 3,
+      "scanlineSha256": "e23c806d2ff0b835bf8106530be6fe47a9c252780904931525ce44a72c7e937e"
+    },
+    {
+      "file": "f03n2c08.png",
+      "width": 32,
+      "height": 32,
+      "channels": 3,
+      "scanlineSha256": "fa2426c1c6eae9e320c1dd24934dfd2174441e3d6c2c89b58f26568073715b4e"
+    },
+    {
+      "file": "f04n2c08.png",
+      "width": 32,
+      "height": 32,
+      "channels": 3,
+      "scanlineSha256": "0e5f940eb50e220ecc68536b9adc6dd8f408c7d069a080b7865a999e99e1a405"
+    }
+  ]
+}

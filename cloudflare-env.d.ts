@@ -1,0 +1,27 @@
+declare const __ALTER_LOCAL_IDENTITY__: boolean;
+
+declare namespace Cloudflare {
+  interface Env {
+    DB: D1Database;
+    BUCKET: R2Bucket;
+    ALTER_OWNER_USER_ID?: string;
+    ALTER_SITE_ORIGIN?: string;
+    ALTER_LOCAL_MOCK_AUTH?: string;
+    ALTER_OWNER_ENROLLMENT_EXPIRES_AT?: string;
+    ALTER_RESTORE_CONFIGURATION?: string;
+    ALTER_RESTORE_SIGNING_KEY?: string;
+    OPENAI_API_KEY?: string;
+    ALTER_AI_CONFIGURATION?: string;
+    ALTER_GOOGLE_CONFIGURATION?: string;
+    ALTER_GOOGLE_ACCEPTANCE_ENABLED?: string;
+    ALTER_GOOGLE_API_CONFIGURATION?: string;
+    ALTER_GOOGLE_API_CONFIGURATION_1?: string;
+    ALTER_GOOGLE_API_CONFIGURATION_2?: string;
+    ALTER_GOOGLE_API_CONFIGURATION_3?: string;
+    ALTER_GOOGLE_API_CONFIGURATION_4?: string;
+    GOOGLE_PICKER_API_KEY?: string;
+    GOOGLE_CLIENT_ID?: string;
+    GOOGLE_CLIENT_SECRET?: string;
+    GOOGLE_TOKEN_ENCRYPTION_KEY?: string;
+  }
+}

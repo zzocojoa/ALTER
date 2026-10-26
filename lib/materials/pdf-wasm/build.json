@@ -1,0 +1,33 @@
+{
+  "qpdf": {
+    "version": "12.4.2",
+    "url": "https://github.com/qpdf/qpdf/releases/download/v12.4.2/qpdf-12.4.2.tar.gz",
+    "sha256": "8a58af5b6141319287c1883bec8bd1bd545b7567b7fc5e6ce5d25a1c85f36397"
+  },
+  "zlib": {
+    "version": "1.3.1",
+    "emscriptenPort": "zlib",
+    "sha512": "8c9642495bafd6fad4ab9fb67f09b268c69ff9af0f4f20cf15dfc18852ff1f312bd8ca41de761b3f8d8e90e77d79f2ccacd3d4c5b19e475ecf09d021fdfe9088"
+  },
+  "emscripten": "4.0.22",
+  "wrapperSha256": "1bd53e63d1e508aec3a80800113a7cbe88b1840aa00961b6f49cfa662b99ddb5",
+  "patchSha256": "4fe0ff7bfa35aaa8a4d0559a316cec6d47055a51cbf607e8f8e12660eb968b22",
+  "inputWindowBytes": 65536,
+  "maximumWasmBytes": 67108864,
+  "maximumFlateOutputBytes": 16777216,
+  "maximumUnpredictedImageSampleBytes": 128000000,
+  "maximumTotalImageSampleBytes": 1073741824,
+  "encodedImagePixelDecodeClaimed": false,
+  "files": [
+    {
+      "file": "validator.js",
+      "bytes": 37622,
+      "sha256": "5ad310bbbf157ed1c6553f9a1d144db8c6b936a091f1f49b23b9b35172348764"
+    },
+    {
+      "file": "validator.wasm",
+      "bytes": 1907588,
+      "sha256": "eb26b4775b6dcfcaba9e6c718455112d1d3e12a083b7a919cbecd7805dacca50"
+    }
+  ]
+}
