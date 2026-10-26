@@ -68,9 +68,27 @@ async function run(request: Request, env: Environment): Promise<Response> {
   if (url.pathname === "/restore/stress") return stress(request, env);
   return backupWorker.fetch(request, env);
 }
+/** 조기 거절된 합성 업로드만 소진하여 로컬 HTTP 전송 중 응답 종료 경합을 막습니다. */
+async function drainUnusedOriginalBody(request: Request): Promise<void> {
+  const body: ReadableStream<Uint8Array> | null = request.body;
+  if (body === null || request.bodyUsed || body.locked) return;
+  const maximumBytes: number = 900000;
+  const reader: ReadableStreamBYOBReader = body.getReader({ mode: "byob" });
+  let receivedBytes: number = 0;
+  try {
+    while (true) {
+      const result = await reader.read(new Uint8Array(Math.min(65536, maximumBytes - receivedBytes + 1)));
+      if (result.value !== undefined) receivedBytes += result.value.byteLength;
+      if (receivedBytes > maximumBytes) throw new Error("복원 원본 검증 요청 본문이 900000바이트 상한을 초과했습니다.");
+      if (result.done) return;
+    }
+  } catch (error: unknown) {
+    throw new Error("거절된 복원 원본 검증 요청의 본문을 소진하지 못했습니다.", { cause: error });
+  } finally { reader.releaseLock(); }
+}
 const worker = { async fetch(request: Request, env: Environment): Promise<Response> {
   try { return await run(request, env); }
-  catch (error: unknown) { if (!(error instanceof Error)) throw error; return Response.json({ name: error.name, message: error.message, cause: error.cause instanceof Error ? error.cause.message : null }, { status: 409 }); }
+  catch (error: unknown) { if (!(error instanceof Error)) throw error; if (new URL(request.url).pathname === "/restore/original") await drainUnusedOriginalBody(request); return Response.json({ name: error.name, message: error.message, cause: error.cause instanceof Error ? error.cause.message : null }, { status: 409 }); }
 } };
 
 export default worker;
