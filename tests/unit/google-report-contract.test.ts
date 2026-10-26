@@ -1,0 +1,20 @@
+import { prepareGoogleReportDocument } from "../../lib/google-report/document";
+import { describe,it,expect } from "vitest";
+import { weeklyPlanFixture } from "../fixtures/weekly-plan";
+import { tutorId } from "../fixtures/tutor-state";
+import { supportedWeeklyClaims } from "../../lib/weekly/claims";
+import { weeklyWorkspace } from "../../lib/weekly/workspace";
+import type { WeeklyWorkspace } from "../../lib/weekly/workspace";
+import { prepareGoogleWeeklyReport,googleWeeklyDocument,googleWeeklyRow,googleReportHeaders } from "../../lib/google-report/contract";
+
+async function confirmed():Promise<WeeklyWorkspace> {
+  const {context,proposal}=await weeklyPlanFixture();return weeklyWorkspace.parse({id:tutorId(1601),version:5,courseId:context.aggregate.courseId,date:context.aggregate.period.start,context,fingerprint:"a".repeat(64),phase:"confirmed",proposal,claims:supportedWeeklyClaims(context.aggregate,context.sources.map(source=>source.id)),notes:"개인 메모는 내보내지 마세요",pendingKey:null,confirmedVersionId:tutorId(1602)});
+}
+describe("확정 주간 Google 전송 계약",()=>{
+  it("확정 요약·기간·업무 키와 10개 열을 매핑한다",async()=>{const state=await confirmed();const report=prepareGoogleWeeklyReport(state,tutorId(1603));const row=googleWeeklyRow(report,"document_16");expect(report.businessKey).toBe(`weekly:${state.courseId}:${state.context.aggregate.period.start}`);expect(row).toHaveLength(googleReportHeaders.length);expect(row[8]).toBe("https://docs.google.com/document/d/document_16/edit");expect(row[9]).toBe(state.confirmedVersionId);expect(googleWeeklyDocument(report)).toContain(report.content.nextActions);});
+  it("대화·실제 답안·메모·참고 원문을 제외한다",async()=>{const state=await confirmed();const report=prepareGoogleWeeklyReport(state,tutorId(1603));const serialized=JSON.stringify(report);for(const text of [state.notes,...state.context.aggregate.answers.map(answer=>answer.text),...state.context.sources.map(source=>source.evidence)]) expect(serialized).not.toContain(text);expect(Object.keys(report)).not.toContain("context");});
+  it("초안·미확정 판과 임의 문서 URL을 거부한다",async()=>{const state=await confirmed();expect(()=>prepareGoogleWeeklyReport({...state,phase:"proposed"},tutorId(1603))).toThrow();expect(()=>prepareGoogleWeeklyReport({...state,confirmedVersionId:null},tutorId(1603))).toThrow();expect(()=>googleWeeklyRow(prepareGoogleWeeklyReport(state,tutorId(1603)),"https://attacker.invalid/file")).toThrow();});
+  it("도움 사용과 독립 수행을 분리하고 평가를 새로 만들지 않는다",async()=>{const state=await confirmed();const aggregate={...state.context.aggregate,answers:state.context.aggregate.answers.map(answer=>({...answer,helped:true,helpIds:[tutorId(1604)],accepted:false}))};const claims=supportedWeeklyClaims(aggregate,state.context.sources.map(source=>source.id));const report=prepareGoogleWeeklyReport({...state,context:{...state.context,aggregate},claims:[...claims],proposal:{...state.proposal!,claimIds:claims.map(claim=>claim.id),items:[]}},tutorId(1603));expect(report.helped).toContain("기록 1건");expect(report.independent).toBe("선택한 독립 수행 근거 없음");});
+  it("문서 생성·배치·본문을 분리하고 새 판은 같은 문서와 이전 본문을 유지한다",async()=>{const report=prepareGoogleWeeklyReport(await confirmed(),tutorId(1603));const folder={source:"known" as const,externalId:"report-folder"};const first=prepareGoogleReportDocument(report,folder,null);expect(first.operations.map(op=>op.kind)).toEqual(["document-create","file-place","document-write"]);expect(JSON.parse(first.operations[0].expectedSnapshot).text).toBe("");const document={kind:"document" as const,title:report.title,text:"이전 검증 본문",tab:{kind:"single-tab" as const}};const next=prepareGoogleReportDocument(report,folder,{documentId:"same-document",document});expect(next.operations.map(op=>op.kind)).toEqual(["file-placement-verify","document-write"]);expect(next.operations.every(op=>op.externalId==="same-document")).toBe(true);expect(JSON.parse(next.operations[1].requestSnapshot).base.text).toBe(document.text);expect(JSON.parse(next.operations[1].expectedSnapshot).text).toBe(googleWeeklyDocument(report));});
+
+});

@@ -1,0 +1,10 @@
+import { describe,it,expect } from "vitest";
+import { inspectGoogleReportCandidates } from "../../lib/google-report/discovery";
+import { prepareGoogleRestRequest } from "../../lib/google/rest-request";
+const file={id:"doc-1",name:"확정 보고서",mimeType:"application/vnd.google-apps.document",trashed:false,isAppAuthorized:true,parents:["folder-1"],appProperties:{alterBusinessKey:"weekly:fixed:2026-10-19"}};
+describe("Google 보고서 업무 키 탐색",()=>{
+  it("미발견을 미실행으로 승격하지 않고 미완료 페이지를 구별한다",()=>{expect(inspectGoogleReportCandidates([{files:[]}],"folder-1",file.appProperties.alterBusinessKey).state).toBe("missing");expect(inspectGoogleReportCandidates([{files:[file],nextPageToken:"more"}],"folder-1",file.appProperties.alterBusinessKey).state).toBe("incomplete");expect(inspectGoogleReportCandidates([{files:[file],incompleteSearch:true}],"folder-1",file.appProperties.alterBusinessKey).state).toBe("incomplete");});
+  it("다른 이름의 복수 후보도 임의로 선택하지 않는다",()=>{expect(inspectGoogleReportCandidates([{files:[file],nextPageToken:"more"},{files:[{...file,id:"doc-2",name:"다른 제목"}]}],"folder-1",file.appProperties.alterBusinessKey).state).toBe("conflict");expect(inspectGoogleReportCandidates([{files:[file]}],"folder-1",file.appProperties.alterBusinessKey).state).toBe("candidate");});
+  it("폴더·업무 키·접근 증거가 다른 후보를 거부한다",()=>{for(const patch of [{parents:["other"]},{appProperties:{alterBusinessKey:"other"}},{isAppAuthorized:false},{trashed:true}]) expect(()=>inspectGoogleReportCandidates([{files:[{...file,...patch}]}],"folder-1",file.appProperties.alterBusinessKey)).toThrow();});
+  it("서버가 승인한 폴더와 업무 키만 공식 목록 조회에 사용한다",async()=>{const input={method:"drive.files.list" as const,parentId:"folder-1",businessKey:file.appProperties.alterBusinessKey,pageToken:null};const request=await prepareGoogleRestRequest(input,"folder-target");expect(new URL(request.url).searchParams.get("q")).toContain("'folder-1' in parents");expect(request.externalId).toBe("folder-1");await expect(prepareGoogleRestRequest(input,"reference")).rejects.toThrow();await expect(prepareGoogleRestRequest({...input,businessKey:"' or trashed=false"},"folder-target")).rejects.toThrow();});
+});

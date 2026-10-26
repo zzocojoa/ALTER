@@ -1,0 +1,36 @@
+{
+  "source": "https://github.com/qpdf/qpdf/tree/v12.4.2/qpdf/qtest/qpdf",
+  "license": "Apache-2.0",
+  "fixtures": [
+    {
+      "name": "minimal",
+      "sha256": "c16e6eaf7d26ae388cac9a262224981394dc590f940bd2e3bb926eba2f2132a2",
+      "bytes": 763,
+      "pages": 1
+    },
+    {
+      "name": "minimal-linearized",
+      "sha256": "75b49e60adac5dd53c07e01c20f488e86c81a12f402c3b1d5b2a5d3e1a7ca883",
+      "bytes": 1288,
+      "pages": 1
+    },
+    {
+      "name": "object-stream",
+      "sha256": "7e895514a76bff9c9bb699a14275735c9f5c61415fda7acc1e3e80d3003bc730",
+      "bytes": 792,
+      "pages": 1
+    },
+    {
+      "name": "incremental-1",
+      "sha256": "5f9c43d3f201d8e9ea77aa162bf4eb527c563f9db3626a736455e003cf5baaf3",
+      "bytes": 1423,
+      "pages": 1
+    },
+    {
+      "name": "incremental-3",
+      "sha256": "f40a2393e3272a2e037af195570f2339561e1285038cdb501d6881b75c6c7291",
+      "bytes": 944,
+      "pages": 1
+    }
+  ]
+}

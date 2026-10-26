@@ -1,0 +1,38 @@
+[
+  {
+    "id": "maximum-utf8",
+    "title": "1MiB UTF-8",
+    "url": "/diagnostics/text/maximum-utf8.txt",
+    "bytes": 1048576,
+    "sha256": "00b38f96297b44c3faeb9b749d2c3e884964aa7843922d51bd61251e08adc273",
+    "status": 200,
+    "field": null
+  },
+  {
+    "id": "invalid-utf8",
+    "title": "잘못된 UTF-8 거부",
+    "url": "/diagnostics/text/invalid-utf8.txt",
+    "bytes": 1,
+    "sha256": "a8100ae6aa1940d0b663bb31cd466142ebbdbd5187131b92d93818987832eb89",
+    "status": 422,
+    "field": "utf-8"
+  },
+  {
+    "id": "truncated-utf8",
+    "title": "잘린 UTF-8 거부",
+    "url": "/diagnostics/text/truncated-utf8.txt",
+    "bytes": 2,
+    "sha256": "75997f481e768710b6d5560612f7804d2c6ba87542de1975ad41e3775b52b151",
+    "status": 422,
+    "field": "truncated-utf-8"
+  },
+  {
+    "id": "binary-control",
+    "title": "바이너리 제어 문자 거부",
+    "url": "/diagnostics/text/binary-control.txt",
+    "bytes": 3,
+    "sha256": "59b271ae1bbcb1d31d41929817f4b16fb439eb4f31520b5ad1d5ce98920a7138",
+    "status": 422,
+    "field": "text-control-character"
+  }
+]

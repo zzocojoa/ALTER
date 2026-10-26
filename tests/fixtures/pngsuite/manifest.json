@@ -1,0 +1,252 @@
+{
+  "source": "Willem van Schaik PngSuite, libpng mirror",
+  "licenseUrl": "https://raw.githubusercontent.com/pnggroup/libpng/7c0cc40af3a388388faf48a0c3d764bc16436954/contrib/pngsuite/README",
+  "fixtures": [
+    {
+      "file": "basn0g01.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn0g01.png",
+      "sha256": "c8b1364d7771dd2f5a1b2d7d633abcf3f48dafee608558ecd2e5fc98f61894cd",
+      "valid": true
+    },
+    {
+      "file": "basn0g02.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn0g02.png",
+      "sha256": "ca172e92d179c77b3d321ad501e452a59bdaafafde8ebd74fd0669c4eae58efc",
+      "valid": true
+    },
+    {
+      "file": "basn0g04.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn0g04.png",
+      "sha256": "fb2d42c4c8f5c51590e675994a9b0c718fbf71c80e28142f231cfa7c5b0e26e8",
+      "valid": true
+    },
+    {
+      "file": "basn0g08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn0g08.png",
+      "sha256": "268d061075d1dd2eeec62b31303d09f6998549e1bfb447a5f09c80a2b0978ac3",
+      "valid": true
+    },
+    {
+      "file": "basn0g16.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn0g16.png",
+      "sha256": "1a1fe155f40c11d79350b3f84c7eb2b29719037e57073cb7ae2ab9e8323f9360",
+      "valid": true
+    },
+    {
+      "file": "basn2c08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn2c08.png",
+      "sha256": "c90e86090a625661b19960cafdde6e347d6e32d73837aaae533f66dd3f099506",
+      "valid": true
+    },
+    {
+      "file": "basn2c16.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn2c16.png",
+      "sha256": "1e1c28ec0ee5da6224404b4005076dd30e2335a1a80c0ca722046a245c4a2b3b",
+      "valid": true
+    },
+    {
+      "file": "basn3p01.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn3p01.png",
+      "sha256": "c2d7cd682df5f74506b33a5d70c344aaee248fda79fdfef8e873426fd6f2b75b",
+      "valid": true
+    },
+    {
+      "file": "basn3p02.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn3p02.png",
+      "sha256": "0466bb7ed9984cf03b70704564bcffab1df8ec0e8167473ba0f75e4fedce5a8f",
+      "valid": true
+    },
+    {
+      "file": "basn3p04.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn3p04.png",
+      "sha256": "e1fc7be978d3149b98533d0076245ae64353b7967290f4204c1282ecb4ec1aba",
+      "valid": true
+    },
+    {
+      "file": "basn3p08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn3p08.png",
+      "sha256": "d58256cd2eb16b5740d4c1403d25ce43d8dd03e270627ab709d2fb141e3d904c",
+      "valid": true
+    },
+    {
+      "file": "basn4a08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn4a08.png",
+      "sha256": "7be24b618bfd437b921ae0caf9341d112338c6290cc62466deb19d2c7a512968",
+      "valid": true
+    },
+    {
+      "file": "basn4a16.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn4a16.png",
+      "sha256": "1c92ffd11d2fc89a36f170d0239668436407f5c8e3f8d93483fb3fc6bca361d7",
+      "valid": true
+    },
+    {
+      "file": "basn6a08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn6a08.png",
+      "sha256": "559c594166eb156f461c9beff0f053196730dc998fdb0d2b801c89e6680860a5",
+      "valid": true
+    },
+    {
+      "file": "basn6a16.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basn6a16.png",
+      "sha256": "8f9d81060aebf4576461403c5057de7f23f73157016b659402b906df805845aa",
+      "valid": true
+    },
+    {
+      "file": "basi0g01.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basi0g01.png",
+      "sha256": "9bf1c4610280efecc291361e2b7b026d602d03a7137f476ff84af626bb7b3a62",
+      "valid": true
+    },
+    {
+      "file": "basi0g08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basi0g08.png",
+      "sha256": "b9300750e7414c9fed68cc7f4f531f5e2cdd2724f50142e8aa3a0070836bece9",
+      "valid": true
+    },
+    {
+      "file": "basi2c08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basi2c08.png",
+      "sha256": "b2690d4475cdc39faf5a7d2de20de4e14eb96c6360fa791ec2003b4085ecacde",
+      "valid": true
+    },
+    {
+      "file": "basi3p01.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basi3p01.png",
+      "sha256": "8e1edfbc0382e0b545c70209271cedead2d530df1ce40f5296f0749226b36006",
+      "valid": true
+    },
+    {
+      "file": "basi3p08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basi3p08.png",
+      "sha256": "ca103eef7a7c50abc7af9d5ec0dc9fdc07668e2f030adbce226e050dcec9eea3",
+      "valid": true
+    },
+    {
+      "file": "basi6a16.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/basi6a16.png",
+      "sha256": "7fdd6bf08f04692bcf06b5c4262e7f76c49d8adb992789fd3f05aa0435645cd8",
+      "valid": true
+    },
+    {
+      "file": "f00n0g08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/f00n0g08.png",
+      "sha256": "d055cc0bb505b37c6ecf88a808d71675eca5dd0ee683d70ebc9c0be0e1bb8e57",
+      "valid": true
+    },
+    {
+      "file": "f01n0g08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/f01n0g08.png",
+      "sha256": "956ddaf133e6d9a8d36f1e00604d87fbc2d0295e933bb8caaef517e7d87e5342",
+      "valid": true
+    },
+    {
+      "file": "f02n0g08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/f02n0g08.png",
+      "sha256": "1f5b49c06ecc2a1756f0423b3de936bd18497866d035ac8eded78a6f17408a2c",
+      "valid": true
+    },
+    {
+      "file": "f03n0g08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/f03n0g08.png",
+      "sha256": "d0563ae30c6ce7a01eae7a5cdc0ef780175bfa7653888ed93f17bef5fe4b2107",
+      "valid": true
+    },
+    {
+      "file": "f04n0g08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/f04n0g08.png",
+      "sha256": "fec1a3c53833d0ddefa4486a98934c393cb4335b2dc31da70e6540a4686f1457",
+      "valid": true
+    },
+    {
+      "file": "f00n2c08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/f00n2c08.png",
+      "sha256": "0fe92b2aa2da04c885d1dbd85c834716f6cdd946364d97dcd597bb79d9e14427",
+      "valid": true
+    },
+    {
+      "file": "f01n2c08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/f01n2c08.png",
+      "sha256": "ef072ec6815ebf9b33e0553d2e4e4e7ed6911860a2512c67bcd10a9f0f09b9de",
+      "valid": true
+    },
+    {
+      "file": "f02n2c08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/f02n2c08.png",
+      "sha256": "ca4b937b3c587d5c007f193a2eec14dc96b0d23ff7d6aa9004e3badd1af9fe8f",
+      "valid": true
+    },
+    {
+      "file": "f03n2c08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/f03n2c08.png",
+      "sha256": "2d101e3ef4f78a69437034671e93fe11faac0cfc4d44210dcca1b944caa886f7",
+      "valid": true
+    },
+    {
+      "file": "f04n2c08.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/f04n2c08.png",
+      "sha256": "c365c24153cb69fd3c162f00b296ae23a71a1595645d1aeb0ad23af680d7b4be",
+      "valid": true
+    },
+    {
+      "file": "s01i3p01.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/s01i3p01.png",
+      "sha256": "235eb82f1337e3fcefbdca566a53af3d3523db7588ba3cd7fa5dab19afe48a41",
+      "valid": true
+    },
+    {
+      "file": "s02i3p01.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/s02i3p01.png",
+      "sha256": "e7d26ab4b31e7066b0674a4374c093967a9f1761b96836aa3dbe624acd73ab52",
+      "valid": true
+    },
+    {
+      "file": "s03i3p01.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/s03i3p01.png",
+      "sha256": "4513dec80f54ffd04a28834b114254d6e6d66e52e32e0059174474f2fb15d6bc",
+      "valid": true
+    },
+    {
+      "file": "s04i3p01.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/s04i3p01.png",
+      "sha256": "918f94f3557e10de91efa680df507c8eafc347fa5023af43037701398128ad0f",
+      "valid": true
+    },
+    {
+      "file": "s05i3p02.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/s05i3p02.png",
+      "sha256": "77fe040e17167f9656afe46cf0031832e635745e4e7f19ba12dee32f5ec03d96",
+      "valid": true
+    },
+    {
+      "file": "s06i3p02.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/s06i3p02.png",
+      "sha256": "cf8d5fdb34c0afd38b1b4745bed6167771767ccdfe847c4d8766f7fcc5c41176",
+      "valid": true
+    },
+    {
+      "file": "s07i3p02.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/s07i3p02.png",
+      "sha256": "d9874bfad10353a9ea2876ee388c3e7f81f697ed141d0d79c5c2019d62a7a698",
+      "valid": true
+    },
+    {
+      "file": "s08i3p02.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/s08i3p02.png",
+      "sha256": "62adf855c6b1e3a007f9dcf3ce2ba244616c089269a511dd939e89a4b0853453",
+      "valid": true
+    },
+    {
+      "file": "s09i3p02.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/s09i3p02.png",
+      "sha256": "f2cf5b3109690704d106a0b22ea079e36064cc6077e1fb9a1ba87397d0bbcca1",
+      "valid": true
+    },
+    {
+      "file": "x00n0g01.png",
+      "url": "https://www.libpng.org/pub/png/PngSuite/x00n0g01.png",
+      "sha256": "d171add1753c8e9cc7bacc209fa62f9a23166ba71054a134c048744dd9400c91",
+      "valid": false
+    }
+  ]
+}

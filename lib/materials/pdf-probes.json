@@ -1,0 +1,92 @@
+[
+  {
+    "id": "text",
+    "title": "텍스트 PDF",
+    "url": "/diagnostics/pdf/text.pdf",
+    "bytes": 481,
+    "sha256": "7c237430e942cdac56aa069a18974d3f790686d008545a8989b0458874c9ce4e",
+    "status": 200,
+    "pages": 1,
+    "field": null
+  },
+  {
+    "id": "scanned-jpeg",
+    "title": "스캔 PDF 구조",
+    "url": "/diagnostics/pdf/scanned-jpeg.pdf",
+    "bytes": 1285,
+    "sha256": "e005957b15256ec3b864a92d732f13745149a271013b3b9fe675b9a4febcdc92",
+    "status": 200,
+    "pages": 1,
+    "field": null
+  },
+  {
+    "id": "object-stream",
+    "title": "객체·xref 스트림",
+    "url": "/diagnostics/pdf/object-stream.pdf",
+    "bytes": 792,
+    "sha256": "7e895514a76bff9c9bb699a14275735c9f5c61415fda7acc1e3e80d3003bc730",
+    "status": 200,
+    "pages": 1,
+    "field": null
+  },
+  {
+    "id": "incremental",
+    "title": "증분 저장",
+    "url": "/diagnostics/pdf/incremental.pdf",
+    "bytes": 944,
+    "sha256": "f40a2393e3272a2e037af195570f2339561e1285038cdb501d6881b75c6c7291",
+    "status": 200,
+    "pages": 1,
+    "field": null
+  },
+  {
+    "id": "pages-500",
+    "title": "500페이지",
+    "url": "/diagnostics/pdf/pages-500.pdf",
+    "bytes": 59038,
+    "sha256": "655f2b520da3631b4752e68aac459503e8ab90fd5465e8963709e226232a9eaf",
+    "status": 200,
+    "pages": 500,
+    "field": null
+  },
+  {
+    "id": "size-20mib",
+    "title": "20MiB 원본",
+    "url": "/diagnostics/pdf/size-20mib.pdf",
+    "bytes": 20971520,
+    "sha256": "1bd6802e805006d37dc69a12e33b3c4117cdd0ad30f7698f8980b4343dc6ad14",
+    "status": 200,
+    "pages": 1,
+    "field": null
+  },
+  {
+    "id": "count-forged",
+    "title": "페이지 수 위조 거부",
+    "url": "/diagnostics/pdf/count-forged.pdf",
+    "bytes": 466,
+    "sha256": "63d0467cb31ed6b5290e25ff03902cc62465f847084e71c9b4fc3ec173c6fdb7",
+    "status": 422,
+    "pages": null,
+    "field": "pdf:page-tree-count-mismatch"
+  },
+  {
+    "id": "flate-adler",
+    "title": "압축 체크섬 손상 거부",
+    "url": "/diagnostics/pdf/flate-adler.pdf",
+    "bytes": 471,
+    "sha256": "7454ed4813fbce0d4ea51eb323ba6ca54e58b77a5f76edc1ab47af820f6048fc",
+    "status": 422,
+    "pages": null,
+    "field": "pdf:stream-decode-failed"
+  },
+  {
+    "id": "pages-501",
+    "title": "501페이지 거부",
+    "url": "/diagnostics/pdf/pages-501.pdf",
+    "bytes": 59156,
+    "sha256": "963b5484f2a54a77b0c82ca86b99b000d1e6e70b1487d8a3bc21ad85935270d0",
+    "status": 422,
+    "pages": null,
+    "field": "pdf:page-tree-count"
+  }
+]

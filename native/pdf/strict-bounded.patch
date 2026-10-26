@@ -1,0 +1,109 @@
+--- a/libqpdf/QPDF.cc
++++ b/libqpdf/QPDF.cc
+@@ -719,15 +719,21 @@
+ 
+     bool attempted_finish = false;
+     try {
+-        auto buf = file->read(length, offset);
+-        if (buf.size() != length) {
+-            throw qpdf_for_warning.m->c.damagedPDF(
+-                *file,
+-                "",
+-                offset + QIntC::to_offset(buf.size()),
+-                "unexpected EOF reading stream data");
+-        }
+-        pipeline->write(buf.data(), length);
++        // ALTER: 원본 스트림을 고정 크기 창으로 읽습니다.
++        char buffer[65536];
++        file->seek(offset, SEEK_SET);
++        size_t consumed = 0;
++        while (consumed < length) {
++            size_t requested = std::min(length - consumed, sizeof(buffer));
++            size_t actual = file->read(buffer, requested);
++            if (actual != requested) {
++                throw qpdf_for_warning.m->c.damagedPDF(
++                    *file, "", offset + QIntC::to_offset(consumed + actual),
++                    "unexpected EOF reading stream data");
++            }
++            pipeline->write(buffer, actual);
++            consumed += actual;
++        }
+         attempted_finish = true;
+         pipeline->finish();
+         return true;
+--- a/include/qpdf/Pl_Flate.hh
++++ b/include/qpdf/Pl_Flate.hh
+@@ -114,6 +114,7 @@
+         size_t out_bufsize;
+         action_e action;
+         bool initialized;
++        bool inflate_done{false};
+         void* zdata;
+         unsigned long long written{0};
+         std::function<void(char const*, int)> callback;
+--- a/libqpdf/Pl_Flate.cc
++++ b/libqpdf/Pl_Flate.cc
+@@ -133,6 +133,11 @@
+     util::no_ci_rt_error_if(
+         len > UINT_MAX, "Pl_Flate: zlib doesn't support data blocks larger than int");
+     z_stream& zstream = *(static_cast<z_stream*>(m->zdata));
++    // ALTER: 종료 이후의 바이트는 손상으로 처리합니다.
++    if (m->action == a_inflate && m->inflate_done) {
++        if (len != 0) throw std::runtime_error("ALTER flate trailing bytes");
++        return;
++    }
+     // zlib is known not to modify the data pointed to by next_in but doesn't declare the field
+     // value const unless compiled to do so.
+     zstream.next_in = const_cast<unsigned char*>(data);
+--- a/libqpdf/Pl_Flate.cc
++++ b/libqpdf/Pl_Flate.cc
+@@ -172,12 +172,6 @@
+             err = deflate(&zstream, flush);
+         } else {
+             err = inflate(&zstream, flush);
+-        }
+-        if ((m->action == a_inflate) && (err != Z_OK) && zstream.msg &&
+-            (strcmp(zstream.msg, "incorrect data check") == 0)) {
+-            // Other PDF readers ignore this specific error. Combining this with Z_SYNC_FLUSH
+-            // enables qpdf to handle some broken zlib streams without losing data.
+-            err = Z_STREAM_END;
+         }
+         switch (err) {
+         case Z_BUF_ERROR:
+--- a/libqpdf/Pl_Flate.cc
++++ b/libqpdf/Pl_Flate.cc
+@@ -186,6 +186,10 @@
+             break;
+ 
+         case Z_STREAM_END:
++            if (m->action == a_inflate) {
++                m->inflate_done = true;
++                if (zstream.avail_in != 0) throw std::runtime_error("ALTER flate trailing bytes");
++            }
+             done = true;
+             // fall through
+ 
+--- a/libqpdf/Pl_Flate.cc
++++ b/libqpdf/Pl_Flate.cc
+@@ -236,6 +236,9 @@
+                 unsigned char buf[1];
+                 buf[0] = '\0';
+                 handleData(buf, 0, Z_FINISH);
++                if (m->action == a_inflate && !m->inflate_done) {
++                    throw std::runtime_error("ALTER flate truncated stream");
++                }
+                 int err = Z_OK;
+                 if (m->action == a_deflate) {
+                     err = deflateEnd(&zstream);
+--- a/libqpdf/Pl_Flate.cc
++++ b/libqpdf/Pl_Flate.cc
+@@ -231,6 +231,9 @@
+         if (m->zopfli_buf) {
+             finish_zopfli();
+         } else if (m->outbuf.get()) {
++            if (m->action == a_inflate && !m->initialized) {
++                throw std::runtime_error("ALTER flate empty stream");
++            }
+             if (m->initialized) {
+                 z_stream& zstream = *(static_cast<z_stream*>(m->zdata));
+                 unsigned char buf[1];

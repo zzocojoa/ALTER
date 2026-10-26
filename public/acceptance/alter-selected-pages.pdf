@@ -1,0 +1,55 @@
+%PDF-1.7
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R 4 0 R 5 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 9 0 R >> >> /Contents 6 0 R >>
+endobj
+4 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 9 0 R >> >> /Contents 7 0 R >>
+endobj
+5 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 9 0 R >> >> /Contents 8 0 R >>
+endobj
+6 0 obj
+<<  /Length 106 >>
+stream
+BT /F1 24 Tf 40 700 Td (ALTER selected-page test) Tj 0 -50 Td (Contents: page 3 - formula and table) Tj ET
+endstream
+endobj
+7 0 obj
+<<  /Length 57 >>
+stream
+BT /F1 24 Tf 40 700 Td (UNSELECTED_SENTINEL_PAGE_2) Tj ET
+endstream
+endobj
+8 0 obj
+<<  /Length 245 >>
+stream
+BT /F1 24 Tf 40 700 Td (Pythagorean theorem) Tj 0 -50 Td (a^2 + b^2 = c^2) Tj 0 -60 Td (a       b       c) Tj 0 -40 Td (3       4       5) Tj ET 35 605 260 30 re S 35 565 260 40 re S 35 525 260 40 re S 110 525 m 110 635 l S 200 525 m 200 635 l S
+endstream
+endobj
+9 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 10
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000133 00000 n 
+0000000259 00000 n 
+0000000385 00000 n 
+0000000511 00000 n 
+0000000669 00000 n 
+0000000777 00000 n 
+0000001074 00000 n 
+trailer
+<< /Size 10 /Root 1 0 R >>
+startxref
+1144
+%%EOF

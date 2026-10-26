@@ -1,0 +1,79 @@
+[
+  {
+    "id": "maximum-pixels",
+    "title": "최대 픽셀 이미지",
+    "url": "/diagnostics/png/maximum-pixels.png",
+    "bytes": 124490,
+    "sha256": "d8c0f34efc05a6baec009c56d62030fa969a779f3a8cb554a761b0999478b9de",
+    "status": 200,
+    "pixels": 16000000,
+    "decodedBytes": 128000000,
+    "field": ""
+  },
+  {
+    "id": "maximum-row",
+    "title": "최대 행 크기",
+    "url": "/diagnostics/png/maximum-row.png",
+    "bytes": 334,
+    "sha256": "d8cc803fb52f40634210895731b596f804e98155b5b186917e9bb04898f404e7",
+    "status": 200,
+    "pixels": 32768,
+    "decodedBytes": 262144,
+    "field": ""
+  },
+  {
+    "id": "maximum-rows",
+    "title": "최대 행 개수",
+    "url": "/diagnostics/png/maximum-rows.png",
+    "bytes": 206,
+    "sha256": "5239f5865a9e4e528dec523709ab284f5dc0878cbe721f5dcbf8bae9d39884c2",
+    "status": 200,
+    "pixels": 65536,
+    "decodedBytes": 65536,
+    "field": ""
+  },
+  {
+    "id": "adam7",
+    "title": "인터레이스 이미지",
+    "url": "/diagnostics/png/adam7.png",
+    "bytes": 4180,
+    "sha256": "7fdd6bf08f04692bcf06b5c4262e7f76c49d8adb992789fd3f05aa0435645cd8",
+    "status": 200,
+    "pixels": 1024,
+    "decodedBytes": 8192,
+    "field": ""
+  },
+  {
+    "id": "invalid-crc",
+    "title": "손상된 체크섬 거부",
+    "url": "/diagnostics/png/invalid-crc.png",
+    "bytes": 67,
+    "sha256": "de9a168f6c691cc3e44efe2af1401836adb09d7cd7783aa3a45da16a3b6d2ec6",
+    "status": 422,
+    "pixels": 0,
+    "decodedBytes": 0,
+    "field": "png:crc"
+  },
+  {
+    "id": "trailing-compressed",
+    "title": "남은 압축 데이터 거부",
+    "url": "/diagnostics/png/trailing-compressed.png",
+    "bytes": 70,
+    "sha256": "0361f694769498ca0687f90022152915a40867abb2aaa9687bd140f32a3cff4b",
+    "status": 422,
+    "pixels": 0,
+    "decodedBytes": 0,
+    "field": "png:trailing-compressed-bytes"
+  },
+  {
+    "id": "excess-pixels",
+    "title": "픽셀 상한 초과 거부",
+    "url": "/diagnostics/png/excess-pixels.png",
+    "bytes": 66,
+    "sha256": "2ccc4d26ec7685986166559aba0453ba15afdb24e442153f6ab792b9ba3b084c",
+    "status": 422,
+    "pixels": 0,
+    "decodedBytes": 0,
+    "field": "png:pixel-limit"
+  }
+]
