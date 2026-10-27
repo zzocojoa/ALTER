@@ -3,7 +3,6 @@
 import { clientReady, serverReady, subscribeToHydration } from "@/lib/client-ready";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { FormEvent, ReactElement } from "react";
-import { z } from "zod";
 import type { MaterialMetadata } from "@/lib/materials/policy";
 import type { MaterialCard, MaterialLibrary, PendingMaterial } from "@/lib/materials/library";
 import { errorText, materialFailure, type MaterialFailure, isMaterialResponseFailure, inventoryReply, loadMaterialLibrary, materialJson, transferReply, registrationReply, recoveryReply, cleanupReply } from "./client-api";
@@ -48,6 +47,7 @@ export function MaterialLibraryClient({ initial, initialSelectedId }: Readonly<{
   const newlyRegisteredId = useRef<string | null>(null);
   const form = useRef<HTMLFormElement>(null);
   const abort = useRef<AbortController | null>(null);
+  const [canStop, setCanStop] = useState<boolean>(false);
   const [queue, setQueue] = useState<readonly UploadQueueEntry[]>([]);
   const queueRef = useRef<readonly UploadQueueEntry[]>([]);
   const [selectedNames, setSelectedNames] = useState<readonly string[]>([]);
@@ -112,7 +112,7 @@ export function MaterialLibraryClient({ initial, initialSelectedId }: Readonly<{
     }
   }
   async function finishOperation(): Promise<void> {
-    abort.current = null;
+    abort.current = null; setCanStop(false);
     try { await refresh(); } catch (error: unknown) { setFailure(materialFailure(error)); }
     finally { operation.current = false; setBusy(false); }
   }
@@ -160,7 +160,7 @@ export function MaterialLibraryClient({ initial, initialSelectedId }: Readonly<{
     }
     if (!beginOperation()) return;
     setIssue(null); setSelected(null); setMessage(""); setUploadPhase("checking");
-    abort.current = new AbortController();
+    abort.current = new AbortController(); setCanStop(true);
     const signal: AbortSignal = abort.current.signal;
     let current: UploadQueueEntry | null = null;
     try {
@@ -190,7 +190,7 @@ export function MaterialLibraryClient({ initial, initialSelectedId }: Readonly<{
   async function recover(item: PendingMaterial): Promise<void> {
     if (!beginOperation()) return;
     const selection: FormData | null = form.current === null ? null : new FormData(form.current);
-    setIssue(null); setRegistrationOpen(true); abort.current = new AbortController();
+    setIssue(null); setRegistrationOpen(true); abort.current = new AbortController(); setCanStop(true);
     try {
       const result = recoveryReply.parse(await materialJson(`/api/materials/uploads/${item.id}/recover`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ expectedVersion: item.version }), signal: abort.current.signal }));
       if (result.id !== item.id || result.materialId !== item.materialId) throw new Error("복구 응답의 자료가 요청과 달라요. 목록을 다시 확인해 주세요.");
@@ -239,5 +239,5 @@ export function MaterialLibraryClient({ initial, initialSelectedId }: Readonly<{
   const allRegistered: boolean = queue.length > 0 && !queued;
   const canClear: boolean = !busy && queue.length > 0 && queue.every((entry): boolean => entry.status === "waiting" || entry.status === "registered");
   const uploadAvailability: ActionAvailability = busy ? { kind: "busy", reason: "현재 요청을 확인하고 있어요." } : !listFresh ? { kind: "blocked", reason: "목록 조회가 확인되지 않았어요. 목록 새로 확인을 눌러 주세요." } : library.pending.length > 0 ? { kind: "blocked", reason: "아래 확인이 필요한 자료에서 기존 요청을 먼저 확인해 주세요." } : library.usage === null || library.usage.blocked ? { kind: "blocked", reason: "저장 공간 확인이 필요해요. 원본과 예약 상태를 확인한 뒤 등록할 수 있어요." } : allRegistered ? { kind: "blocked", reason: "선택한 자료를 모두 등록했어요. 다른 파일을 선택해 주세요." } : library.courses.length === 0 ? { kind: "blocked", reason: "과정 이름을 먼저 만들어 주세요." } : { kind: "available" };
-  return <div data-alter-ui className="material-library" data-detail={selected !== null} inert={!ready}><div className="material-summary"><p>원본을 모아 두고, 필요한 부분부터 차근차근 살펴보세요.</p><p>{library.usage === null ? "자료 저장 준비가 아직 완료되지 않았어요." : `${size(library.usage.occupiedBytes)} 사용 · ${size(library.usage.reservedBytes)} 예약 / 256 MiB`}</p></div><button type="button" disabled={busy || library.pending.length > 0} onClick={(): void => { void verifyStorage(); }}>저장 공간 확인</button>{(message || failure) && <div className="material-feedback" aria-live="polite"><p role="status">{message}</p>{failure && <p role="alert">{failure.message}{failure.requiresLogin && <> <a href="/signin-with-chatgpt?return_to=/learn/materials">다시 로그인</a></>}</p>}</div>}<div className="material-layout">{issue !== null && <div data-upload-issue={issue.kind}><ErrorState title={issue.title} detail={issue.detail} action={null} /></div>}{!listFresh && !busy && <ErrorState title="목록을 새로 확인하지 못했어요" detail="아래는 마지막으로 확인한 목록이에요. 새로 조회하기 전에는 원본을 열거나 새로 등록할 수 없어요." action={null} />}<Disclosure title="새 자료 등록" open={registrationOpen} onOpenChange={setRegistrationOpen}><RegistrationForm library={library} formRef={form} inputKind={inputKind} busy={busy} canStop={busy && abort.current !== null} queued={queued} canClear={canClear} selectedNames={selectedNames} onFiles={selectFiles} onClear={clearSelection} availability={uploadAvailability} onInputKind={changeInputKind} onUpload={upload} onCourse={createCourse} onStop={(): void => { abort.current?.abort(new Error("전송을 중단했어요. 상태를 확인해 주세요.")); }} /></Disclosure><UploadQueue entries={queue} />{(registrationOpen || uploadPhase !== "idle") && <UploadProgress phase={uploadPhase} />}<section className="material-shelf" aria-label="나의 자료 목록">{selected && !library.hidden && <SourcePreview key={selected.id} material={selected} previewRef={preview} onReturnToList={returnToList} />}<div hidden={selected !== null}><div className="material-section-heading"><h2 id="material-list-heading" tabIndex={-1}>나의 자료 <span>현재 {library.materials.length}개{library.hasMore ? " · 더 있음" : ""}</span></h2><button type="button" disabled={busy} onClick={(): void => { void refreshList(); }}>목록 새로 확인</button></div>{library.hidden && <p role="status" className="material-hidden">자료를 가리고 답하는 중이에요. 답안을 제출한 뒤 원본을 열 수 있어요.</p>}{library.pending.length > 0 && <PendingMaterials items={library.pending} busy={busy} onRecover={recover} onCleanup={cleanup} />}{library.materials.length === 0 && listFresh ? <div className="material-empty"><p className="eyebrow">첫 번째 자료</p><h3>배울 내용을 한곳에</h3><p>교재나 사진, 정리한 문장을 등록하면<br />여기에서 원본을 다시 볼 수 있어요.</p></div> : <MaterialList materials={library.materials} selectedId={selected?.id ?? null} unavailable={library.hidden || busy || !listFresh} onSelect={openMaterial} />}{library.hasMore && <button type="button" disabled={busy} onClick={(): void => { void nextPage(); }}>자료 더 보기</button>}</div></section></div></div>;
+  return <div data-alter-ui className="material-library" data-detail={selected !== null} inert={!ready}><div className="material-summary"><p>원본을 모아 두고, 필요한 부분부터 차근차근 살펴보세요.</p><p>{library.usage === null ? "자료 저장 준비가 아직 완료되지 않았어요." : `${size(library.usage.occupiedBytes)} 사용 · ${size(library.usage.reservedBytes)} 예약 / 256 MiB`}</p></div><button type="button" disabled={busy || library.pending.length > 0} onClick={(): void => { void verifyStorage(); }}>저장 공간 확인</button>{(message || failure) && <div className="material-feedback" aria-live="polite"><p role="status">{message}</p>{failure && <p role="alert">{failure.message}{failure.requiresLogin && <> <a href="/signin-with-chatgpt?return_to=/learn/materials">다시 로그인</a></>}</p>}</div>}<div className="material-layout">{issue !== null && <div data-upload-issue={issue.kind}><ErrorState title={issue.title} detail={issue.detail} action={null} /></div>}{!listFresh && !busy && <ErrorState title="목록을 새로 확인하지 못했어요" detail="아래는 마지막으로 확인한 목록이에요. 새로 조회하기 전에는 원본을 열거나 새로 등록할 수 없어요." action={null} />}<Disclosure title="새 자료 등록" open={registrationOpen} onOpenChange={setRegistrationOpen}><RegistrationForm library={library} formRef={form} inputKind={inputKind} busy={busy} canStop={busy && canStop} queued={queued} canClear={canClear} selectedNames={selectedNames} onFiles={selectFiles} onClear={clearSelection} availability={uploadAvailability} onInputKind={changeInputKind} onUpload={upload} onCourse={createCourse} onStop={(): void => { abort.current?.abort(new Error("전송을 중단했어요. 상태를 확인해 주세요.")); }} /></Disclosure><UploadQueue entries={queue} />{(registrationOpen || uploadPhase !== "idle") && <UploadProgress phase={uploadPhase} />}<section className="material-shelf" aria-label="나의 자료 목록">{selected && !library.hidden && <SourcePreview key={selected.id} material={selected} previewRef={preview} onReturnToList={returnToList} />}<div hidden={selected !== null}><div className="material-section-heading"><h2 id="material-list-heading" tabIndex={-1}>나의 자료 <span>현재 {library.materials.length}개{library.hasMore ? " · 더 있음" : ""}</span></h2><button type="button" disabled={busy} onClick={(): void => { void refreshList(); }}>목록 새로 확인</button></div>{library.hidden && <p role="status" className="material-hidden">자료를 가리고 답하는 중이에요. 답안을 제출한 뒤 원본을 열 수 있어요.</p>}{library.pending.length > 0 && <PendingMaterials items={library.pending} busy={busy} onRecover={recover} onCleanup={cleanup} />}{library.materials.length === 0 && listFresh ? <div className="material-empty"><p className="eyebrow">첫 번째 자료</p><h3>배울 내용을 한곳에</h3><p>교재나 사진, 정리한 문장을 등록하면<br />여기에서 원본을 다시 볼 수 있어요.</p></div> : <MaterialList materials={library.materials} selectedId={selected?.id ?? null} unavailable={library.hidden || busy || !listFresh} onSelect={openMaterial} />}{library.hasMore && <button type="button" disabled={busy} onClick={(): void => { void nextPage(); }}>자료 더 보기</button>}</div></section></div></div>;
 }
