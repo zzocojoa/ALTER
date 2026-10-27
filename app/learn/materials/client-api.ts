@@ -38,3 +38,10 @@ export async function materialJson(url: string, init: RequestInit): Promise<unkn
 }
 export async function loadMaterialLibrary(cursor: string | null): Promise<MaterialLibrary> { return libraryReply.parse(await materialJson(`/api/materials${cursor === null ? "" : `?after=${encodeURIComponent(cursor)}`}`, { method: "GET" })); }
 export function errorText(error: unknown): string { return error instanceof Error ? error.message : "알 수 없는 오류가 발생했어요. 목록을 새로 확인해 주세요."; }
+
+export type MaterialFailure = Readonly<{ message: string; requiresLogin: boolean }>;
+
+/** 인증 만료 응답일 때만 재로그인 동작을 안내합니다. */
+export function materialFailure(error: unknown): MaterialFailure {
+  return { message: errorText(error), requiresLogin: isMaterialResponseFailure(error) && error.status === 401 };
+}

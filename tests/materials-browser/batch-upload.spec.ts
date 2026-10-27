@@ -132,6 +132,8 @@ test("다중 선택 중 지원하지 않는 파일은 서버 예약 전에 전�
   await page.getByLabel("원본 파일", { exact: true }).setInputFiles([files[0], { name: "미지원.heic", mimeType: "image/heic", buffer: Buffer.from("HEIC") }]);
   await page.getByRole("button", { name: "자료 등록하기", exact: true }).click();
   await expect(page.getByRole("alert")).toContainText("미지원.heic");
+  await expect(page.locator(".alter-upload-progress")).toHaveAttribute("data-phase", "invalid");
+  await expect(page.getByRole("link", { name: "다시 로그인", exact: true })).toHaveCount(0);
   expect(fixture.writes).toEqual([]);
   await expect(page.getByLabel("원본 파일", { exact: true })).toBeEnabled();
   await chooseBatch(page);
