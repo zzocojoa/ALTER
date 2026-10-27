@@ -47,6 +47,10 @@ test("응답 유실은 미확정으로 남기고 같은 파일·요청·판으�
   const pending = page.getByRole("region", { name: "중단된 자료", exact: true });
   await expect(pending).toContainText("저장 결과 미확정");
   await expect(page.getByRole("button", { name: "자료 등록하기", exact: true })).toBeDisabled();
+  await expect(page.getByLabel("원본 파일", { exact: true })).toBeDisabled();
+  await page.reload();
+  await page.getByRole("button", { name: "목록 새로 확인", exact: true }).click();
+  await expect(pending).toContainText("저장 결과 미확정");
   await page.getByLabel("원본 파일", { exact: true }).setInputFiles({ name: metadata.filename, mimeType: metadata.mime, buffer: Buffer.from("다른 원본") });
   await page.getByRole("button", { name: "상태 확인·이어서 등록", exact: true }).click();
   await expect(page.getByRole("alert").filter({ hasText: "처음 등록한 것과 같은 파일" })).toBeVisible();
