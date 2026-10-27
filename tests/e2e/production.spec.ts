@@ -99,3 +99,16 @@ test("소유자 설정 없는 실제 빌드의 학습 경로는 앱 탐색을 �
     expect(body, path).not.toContain('aria-label="주 탐색"');
   }
 });
+
+
+test("운영 설정 안내의 시작 화면 이동은 사전 로딩 오류 없이 동작한다", async ({ page }) => {
+  const errors: string[] = [];
+  page.on("console", (message) => { if (message.type() === "error") errors.push(message.text()); });
+  await page.goto("/setup");
+  await page.waitForLoadState("networkidle");
+  await expect(page.getByRole("heading", { name: "소유자 확인이 닫혀 있어요" })).toBeVisible();
+  await page.getByRole("link", { name: "시작 화면으로", exact: true }).click();
+  await expect(page.getByRole("button", { name: "환영 문구 바꾸기" })).toBeEnabled();
+  expect(errors).toEqual([]);
+  expect(await page.pageErrors()).toEqual([]);
+});
