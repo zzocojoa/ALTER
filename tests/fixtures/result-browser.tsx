@@ -1,6 +1,10 @@
 import { createRoot } from "react-dom/client";
 import { resultDraft } from "../../lib/results/contracts";
 import { ResultClient } from "../../app/learn/results/result-client";
+import "../../app/styles/tokens.css";
+import "../../app/styles/foundation.css";
+import "../../app/styles/components.css";
 import "../../app/learn/results/results.css";
 const element=document.getElementById("result-fixture");const data=document.getElementById("result-initial");if(!element || !data) throw new Error("결과 화면 검사 입력이 없습니다.");
-createRoot(element).render(<ResultClient initial={resultDraft.parse(JSON.parse(data.textContent ?? ""))}/>);
+const initial=resultDraft.parse(JSON.parse(data.textContent ?? ""));
+createRoot(element).render(<div data-alter-ui><ResultClient initial={initial} history={[{id:initial.id,version:initial.version,title:initial.title,confirmedOrdinal:initial.confirmation?.version ?? null,confirmedAt:initial.confirmation?.confirmedAt ?? null}]}/></div>);

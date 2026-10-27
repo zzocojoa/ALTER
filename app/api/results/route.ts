@@ -1,3 +1,5 @@
+import { readResultEvidence } from "@/db/repositories/result-evidence";
+import { resultEvidenceQuery } from "@/lib/results/evidence-detail";
 import { resultRequest } from "@/lib/results/contracts";
 import { confirmSessionResult } from "@/db/repositories/result-confirmation";
 import { materialRequestKey,readBoundedJson } from "@/lib/materials/request";
@@ -8,7 +10,7 @@ import { tutorErrorResponse } from "@/lib/tutor/server";
 import { readResultSnapshot } from "@/db/repositories/result-draft";
 export async function GET(request:Request):Promise<Response> {
   const access=await materialOwnerAccess();if(access.rejection) return access.rejection;
-  try {return privateJson((await readResultSnapshot(env.DB,access.owner,new URL(request.url).searchParams.get("id") ?? "")).draft,200);}catch(error:unknown){return tutorErrorResponse(error);}
+  try {const params=new URL(request.url).searchParams;const id=params.get("id") ?? "";if(params.has("answerId")) return privateJson(await readResultEvidence(env.DB,access.owner,resultEvidenceQuery.parse({resultId:id,answerId:params.get("answerId"),fingerprint:params.get("fingerprint")})),200);return privateJson((await readResultSnapshot(env.DB,access.owner,id)).draft,200);}catch(error:unknown){return tutorErrorResponse(error);}
 }
 
 export async function POST(request:Request):Promise<Response> {

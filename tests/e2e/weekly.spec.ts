@@ -24,6 +24,7 @@ test("시험 준비의 서버 탐색은 새 주간 본문을 즉시 반영한다
   const response=await page.request.post("/api/weekly",{headers:{origin:"http://127.0.0.1:5173","idempotency-key":randomUUID()},data:{action:"start",input:{id,courseId:overview.courses[0].id,date,availableMinutes:60}}});
   expect(response.status(),await response.text()).toBe(200);const view=weeklyView.parse(await response.json());
   await page.route("**/api/weekly/acceptance",async route=>{await route.fulfill({json:{view:route.request().method()==="GET" ? null : view}});});
+  await page.getByText("고급 · 소유자 진단 — 주간 점검", { exact: true }).click();
   await page.getByText("Task 13 고정 주간 검증",{exact:true}).click();await page.getByRole("button",{name:"시험 주간 기록 확인",exact:true}).click();await page.getByRole("button",{name:"고정 주간 시험 준비",exact:true}).click();
   await expect(page.getByRole("heading",{name:`${date} 주간`,exact:true})).toBeVisible();
   await expect(page.getByRole("spinbutton",{name:"다음 주 가용 시간 저장 (분)",exact:true})).toHaveValue("60");

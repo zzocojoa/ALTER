@@ -1,0 +1,23 @@
+[data-alter-ui] .alter-extraction-progress { margin-block: var(--alter-space-5); padding: var(--alter-space-4); background: var(--alter-surface-muted); border-radius: var(--alter-radius-panel); }
+[data-alter-ui] .alter-extraction-progress ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 6.5rem), 1fr)); gap: var(--alter-space-3); list-style: none; padding: 0; margin-block: var(--alter-space-3); }
+[data-alter-ui] .alter-extraction-progress li { display: flex; align-items: flex-start; gap: var(--alter-space-2); padding: var(--alter-space-3); background: var(--alter-surface); border: var(--alter-border-width) solid var(--alter-border); border-radius: var(--alter-radius-control); min-width: 0; }
+[data-alter-ui] .alter-extraction-progress li > div { display: grid; gap: var(--alter-space-1); min-width: 0; }
+[data-alter-ui] .alter-extraction-progress li[aria-current="step"] { border-color: var(--alter-primary); box-shadow: inset 0 0 0 1px var(--alter-primary); }
+[data-alter-ui] .alter-step-number { display: inline-grid; place-items: center; flex-shrink: 0; inline-size: 1.5em; block-size: 1.5em; border-radius: 50%; background: var(--alter-primary); color: var(--alter-on-primary); font-weight: var(--alter-weight-label); }
+
+[data-alter-ui] .alter-extraction-metadata { padding: var(--alter-space-4); margin-block: var(--alter-space-4); border-inline-start: 3px solid var(--alter-border); background: var(--alter-surface-muted); }
+[data-alter-ui] .alter-extraction-form { margin-block: var(--alter-space-4); }
+[data-alter-ui] .alter-extraction-form fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
+[data-alter-ui] .alter-extraction-form legend { font-weight: var(--alter-weight-label); margin-block-end: var(--alter-space-3); }
+[data-alter-ui] .alter-extraction-form .alter-extraction-check { display: flex; align-items: flex-start; justify-content: flex-start; gap: var(--alter-space-3); margin-block: var(--alter-space-3); }
+[data-alter-ui] .alter-extraction-check input[type="checkbox"] { flex: 0 0 auto; inline-size: 1.25rem; min-block-size: 1.25rem; block-size: 1.25rem; margin-block-start: .25em; }
+[data-alter-ui] .alter-extraction-check span { min-width: 0; flex: 1; }
+[data-alter-ui] .alter-extraction-correction { border-block-start: 1px solid var(--alter-border); padding-block: var(--alter-space-4); }
+[data-alter-ui] .alter-confirmed-source { border-inline-start: 3px solid var(--alter-primary); padding-inline-start: var(--alter-space-3); }
+
+[data-alter-ui] .alter-vision-form { padding: var(--alter-space-4); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); margin-block: var(--alter-space-4); }
+[data-alter-ui] .alter-vision-form fieldset { border: 0; padding: 0; min-width: 0; }
+[data-alter-ui] .alter-vision-form .alter-extraction-check { display: flex; align-items: flex-start; gap: var(--alter-space-3); margin-block: var(--alter-space-4); }
+[data-alter-ui] .alter-vision-cost { padding: var(--alter-space-4); background: var(--alter-surface-muted); margin-block: var(--alter-space-3); border-radius: var(--alter-radius-control); }
+
+[data-alter-ui] .alter-extraction-save-issue { padding: var(--alter-space-4); margin-block: var(--alter-space-4); border: 1px solid var(--alter-warning); border-radius: var(--alter-radius-control); }

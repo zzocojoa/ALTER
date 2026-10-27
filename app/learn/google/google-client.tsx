@@ -1,7 +1,9 @@
 "use client";
+import { GoogleConnectionDetails } from "./connection-details";
+import "./google.css";
 import { ServiceFailureHelp } from "../service-availability";
 import { GoogleDataClient } from "./google-data-client";
-import { useState, useSyncExternalStore } from "react";
+import { useRef, useState, useSyncExternalStore } from "react";
 import type { ReactElement } from "react";
 import { useRouter } from "next/navigation";
 import { clientReady, serverReady, subscribeToHydration } from "@/lib/client-ready";
@@ -11,12 +13,14 @@ import { googleConnectionCanUseData, googleConnectionOutcome } from "@/lib/googl
 const labels: Readonly<Record<NonNullable<GoogleConnectionView["connection"]>["state"], string>> = { active: "Google 계정 연결됨", partial: "일부 권한만 연결됨", refreshing: "Google 연결 갱신 중", "refresh-unknown": "Google 갱신 결과 확인 필요", reconsent: "Google 동의 다시 필요", disconnecting: "Google 연결 해제 중", disconnected: "Google 연결 해제됨" };
 export function GoogleConnectionClient({ initial, outcome }: Readonly<{ initial: GoogleConnectionView; outcome: string | null }>): ReactElement {
   const router = useRouter();
+  const inFlight = useRef<boolean>(false);
   const ready: boolean = useSyncExternalStore(subscribeToHydration, clientReady, serverReady);
   const [working, setWorking] = useState<boolean>(false);
   const [message, setMessage] = useState<string | null>(googleConnectionOutcome(outcome, initial.connection));
   const busy: boolean = working || !ready;
   const connection = initial.connection;
   const connect = async (): Promise<void> => {
+    if (inFlight.current) return; inFlight.current = true;
     setWorking(true); setMessage(null);
     try {
       const body = connection === null ? { kind: "connect" } : { kind: "reconnect", connectionId: connection.connectionId, generation: connection.generation };
@@ -28,10 +32,11 @@ export function GoogleConnectionClient({ initial, outcome }: Readonly<{ initial:
       if (target.origin !== "https://accounts.google.com" || target.pathname !== "/o/oauth2/v2/auth") throw new Error("Google 연결 주소를 확인하지 못했어요.");
       window.location.assign(target.toString());
     } catch (error: unknown) { if (error instanceof Error) setMessage("Google 연결 응답을 확인하지 못했어요. 상태를 새로 확인해 주세요."); else throw error; }
-    finally { setWorking(false); }
+    finally { inFlight.current = false; setWorking(false); }
   };
   const disconnect = async (): Promise<void> => {
-    if (connection === null) return;
+    if (connection === null || inFlight.current) return;
+    inFlight.current = true;
     setWorking(true); setMessage(null);
     try {
       const response: Response = await fetch("/api/google/disconnect", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ connectionId: connection.connectionId, generation: connection.generation }), cache: "no-store" });
@@ -42,16 +47,21 @@ export function GoogleConnectionClient({ initial, outcome }: Readonly<{ initial:
       }
       router.refresh();
     } catch (error: unknown) { if (error instanceof Error) setMessage("응답을 확인하지 못했어요. 상태를 새로 확인해 주세요."); else throw error; }
-    finally { setWorking(false); }
+    finally { inFlight.current = false; setWorking(false); }
   };
-  return <><section className="storage-check" aria-label="Google 연결 상태" inert={!ready}>
+  return <><section className="storage-check google-settings" aria-label="Google 연결 상태" inert={!ready}>
     <h2>{connection === null ? "아직 연결하지 않았어요" : labels[connection.state]}</h2>
     {initial.configurationIssue && <><p role="status">{initial.configurationIssue}</p><ServiceFailureHelp/></>}
     {message && <p role="status">{message}</p>}
-    {connection && <><p>{connection.email}</p>{googleConnectionCanUseData(connection) && <><p>선택한 파일: {connection.filesAllowed ? "권한 승인됨" : "권한 필요"} · ALTER 전용 캘린더: {connection.calendarAllowed ? "권한 승인됨" : "권한 필요"}</p>{connection.refreshExpiresAt !== null && <p>동의 유효기간: {new Date(connection.refreshExpiresAt).toLocaleString("ko-KR", { timeZone: "Asia/Seoul" })}</p>}</>}{connection.state === "disconnected" && connection.providerRevocation === "revoked" && <p>Google 접근 권한을 철회하고 저장 토큰을 제거했어요.</p>}{connection.state === "disconnected" && connection.providerRevocation !== "revoked" && <p role="status">ALTER의 저장 토큰은 제거했지만 Google 측 철회는 확인되지 않았어요. <a href="https://myaccount.google.com/connections" target="_blank" rel="noreferrer">Google 계정의 연결 관리</a>에서 확인해 주세요.</p>}</>}
+    {connection && <GoogleConnectionDetails connection={connection} configured={initial.configured}/>}
+    <section className="google-connect-actions" aria-label="연결·재동의"><h3>연결·재동의</h3><p>필요한 계정과 범위를 확인한 뒤 Google 동의 화면에서 진행해요.</p>
     <p><button className="storage-check-button" disabled={busy || !initial.configured || connection?.state === "disconnecting"} onClick={() => { void connect(); }}>{working ? "처리 중…" : connection === null ? "Google 연결하기" : "Google 다시 연결하기"}</button></p>
+    </section><section className="google-card google-disconnect" aria-label="연결 해제"><h3>연결 해제</h3><p>ALTER에 저장된 접근 토큰 제거와 Google 측 권한 철회 결과를 따로 확인해요.</p>
     {connection?.state === "disconnecting" && <p>해제 시작 후 2분이 지나도 상태가 바뀌지 않으면 아래 버튼으로 중단된 해제를 확인해 주세요. Google 측 철회 여부는 별도로 표시해요.</p>}
     {connection && connection.state !== "disconnected" && <p><button className="storage-check-button" disabled={busy} onClick={() => { void disconnect(); }}>{connection.state === "disconnecting" ? "중단된 해제 확인" : "Google 연결 해제"}</button></p>}
+    {connection?.state === "disconnected" && connection.providerRevocation === "revoked" && <p>Google 접근 권한을 철회하고 저장 토큰을 제거했어요.</p>}
+    {connection?.state === "disconnected" && connection.providerRevocation !== "revoked" && <p role="status">ALTER의 저장 토큰은 제거했지만 Google 측 철회는 확인되지 않았어요. <a href="https://myaccount.google.com/connections" target="_blank" rel="noreferrer">Google 계정의 연결 관리</a>에서 확인해 주세요.</p>}
+    {connection === null && <p>해제할 연결이 없어요.</p>}</section>
     <button className="storage-check-button" disabled={busy} onClick={() => { router.refresh(); }}>연결 상태 새로 확인</button>
-  </section>{connection && googleConnectionCanUseData(connection) && <GoogleDataClient key={`${connection.connectionId}:${connection.generation}`} connection={connection} />}</>;
+  </section>{initial.configured && connection && googleConnectionCanUseData(connection) && <GoogleDataClient key={`${connection.connectionId}:${connection.generation}`} connection={connection} />}</>;
 }

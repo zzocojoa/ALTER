@@ -1,0 +1,10 @@
+[data-alter-ui] .diagnostic-directory, [data-alter-ui] .diagnostic-tools { display: grid; gap: var(--alter-space-5); margin-block: var(--alter-space-6); }
+[data-alter-ui] .diagnostic-directory { padding: var(--alter-space-5); background: var(--alter-surface-muted); border-radius: var(--alter-radius-panel); }
+[data-alter-ui] .diagnostic-links, [data-alter-ui] .diagnostic-directory ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--alter-space-3); padding: 0; list-style: none; }
+[data-alter-ui] .diagnostic-directory .alter-link { min-block-size: 48px; }
+[data-alter-ui] .diagnostic-tools > section { min-inline-size: 0; padding-block: var(--alter-space-5); border-block-start: 1px solid var(--alter-border); scroll-margin-block-start: var(--alter-space-5); }
+[data-alter-ui] .diagnostic-tools summary, [data-alter-ui] .context-diagnostics > summary { min-block-size: 48px; padding-block: var(--alter-space-3); cursor: pointer; font-weight: var(--alter-weight-label); }
+[data-alter-ui] .diagnostic-tools button, [data-alter-ui] .context-diagnostics button { min-block-size: 48px; }
+[data-alter-ui] .context-diagnostics { margin-block: var(--alter-space-8); padding: var(--alter-space-4); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); background: var(--alter-surface-muted); scroll-margin-block-start: var(--alter-space-5); }
+[data-alter-ui] .context-diagnostics pre { overflow-wrap: anywhere; white-space: pre-wrap; }
+[data-alter-ui] .diagnostic-tools :focus-visible, [data-alter-ui] .context-diagnostics:focus-visible { outline: var(--alter-focus-width) solid var(--alter-focus); outline-offset: var(--alter-focus-offset); }

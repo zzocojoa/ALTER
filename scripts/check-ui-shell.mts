@@ -1,0 +1,150 @@
+import { build } from "vite";
+import { chromium, expect, type Page, type BrowserContext } from "@playwright/test";
+import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { resolve } from "node:path";
+import { createHash } from "node:crypto";
+import AxeBuilder from "@axe-core/playwright";
+
+await build({ configFile: false, logLevel: "warn", resolve: { alias: { "@": resolve(".") } }, build: { outDir: ".sites-runtime/ui-shell", emptyOutDir: true, copyPublicDir: false, lib: { entry: "tests/fixtures/ui-shell.tsx", formats: ["iife"], name: "UiShell", fileName: "fixture", cssFileName: "fixture" } }, define: { "process.env.NODE_ENV": JSON.stringify("production") }, esbuild: { jsx: "automatic" } });
+const js: string = await readFile(".sites-runtime/ui-shell/fixture.iife.js", "utf8");
+const css: string = await readFile(".sites-runtime/ui-shell/fixture.css", "utf8");
+const html: string = '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>앱 셸 검증</title><style>' + css + '</style><div id="fixture"></div><script>' + js.replaceAll("</script", "<\\/script") + '</script></html>';
+const browser = await chromium.launch({ headless: true });
+try {
+  const context: BrowserContext = await browser.newContext({ viewport: { width: 402, height: 874 }, locale: "ko-KR", reducedMotion: "reduce" });
+  const page: Page = await context.newPage();
+  const requests: string[] = [];
+  let savedDraft: string = "";
+  let saveFails: boolean = false;
+  let sessionStatus: number = 200;
+  let sessionDelay: number = 0;
+  await page.route("**/*", async (route): Promise<void> => {
+    const request = route.request();
+    requests.push(request.method() + " " + request.url());
+    if (request.url() === "https://ui-shell.local.test/api/session" && request.method() === "GET") {
+      const responseStatus: number = sessionStatus;
+      const responseDelay: number = sessionDelay;
+      if (responseDelay > 0) await new Promise<void>((done): void => { setTimeout(done, responseDelay); });
+      await route.fulfill({ status: responseStatus, contentType: "application/json", body: JSON.stringify(responseStatus === 200 ? { authenticated: true, role: "owner" } : { error: "denied" }) });
+      return;
+    }
+    if (request.url() === "https://ui-shell.local.test/__fixture/draft" && request.method() === "POST") {
+      const body = JSON.parse(request.postData() ?? "null") as { draft: string };
+      if (!saveFails) savedDraft = body.draft;
+      await route.fulfill({ status: saveFails ? 503 : 200, contentType: "application/json", body: JSON.stringify({ saved: !saveFails }) });
+      return;
+    }
+    if (request.method() !== "GET" || new URL(request.url()).origin !== "https://ui-shell.local.test") throw new TypeError("셸 검증의 외부 요청 차단: " + request.url());
+    await route.fulfill({ contentType: "text/html", body: html.replace('id="fixture"', 'id="fixture" data-draft="' + savedDraft.replaceAll("&", "&amp;").replaceAll('"', "&quot;").replaceAll("<", "&lt;") + '"') });
+  });
+  await page.goto("https://ui-shell.local.test/learn/tutor?id=fixture#tutor-answer");
+  await page.getByLabel("나의 답안", { exact: true }).fill("회전해도 남아야 할 한글 답안");
+  const widths: readonly number[] = [320, 767, 768, 1023, 1024, 1440];
+  for (const width of widths) {
+    await page.setViewportSize({ width, height: 874 });
+    await page.locator("h1").click();
+    const nav = page.getByRole("navigation", { name: "주 탐색", exact: true });
+    await expect(nav.getByRole("link")).toHaveCount(5);
+    await expect(nav.getByRole("link", { name: "학습", exact: true })).toHaveAttribute("aria-current", "page");
+    await expect(nav).toHaveCSS("position", width < 768 ? "fixed" : "static");
+    expect(await page.evaluate((): boolean => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await expect(page.getByLabel("나의 답안", { exact: true })).toHaveValue("회전해도 남아야 할 한글 답안");
+  }
+  await page.getByRole("button", { name: "탐색 접기", exact: true }).click();
+  await expect(page.getByRole("button", { name: "탐색 펼치기", exact: true })).toHaveAttribute("aria-expanded", "false");
+  await expect(page.getByRole("navigation", { name: "주 탐색", exact: true }).getByRole("link", { name: "자료", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "탐색 펼치기", exact: true }).click();
+  await page.setViewportSize({ width: 402, height: 360 });
+  await page.getByLabel("나의 답안", { exact: true }).focus();
+  await expect(page.locator("#alter-navigation")).not.toBeVisible();
+  await page.getByRole("button", { name: "답안 제출·저장", exact: true }).click();
+  await expect(page.getByLabel("제출 횟수", { exact: true })).toHaveText("1");
+  await expect(page.locator("#alter-navigation")).not.toBeVisible();
+  await page.locator("h1").click();
+  await expect(page.locator("#alter-navigation")).toBeVisible();
+  await page.getByRole("button", { name: "집중 화면 전환", exact: true }).click();
+  await expect(page.locator(".alter-sidebar")).not.toBeVisible();
+  await expect(page.getByRole("link", { name: "오늘로", exact: true })).toBeVisible();
+  saveFails = true;
+  await page.getByRole("link", { name: "오늘로", exact: true }).click();
+  await expect(page.getByRole("alert")).toHaveText("모의 저장 실패 · 입력 유지");
+  await expect(page).toHaveURL(/learn\/tutor\?id=fixture/);
+  await expect(page.getByLabel("나의 답안", { exact: true })).toHaveValue("회전해도 남아야 할 한글 답안");
+  await page.getByRole("button", { name: "저장 대기 전환", exact: true }).click();
+  const beforeBusy: number = requests.length;
+  await page.getByRole("link", { name: "오늘로", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("저장·사진 전송 결과를 확인한 뒤");
+  expect(requests.length).toBe(beforeBusy);
+  await page.getByRole("button", { name: "저장 대기 전환", exact: true }).click();
+  saveFails = false;
+  await page.getByRole("link", { name: "오늘로", exact: true }).click();
+  await expect(page).toHaveURL("https://ui-shell.local.test/learn");
+  await expect(page.getByLabel("나의 답안", { exact: true })).toHaveValue("회전해도 남아야 할 한글 답안");
+  const expected = [["오늘", "/learn"], ["자료", "/learn/materials"], ["학습", "/learn/tutor"], ["기록", "/learn/results"], ["더보기", "/learn/more"]] as const;
+  for (const [name, path] of expected) {
+    const link = page.getByRole("navigation", { name: "주 탐색", exact: true }).getByRole("link", { name, exact: true });
+    await expect(link).toHaveAttribute("href", path);
+    const prior: number = requests.length;
+    await link.hover();
+    await page.waitForTimeout(50);
+    expect(requests.length).toBe(prior);
+    await link.click();
+    await expect(page).toHaveURL("https://ui-shell.local.test" + path);
+    await expect(page.getByRole("navigation", { name: "주 탐색", exact: true }).getByRole("link", { name, exact: true })).toHaveAttribute("aria-current", "page");
+  }
+  await expect(page.getByRole("main")).toHaveCount(1);
+  await expect(page.getByRole("heading", { level: 1 })).toHaveCount(1);
+  await expect(page.getByRole("heading", { level: 1 })).toBeFocused();
+  await page.getByRole("link", { name: "본문으로 바로가기", exact: true }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("main")).toBeFocused();
+  await expect(page.getByRole("link", { name: "오늘로", exact: true })).toHaveAttribute("href", "/learn");
+  await page.goBack();
+  await expect(page).toHaveURL("https://ui-shell.local.test/learn/more");
+  await page.goBack();
+  await expect(page).toHaveURL("https://ui-shell.local.test/learn/results");
+  await expect(page.locator(".alter-session-content")).toBeVisible();
+  await page.goForward();
+  await expect(page).toHaveURL("https://ui-shell.local.test/learn/more");
+  await page.goForward();
+  await expect(page).toHaveURL("https://ui-shell.local.test/learn/more#learn-main");
+  await expect(page.locator(".alter-session-content")).toBeVisible();
+  for (const status of [401, 403, 423, 503]) {
+    sessionStatus = status;
+    await page.evaluate((): void => { window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true })); });
+    await expect(page.locator(".alter-session-content")).not.toBeVisible();
+    await page.evaluate((): void => { window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })); });
+    await expect(page.getByRole("alert")).toContainText("HTTP " + status);
+    await expect(page.getByRole("navigation", { name: "주 탐색", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("textbox", { name: "나의 답안", exact: true })).toHaveCount(0);
+    sessionStatus = 200;
+    await page.getByRole("button", { name: "접근 상태 다시 확인", exact: true }).click();
+    await expect(page.locator(".alter-session-content")).toBeVisible();
+    await expect(page.getByLabel("나의 답안", { exact: true })).toHaveValue(savedDraft);
+  }
+  sessionDelay = 250;
+  const oldSession = page.waitForRequest("https://ui-shell.local.test/api/session");
+  await page.evaluate((): void => { window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true })); window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })); });
+  await oldSession;
+  sessionStatus = 403;
+  sessionDelay = 0;
+  await page.evaluate((): void => { window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true })); window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })); });
+  await expect(page.getByRole("alert")).toContainText("HTTP 403");
+  await page.waitForTimeout(300);
+  await expect(page.locator(".alter-session-content")).not.toBeVisible();
+  sessionStatus = 200;
+  await page.getByRole("button", { name: "접근 상태 다시 확인", exact: true }).click();
+  await expect(page.locator(".alter-session-content")).toBeVisible();
+  await page.setViewportSize({ width: 320, height: 600 });
+  const unexpectedWrites: readonly string[] = requests.filter((request): boolean => !request.startsWith("GET ") && request !== "POST https://ui-shell.local.test/__fixture/draft");
+  expect(unexpectedWrites).toEqual([]);
+  expect(requests.filter((request): boolean => request === "POST https://ui-shell.local.test/__fixture/draft")).toHaveLength(2);
+  const axe = await new AxeBuilder({ page }).analyze();
+  expect(axe.violations).toEqual([]);
+  expect(await page.pageErrors()).toEqual([]);
+  await mkdir("outputs/ui-shell", { recursive: true });
+  await page.screenshot({ path: "outputs/ui-shell/shell-320.png", fullPage: true });
+  const report = { status: "passed", sourceSha256: createHash("sha256").update(js + css).digest("hex"), responsiveWidths: widths, singleNavigation: true, singleMainAndHeading: true, skipLinkFocus: true, safeReturn: true, collapsePreservesInput: true, shortViewportSubmission: true, focusModePreservesExit: true, failedAndBusyExitBlocked: true, confirmedDraftResumed: true, nativeHistory: true, staleSessionCannotReveal: true, simulatedBfcacheConcealAndRevalidate: [401, 403, 423, 503, 200], hoverPrefetchRequests: 0, automaticAiOrGoogleWrites: 0, explicitSyntheticDraftWrites: 2, axeViolations: axe.violations, requests, actualDevice: false, paidCalls: 0, externalWrites: 0 };
+  await writeFile("outputs/ui-shell/report.json", JSON.stringify(report, null, 2) + "\n");
+  console.log(JSON.stringify(report));
+} finally { await browser.close(); }

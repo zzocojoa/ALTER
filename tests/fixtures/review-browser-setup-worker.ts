@@ -19,6 +19,7 @@ import { librarianOutputFixture } from "./librarian-output";
 import { scopeInput } from "../../lib/librarian/contracts";
 import { linkInput } from "../../lib/librarian/contracts";
 import { confirmedPlanFixture } from "./confirmed-plan";
+import { browserStudyScopes } from "./browser-study-scopes";
 import type { PageResult } from "../../lib/extraction/result";
 /** 격리된 로컬 D1·R2에 실제 저장 경로로 범위를 준비합니다. AI 응답만 모의 값입니다. */
 const worker = { async fetch(request: Request, environment: Readonly<{ DB: D1Database; BUCKET: R2Bucket }>): Promise<Response> {
@@ -28,8 +29,6 @@ const worker = { async fetch(request: Request, environment: Readonly<{ DB: D1Dat
   const upload = await uploadMaterialBody(DB, BUCKET, owner, id, 1, request);
   await completeMaterialTransfer(DB, BUCKET, owner, id, upload.version, { pdf, jpeg }, new AbortController().signal);
   const transfer = await getMaterialTransfer(DB, owner, id);
-  const units = await listConfirmedUnits(DB, owner); const unit = units.find((item): boolean => item.prerequisiteUnitIds.length === 0);
-  if (!unit) throw new Error("로컬 확정 단원이 없어요.");
   const cmd = (expectedVersion: number) => ({ owner, requestKey: crypto.randomUUID(), expectedVersion });
   const selection = buildSelection(materialFileReference(transfer), "1", "");
   await saveExtractionSelection(DB, cmd(0), transfer, selection);
@@ -44,14 +43,14 @@ const worker = { async fetch(request: Request, environment: Readonly<{ DB: D1Dat
   const confirmed = await getExtractionPage(DB, owner, page.id);
   await createExtractionSource(DB, cmd(confirmed.version), proof, confirmed, "s0");
   const sourceId = await DB.prepare("SELECT source_id FROM extraction_sources WHERE owner_id=? AND result_id=?").bind(owner.userId, confirmed.resultId).first<string>("source_id"); if (!sourceId) throw new Error("출처 누락");
-  const secondPlan = await confirmedPlanFixture(DB, owner);
-  const secondUnit = (await listConfirmedUnits(DB, owner)).find(item=>item.planId===secondPlan.id && item.prerequisiteUnitIds.length===0);
-  if(!secondUnit) throw new Error("두 번째 로컬 확정 단원이 없어요.");
   const scopeIds: string[]=[];
-  for(const chosen of [unit,secondUnit]) {
+  for(const scopeId of browserStudyScopes.flatMap((item): readonly string[] => [item.reviewId, item.historyId])) {
+  const plan = await confirmedPlanFixture(DB, owner);
+  const chosen = (await listConfirmedUnits(DB, owner)).find(item=>item.planId===plan.id && item.prerequisiteUnitIds.length===0);
+  if(!chosen) throw new Error("브라우저 검사 전용 확정 단원이 없어요.");
   const input = linkInput.parse({ id: recordId.parse(crypto.randomUUID()), planVersionId: chosen.planVersionId, unitId: chosen.unitId, materialId: transfer.materialId, toc: "분수의 의미", sourceRefIds: [sourceId], bibliography: { author: "ALTER", origin: "자체 시험 자료", checked: true, evidenceSourceId: sourceId }, readingMinutes: 5 });
   await createMaterialLink(DB, BUCKET, cmd(1), input);
-  const scopeValue = scopeInput.parse({ id: crypto.randomUUID(),planVersionId: chosen.planVersionId,unitId: chosen.unitId,date: "2026-10-25",availableMinutes: 30,questionMinutes: 5,practiceMinutes: 10,linkIds: [input.id] });
+  const scopeValue = scopeInput.parse({ id: scopeId,planVersionId: chosen.planVersionId,unitId: chosen.unitId,date: "2026-10-25",availableMinutes: 30,questionMinutes: 5,practiceMinutes: 10,linkIds: [input.id] });
   await createStudyScope(DB, BUCKET, cmd(1), scopeValue);
   const start = await getStudyScope(DB, owner, scopeValue.id);
   await beginStoredScopeEvaluation(DB, BUCKET, cmd(start.version), scopeValue.id);

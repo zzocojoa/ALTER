@@ -78,7 +78,12 @@
     "test:backup-browser": "node scripts/build-backup-browser.mts && PLAYWRIGHT_BROWSERS_PATH=0 playwright test --config playwright.backup.config.ts",
     "test:learning-flow": "node --import ./scripts/sites-env.mjs scripts/check-learning-flow.mts",
     "test:learning-flow-browser": "node scripts/build-learning-browser.mts && node scripts/build-tutor-browser.mts && node scripts/build-editor-browser.mts && node scripts/build-results-browser.mts && PLAYWRIGHT_BROWSERS_PATH=0 node --import ./scripts/sites-env.mjs ./node_modules/@playwright/test/cli.js test --config playwright.learning-flow.config.ts",
-    "test:weekly-adjustments": "node --import ./scripts/sites-env.mjs scripts/check-weekly-adjustments.mts"
+    "test:weekly-adjustments": "node --import ./scripts/sites-env.mjs scripts/check-weekly-adjustments.mts",
+    "test:ui-foundation": "PLAYWRIGHT_BROWSERS_PATH=0 node scripts/check-ui-foundation.mts",
+    "test:ui-components": "PLAYWRIGHT_BROWSERS_PATH=0 node scripts/check-ui-components.mts",
+    "test:ui-shell": "PLAYWRIGHT_BROWSERS_PATH=0 node scripts/check-ui-shell.mts",
+    "test:materials-browser": "node scripts/build-materials-browser.mts && PLAYWRIGHT_BROWSERS_PATH=0 playwright test --config playwright.materials.config.ts",
+    "test:extraction-replay": "PLAYWRIGHT_BROWSERS_PATH=0 playwright test --config playwright.extraction-replay.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

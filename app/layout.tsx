@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import type { ReactElement, ReactNode } from "react";
 import "./globals.css";
+import "./styles/tokens.css";
+import "./styles/foundation.css";
+import "./styles/components.css";
+import "./styles/shell.css";
 
 export const metadata: Metadata = {
   title: "ALTER · 나의 학습 공간",

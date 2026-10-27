@@ -18,6 +18,7 @@ test("범위 API는 미인증·교차 출처·다른 소유자 참조를 거부�
 test("자료 준비·정확한 텍스트 이동·비교·시간·명시적 확정 화면", async ({ page },info) => {
   await page.goto("/signin-with-chatgpt?return_to=/learn/library");
   await expect(page.locator(".storage-check button").first()).toBeEnabled();
+  await page.getByText("고급 · 소유자 진단 — 자료 선정", { exact: true }).click();
   await page.getByText("Task 8 고정 자료 검증",{ exact: true }).click();
   await page.getByRole("button",{ name: "시험 자료 준비·저장 상태 확인",exact: true }).click();
   await expect(page.getByText(/시험 범위 기록 .*판/)).toBeVisible({ timeout: 30000 });
@@ -44,7 +45,7 @@ test("자료 준비·정확한 텍스트 이동·비교·시간·명시적 확�
     await route.fulfill({ json: view });
   });
   await page.route(`**/api/librarian?id=${LIBRARIAN_ACCEPTANCE_ID}`,async (route): Promise<void> => { await route.fulfill({ json: view }); });
-  await page.reload();
+  await page.goto(`/learn/library?id=${LIBRARIAN_ACCEPTANCE_ID}`);
   await page.getByRole("button",{ name: "선택 자료를 AI로 비교하고 범위 제안받기",exact: true }).click();
   await expect(page.getByText("읽기·질문·직접 수행 총 20분",{ exact: true })).toBeVisible();
   await expect(page.getByRole("button",{ name: "오늘의 학습 범위 확정",exact: true })).toBeDisabled();
@@ -54,6 +55,7 @@ test("자료 준비·정확한 텍스트 이동·비교·시간·명시적 확�
   await page.getByRole("button",{ name: "최신 범위 확인",exact: true }).click(); await page.getByRole("checkbox",{ name: /판의 원문·선정 근거/ }).check();
   await page.getByRole("button",{ name: "오늘의 학습 범위 확정",exact: true }).click();
   await expect(page.getByText("검토한 학습 범위를 저장했어요.",{ exact: false })).toBeVisible();
+  await page.getByRole("button", { name: "4. 시간", exact: true }).click();
   await page.getByLabel("오늘의 학습 수준·가정 (선택)",{exact:true}).fill("가려도 보관할 범위 입력");
   let denied:boolean=false;let delayRead:boolean=true;let releaseRead:()=>void=()=>{};let notifyRead:()=>void=()=>{};
   const readStarted=new Promise<void>(resolve=>{notifyRead=resolve;});const readGate=new Promise<void>(resolve=>{releaseRead=resolve;});
@@ -66,6 +68,8 @@ test("자료 준비·정확한 텍스트 이동·비교·시간·명시적 확�
   await page.evaluate(()=>window.dispatchEvent(new Event("alter:recall-starting")));releaseRead();await expect(page.locator(".library-content")).toBeHidden();await expect(page.locator(".library-bundle")).toHaveCount(0);
   delayRead=false;denied=true;await page.getByRole("button",{name:"자료 접근 다시 확인",exact:true}).click();await expect(page.getByRole("alert")).toContainText("HTTP 403");await expect(page.locator(".library-bundle")).toHaveCount(0);
   denied=false;await page.getByRole("button",{name:"자료 접근 다시 확인",exact:true}).click();await expect(page.locator(".library-bundle blockquote")).toHaveText(STUDY_ACCEPTANCE_TEXT);await expect(page.getByLabel("오늘의 학습 수준·가정 (선택)",{exact:true})).toHaveValue("가려도 보관할 범위 입력");
+  await page.getByRole("button", { name: "5. 검토", exact: true }).click();
+  await expect(page.locator(".library-bundle blockquote")).toBeVisible();
   await page.screenshot({ path: `outputs/librarian-${info.project.name}.png`,fullPage: true });
   expect(await page.evaluate((): boolean => document.documentElement.scrollWidth <= innerWidth)).toBe(true); expect(await page.pageErrors()).toEqual([]);
 });

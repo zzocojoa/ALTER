@@ -1,7 +1,27 @@
+import { GoogleReportStatus } from "../../app/learn/weekly/google-report-status";
+import "../../app/learn/weekly/weekly.css";
+import { installFixtureGooglePicker } from "./google-picker-sdk";
+import { GoogleConnectionClient } from "../../app/learn/google/google-client";
+import { googleConnectionFixture } from "./google-connection-view";
+import { z } from "zod";
+import { externalWorkflowState } from "../../lib/external/state";
+import { calendarViewFixture } from "./calendar-view";
+import type { GoogleCalendarView } from "../../lib/google-calendar/view";
+import "../../app/styles/tokens.css";
+import "../../app/styles/foundation.css";
+import "../../app/styles/components.css";
 import { createRoot } from "react-dom/client";
 import { GoogleCalendarClient } from "../../app/learn/calendar/calendar-client";
 import { GoogleReferencesClient } from "../../app/learn/google/references/references-client";
 import "../../app/globals.css";
 import "../../app/learn/calendar/calendar.css";
 const root=document.getElementById("google-fixture");if(!root)throw new Error("Google 화면 검사 요소가 없습니다.");
-createRoot(root).render(<main className="site-shell"><GoogleCalendarClient initial={{setup:{workflow:null,calendarId:"fixture-calendar@group.calendar.google.com"},study:null,review:null}}/><GoogleReferencesClient files={[{id:"fixture-reference",name:"선택한 시험 문서",mimeType:"application/vnd.google-apps.document"}]} courses={[{id:"00000000-0000-4000-8000-000000001600",title:"시험 학습 공간"}]}/></main>);
+const parameters = new URLSearchParams(location.search);
+const initial: GoogleCalendarView = parameters.has("state") ? calendarViewFixture(externalWorkflowState.parse(parameters.get("state")), z.enum(["setup", "schedule"]).parse(parameters.get("target"))) : { setup: { workflow: null, calendarId: "fixture-calendar@group.calendar.google.com" }, study: null, review: null };
+const connectionState = parameters.get("connection");
+if (parameters.get("panel") === "connection") {
+  installFixtureGooglePicker(window);
+  const state = connectionState === "none" ? null : z.enum(["active", "partial", "refreshing", "refresh-unknown", "reconsent", "disconnecting", "disconnected"]).parse(connectionState);
+  createRoot(root).render(<main data-alter-ui className="site-shell"><GoogleConnectionClient initial={googleConnectionFixture(state, parameters.get("configured") !== "0")} outcome={parameters.get("outcome")}/></main>);
+} else if(parameters.get("panel")==="report") createRoot(root).render(<main data-alter-ui className="site-shell"><GoogleReportStatus versionId="00000000-0000-4000-8000-000000001396" disabled={false} refreshToken={0}/></main>);
+else createRoot(root).render(<main data-alter-ui className="site-shell"><GoogleCalendarClient initial={initial}/><GoogleReferencesClient files={[{id:"fixture-reference",name:"선택한 시험 문서",mimeType:"application/vnd.google-apps.document"}]} courses={[{id:"00000000-0000-4000-8000-000000001600",title:"시험 학습 공간"}]}/></main>);

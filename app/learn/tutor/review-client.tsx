@@ -1,12 +1,16 @@
 "use client";
+import { groupReviewPlans, requireReviewResponse } from "@/lib/reviews/presentation";
+import "./reviews.css";
 import { useLocationFragment } from "@/lib/use-location-fragment";
+import { ReviewInterval } from "./review-interval";
+import { ReviewTiming } from "./review-timing";
 import { ReviewStart } from "./review-start";
 import { CheckTarget } from "../check-target";
 import { useRouter } from "next/navigation";
 import { RECALL_START_EVENT } from "@/lib/tutor/client-privacy";
 import { useCallback,useEffect,useRef,useState } from "react";
 import type { ReactElement } from "react";
-import { recordId } from "@/lib/domain/contracts";
+import { canonicalJson, recordId } from "@/lib/domain/contracts";
 import { instant } from "@/lib/reviews/calendar";
 import { proposeInterval } from "@/lib/reviews/schedule";
 import { learningType,reviewConditions } from "@/lib/reviews/contracts";
@@ -15,31 +19,80 @@ import { reviewOverview } from "@/lib/reviews/view";
 import type { ReviewOverview,SavedReviewPlan } from "@/lib/reviews/view";
 import { reviewAction } from "@/lib/reviews/request";
 import type { ReviewAction } from "@/lib/reviews/request";
-import { librarianJson } from "../library/client-api";
+import { z } from "zod";
+import { librarianJson, LibrarianRequestError } from "../library/client-api";
 const typeLabels:Readonly<Record<LearningType,string>>={memory:"암기 · 기억에서 꺼내기",concept:"개념 · 새 예시 설명",skill:"기술 · 작은 작업 수행",judgment:"판단 · 선택과 이유"};
 const dueLabels:Readonly<Record<SavedReviewPlan["dueState"],string>>={proposed:"제안 확인 필요",future:"예정",today:"오늘",overdue:"기한 경과 · 미제출",recheck:"정정 후 재확인",complete:"제출 결과 확정"};
 type SendReview=(input:ReviewAction)=>Promise<void>;
 export function ReviewClient({initial}:Readonly<{initial:ReviewOverview}>):ReactElement {
   const router=useRouter();
-  const [retryAvailable,setRetryAvailable]=useState<boolean>(false);const [data,setData]=useState<ReviewOverview>(initial);const [busy,setBusy]=useState<boolean>(false);const [error,setError]=useState<string>("");const [covered,setCovered]=useState<boolean>(false);const pending=useRef<Readonly<{body:string;key:string}>|null>(null);const inFlight=useRef<boolean>(false);
-  async function send(input:ReviewAction):Promise<void> {if(inFlight.current) return;inFlight.current=true;setBusy(true);setError("");const body=JSON.stringify(input);const key=pending.current?.body===body ? pending.current.key : crypto.randomUUID();pending.current={body,key};setRetryAvailable(true);if(input.action==="start") window.dispatchEvent(new Event(RECALL_START_EVENT));
-    try {const next:unknown=await librarianJson("/api/reviews",{method:"POST",headers:{"content-type":"application/json","idempotency-key":key},body});if(input.action==="start"){const href=`/learn/tutor?id=${input.id}`;router.push(href);}else setData(reviewOverview.parse(next));pending.current=null;setRetryAvailable(false);}
-    catch(cause:unknown){if(!(cause instanceof Error)) throw cause;setError(cause.message);}finally{inFlight.current=false;setBusy(false);}}
-  const refresh=useCallback(async():Promise<void>=>{if(inFlight.current) return;try{const value=await librarianJson("/api/reviews",{method:"GET"});setData(reviewOverview.parse(value));setCovered(false);setError("");}catch(cause:unknown){if(!(cause instanceof Error)) throw cause;setError(cause.message);}},[]);
-  useEffect(()=>{function hide():void{setCovered(true);}function show():void{void refresh();}window.addEventListener(RECALL_START_EVENT,hide);window.addEventListener("pagehide",hide);window.addEventListener("pageshow",show);return ():void=>{window.removeEventListener(RECALL_START_EVENT,hide);window.removeEventListener("pagehide",hide);window.removeEventListener("pageshow",show);};},[refresh]);
-  if(covered) return <div><p role="status">복습 시작 또는 접근 권한을 확인하고 있어요. {error}</p><button disabled={busy} onClick={():void=>{void refresh();}}>복습 목록 접근 다시 확인</button>{retryAvailable && <button disabled={busy} onClick={():void=>{if(pending.current) void send(reviewAction.parse(JSON.parse(pending.current.body)));}}>같은 복습 요청 결과 확인</button>}</div>;
-  return <section id="reviews" className="tutor-panel" aria-label="복습 일정"><h2>오늘과 다음 복습</h2><p>{data.today} · 서울 날짜 기준. 복습은 다음 단원 수업과 함께 진행할 수 있어요.</p>{error && <p role="alert">{error} 저장 결과가 불확실하면 같은 입력으로 재시도하세요.</p>}{data.plans.length===0 && data.legacy.length===0 && <p>확정된 결과에서 생성된 복습 제안이 아직 없어요.</p>}{data.legacy.map((item)=><p key={item.id}>{item.title} <button disabled={busy} onClick={():void=>{void send({action:"prepare",id:item.id,expectedVersion:item.version});}}>기존 확정 결과의 복습 제안 만들기</button></p>)}{data.plans.map((plan)=><ReviewCard key={`${plan.id}:${plan.version}:${plan.reviewVersion}`} plan={plan} today={data.today} related={data.plans.filter((item)=>item.errorId===plan.errorId)} busy={busy} send={send}/>)}</section>;
+  const [retryAvailable,setRetryAvailable]=useState<boolean>(false);const [data,setData]=useState<ReviewOverview>(initial);const latest=useRef<ReviewOverview>(initial);
+  const [busy,setBusy]=useState<boolean>(false);const [error,setError]=useState<string>("");const [covered,setCovered]=useState<boolean>(false);
+  const pending=useRef<Readonly<{body:string;key:string}>|null>(null);const inFlight=useRef<boolean>(false);const epoch=useRef<number>(0);const concealed=useRef<boolean>(false);
+  const restoreWanted=useRef<boolean>(false);const [restoreRequest,setRestoreRequest]=useState<number>(0);
+  function accept(next:ReviewOverview):void {
+    requireReviewResponse(latest.current,next);
+    latest.current=next;setData(next);
+  }
+  async function send(input:ReviewAction):Promise<void> {
+    if(inFlight.current) return;
+    const body:string=canonicalJson(input);
+    if(pending.current && pending.current.body!==body) {setError("이전 요청의 저장 결과가 아직 미확인이에요. 같은 복습 요청 결과 확인으로 먼저 확인해 주세요. 입력은 보존했어요.");return;}
+    inFlight.current=true;setBusy(true);setError("");const key:string=pending.current?.key ?? crypto.randomUUID();pending.current={body,key};setRetryAvailable(true);
+    if(input.action==="start") window.dispatchEvent(new Event(RECALL_START_EVENT));
+    const generation:number=epoch.current;
+    try {
+      const next:unknown=await librarianJson("/api/reviews",{method:"POST",headers:{"content-type":"application/json","idempotency-key":key},body});
+      if(generation!==epoch.current) throw new Error("화면을 가린 뒤 도착한 이전 응답이에요. 같은 요청 결과를 다시 확인해 주세요.");
+      if(input.action==="start") {
+        const href:string=z.object({href:z.string()}).strict().parse(next).href;
+        if(href!==`/learn/tutor?id=${input.id}`) throw new Error("복습 시작 응답이 요청한 회차와 다릅니다. 같은 요청 결과를 다시 확인해 주세요.");
+        pending.current=null;setRetryAvailable(false);router.push(`${href}#tutor-answer-area`);
+      } else {
+        const overview=reviewOverview.parse(next);
+        accept(overview);pending.current=null;setRetryAvailable(false);
+      }
+    } catch(cause:unknown) {
+      if(!(cause instanceof Error)) throw cause;
+      if(cause instanceof LibrarianRequestError && cause.status>=400 && cause.status<500) {pending.current=null;setRetryAvailable(false);if([401,403].includes(cause.status)) {concealed.current=true;setCovered(true);}}
+      setError(cause.message);
+    } finally {inFlight.current=false;setBusy(false);}
+  }
+  const refresh=useCallback(async():Promise<void>=>{
+    if(inFlight.current) return;inFlight.current=true;setBusy(true);setError("");restoreWanted.current=false;const generation:number=epoch.current;
+    try {
+      const next=reviewOverview.parse(await librarianJson("/api/reviews",{method:"GET"}));
+      if(generation!==epoch.current) throw new Error("화면을 가린 뒤 도착한 이전 조회는 표시하지 않았어요. 다시 확인해 주세요.");
+      requireReviewResponse(latest.current,next);
+      latest.current=next;setData(next);concealed.current=false;setCovered(false);
+    }catch(cause:unknown){if(!(cause instanceof Error)) throw cause;if(cause instanceof LibrarianRequestError && [401,403].includes(cause.status)) {concealed.current=true;setCovered(true);}setError(cause.message);}finally{inFlight.current=false;setBusy(false);}
+  },[]);
+  useEffect(()=>{
+    function hide():void{concealed.current=true;epoch.current+=1;restoreWanted.current=false;setCovered(true);}
+    function show():void{if(!concealed.current) return;restoreWanted.current=true;setCovered(true);setRestoreRequest((value):number=>value+1);}
+    function visibility():void{if(document.visibilityState==="hidden") hide();else show();}
+    window.addEventListener(RECALL_START_EVENT,hide);window.addEventListener("pagehide",hide);window.addEventListener("pageshow",show);document.addEventListener("visibilitychange",visibility);
+    return ():void=>{window.removeEventListener(RECALL_START_EVENT,hide);window.removeEventListener("pagehide",hide);window.removeEventListener("pageshow",show);document.removeEventListener("visibilitychange",visibility);};
+  },[]);
+  useEffect(()=>{if(!covered || busy || !restoreWanted.current) return;const timer=setTimeout(():void=>{void refresh();},0);return ():void=>clearTimeout(timer);},[covered,busy,restoreRequest,refresh]);
+  return <>{covered && <section aria-label="복습 접근 재확인"><p role="status">복습 시작 또는 접근 권한을 확인하고 있어요. {error}</p><button disabled={busy} onClick={():void=>{void refresh();}}>복습 목록 접근 다시 확인</button>{retryAvailable && <button disabled={busy} onClick={():void=>{if(pending.current) void send(reviewAction.parse(JSON.parse(pending.current.body)));}}>같은 복습 요청 결과 확인</button>}</section>}<section hidden={covered} inert={covered} id="reviews" className="tutor-panel review-overview" aria-label="복습 일정"><h2>오늘과 다음 복습</h2><p>{data.today} · 서울 날짜 기준. 복습은 다음 단원 수업과 함께 진행할 수 있어요.</p>{error && <p role="alert">{error} 저장 결과가 불확실하면 같은 입력으로 재시도하세요.</p>}{retryAvailable && <button disabled={busy} onClick={():void=>{if(pending.current) void send(reviewAction.parse(JSON.parse(pending.current.body)));}}>같은 복습 요청 결과 확인</button>}{data.plans.length===0 && data.legacy.length===0 && <p>확정된 결과에서 생성된 복습 제안이 아직 없어요.</p>}{data.legacy.map((item)=><p key={item.id}>{item.title} <button disabled={busy} onClick={():void=>{void send({action:"prepare",id:item.id,expectedVersion:item.version});}}>기존 확정 결과의 복습 제안 만들기</button></p>)}{groupReviewPlans(data.plans).map((group)=><section className="review-group" key={group.state} aria-label={`${group.label} 복습`}><h3>{group.label} <span className="review-count">{group.plans.length}개</span></h3><p className="alter-caption">{group.description}</p>{group.plans.length===0 ? <p className="review-empty">해당 복습이 없어요.</p> : group.plans.map((plan)=><ReviewCard key={`${plan.id}:${plan.version}:${plan.reviewVersion}`} plan={plan} today={data.today} related={data.plans.filter((item)=>item.errorId===plan.errorId)} busy={busy} locked={retryAvailable} send={send}/>)}</section>)}</section></>;
 }
-function ReviewCard({plan,today,related,busy,send}:Readonly<{plan:SavedReviewPlan;today:string;related:readonly SavedReviewPlan[];busy:boolean;send:SendReview}>):ReactElement {
+function ReviewCard({plan,today,related,busy,locked,send}:Readonly<{plan:SavedReviewPlan;today:string;related:readonly SavedReviewPlan[];busy:boolean;locked:boolean;send:SendReview}>):ReactElement {
   const [type,setType]=useState<LearningType>(plan.task.type);const [dueDate,setDueDate]=useState<string>(plan.decision.dueDate<today ? today : plan.decision.dueDate);const [goalDate,setGoalDate]=useState<string>(plan.proposal.conditions.goalDate ?? "");const [retention,setRetention]=useState<number>(plan.proposal.conditions.retentionDays);const [minutes,setMinutes]=useState<number>(plan.proposal.conditions.availableMinutes);const [reason,setReason]=useState<string>("");const [correctionReason,setCorrectionReason]=useState<string>("");const [evidence,setEvidence]=useState<string>("");const [question,setQuestion]=useState<string>(plan.question);const [explanation,setExplanation]=useState<string>(plan.explanation);const [nextAction,setNextAction]=useState<string>(plan.nextAction);const ids=useRef({id:recordId.parse(crypto.randomUUID()),questionId:recordId.parse(crypto.randomUUID()),attemptId:recordId.parse(crypto.randomUUID()),correctionId:recordId.parse(crypto.randomUUID())});
   const fragment: string = useLocationFragment();
   const details = useRef<HTMLDetailsElement>(null);
   const checkId: string = `check-review-${plan.id}`;
-  useEffect((): void => { if (fragment === `#${checkId}` && details.current) details.current.open = true; }, [fragment, checkId]);
+  useEffect((): (() => void) | void => {
+    if (fragment !== `#${checkId}` && fragment !== `#review-${plan.id}` || !details.current) return;
+    details.current.open = true;
+    if (fragment !== `#review-${plan.id}`) return;
+    const frame: number = window.requestAnimationFrame((): void => { details.current?.querySelector("summary")?.focus({ preventScroll: true }); details.current?.scrollIntoView({ block: "start" }); });
+    return (): void => window.cancelAnimationFrame(frame);
+  }, [fragment, checkId, plan.id]);
   const checkedConditions=reviewConditions.safeParse({goalDate:goalDate || null,retentionDays:retention,availableMinutes:minutes,requiredMinutes:plan.proposal.conditions.requiredMinutes});
   const suggested=checkedConditions.success ? proposeInterval(plan.proposal.stage,{kind:"not-submitted"},checkedConditions.data,instant.parse(`${plan.proposal.anchorDate}T00:00:00+09:00`),"Asia/Seoul") : null;
-  return <CheckTarget id={checkId} instruction="② 복습 화면 확인. 아래 큰 상자를 눌러 접고, 다시 눌러 펼쳐 주세요."><details ref={details} id={`review-${plan.id}`} className="review-card" data-testid={`review-${plan.id}`}><summary><strong>{plan.title}</strong><span>{dueLabels[plan.dueState]} · {plan.decision.dueDate}</span><span className="review-open-label">＋ 복습 내용 펼치기</span><span className="review-close-label">− 복습 내용 접기</span></summary><ReviewStart plan={plan} today={today} busy={busy} onStart={():void=>{void send({action:"start",id:ids.current.id,reviewId:plan.id,expectedVersion:plan.version,questionId:ids.current.questionId,attemptId:ids.current.attemptId});}}/><p>간격 {plan.proposal.stage+1}단계 · 기본 {plan.proposal.baseDays}일 / 제안 {plan.proposal.adjustedDays}일 · 지연 재현은 실제 답안으로 별도 확인해요.</p><p>{typeLabels[plan.task.type]}</p><p>{plan.question}</p><p>{plan.nextAction}</p><details><summary>확정 근거와 조정 이유</summary><p>공식 결과 {plan.evidence.resultOrdinal}판 · 답안 {plan.evidence.answerVersion}판 · 원래 도움 {plan.evidence.helpIds.length}건</p><p>원인: {plan.evidence.cause.status==="unverified" ? "미확인" : plan.evidence.cause.description}</p><p>{plan.evidence.feedback}</p>{plan.proposal.reasons.map((text,index)=><p key={index}>{text}</p>)}<p>기존 제안과 날짜 변경 이유는 덮어쓰지 않고 보존해요.</p></details>
-    {!(plan.sessionId && plan.sessionPhase!=="finished") && <><h3>복습 날짜·조건 설정</h3><p>아래는 일정 설정이에요. ‘수락·변경 이유’는 답안을 쓰는 칸이 아니에요.</p><form onSubmit={(event):void=>{event.preventDefault();void send({action:"choose",id:plan.id,expectedVersion:plan.version,type,conditions:{goalDate:goalDate || null,retentionDays:retention,availableMinutes:minutes,requiredMinutes:plan.proposal.conditions.requiredMinutes},dueDate,reason});}}><label>복습 유형<select value={type} onChange={(event):void=>setType(learningType.parse(event.target.value))} disabled={busy}>{learningType.options.map((value)=><option key={value} value={value}>{typeLabels[value]}</option>)}</select></label><label>목표일 · 선택<input type="date" value={goalDate} onChange={(event):void=>setGoalDate(event.target.value)} disabled={busy}/></label><label>기억 유지 기간 · 일<input type="number" min={1} max={3650} required value={retention} onChange={(event):void=>setRetention(Number(event.target.value))} disabled={busy}/></label><label>가용 시간 · 분<input type="number" min={0} max={1440} required value={minutes} onChange={(event):void=>setMinutes(Number(event.target.value))} disabled={busy}/></label>{suggested ? <p>현재 입력 조건의 제안: {suggested.dueDate} · {suggested.adjustedDays}일. {suggested.needsTime ? "가용 시간을 늘린 뒤 수락할 수 있어요." : "수락 날짜는 아래에서 직접 정할 수 있어요."}</p> : <p role="alert">유지 기간과 가용 시간의 허용 범위를 확인해 주세요.</p>}<label>수락할 서울 날짜<input type="date" min={today} value={dueDate} required onChange={(event):void=>setDueDate(event.target.value)} disabled={busy}/></label><label>수락·변경 이유<textarea value={reason} onChange={(event):void=>setReason(event.target.value)} required maxLength={2000} disabled={busy}/></label><button disabled={busy || !suggested || suggested.needsTime}>이 조건과 날짜로 수락</button></form></>}
-    <details><summary>잘못 배운 내용·AI 설명 정정</summary><p>같은 오류에 연결된 복습 {related.length}개의 질문·해설·다음 행동을 함께 갱신합니다. 과거 답안과 도움 이력은 보존돼요.</p><form onSubmit={(event):void=>{event.preventDefault();void send({action:"correct",id:plan.id,expectedVersion:plan.errorVersion,correctionId:ids.current.correctionId,reason:correctionReason,evidence,question,explanation,nextAction,targets:related.map((item)=>({reviewId:item.id,expectedVersion:item.reviewVersion}))});}}>{[{label:"수정 이유",value:correctionReason,set:setCorrectionReason},{label:"근거",value:evidence,set:setEvidence},{label:"수정된 질문",value:question,set:setQuestion},{label:"수정된 해설",value:explanation,set:setExplanation},{label:"다음 행동",value:nextAction,set:setNextAction}].map((field)=><label key={field.label}>{field.label}<textarea required value={field.value} maxLength={2000} onChange={(event):void=>field.set(event.target.value)} disabled={busy}/></label>)}<button disabled={busy}>관련 복습 정정·재확인 표시</button></form></details>
+  return <CheckTarget id={checkId} instruction="② 복습 화면 확인. 아래 큰 상자를 눌러 접고, 다시 눌러 펼쳐 주세요."><details ref={details} id={`review-${plan.id}`} className="review-card" data-testid={`review-${plan.id}`}><summary><strong>{plan.title}</strong><span>{dueLabels[plan.dueState]} · {plan.decision.dueDate}</span>{plan.sessionId && <span className="review-session-state">{plan.sessionPhase === "finished" ? "회차 종료 · 공식 확정 여부 별도 확인" : "진행 중인 복습 회차 있음"}</span>}<span className="review-open-label">＋ 복습 내용 펼치기</span><span className="review-close-label">− 복습 내용 접기</span></summary><ReviewStart plan={plan} today={today} busy={busy || locked} onStart={():void=>{void send({action:"start",id:ids.current.id,reviewId:plan.id,expectedVersion:plan.version,questionId:ids.current.questionId,attemptId:ids.current.attemptId});}}/><ReviewTiming plan={plan} today={today}/><ReviewInterval plan={plan}/><p>{typeLabels[plan.task.type]}</p><p>{plan.question}</p><p>{plan.nextAction}</p><details><summary>확정 근거와 조정 이유</summary><p>공식 결과 {plan.evidence.resultOrdinal}판 · 답안 {plan.evidence.answerVersion}판 · 원래 도움 {plan.evidence.helpIds.length}건</p><p>원인: {plan.evidence.cause.status==="unverified" ? "미확인" : plan.evidence.cause.description}</p><p>{plan.evidence.feedback}</p>{plan.proposal.reasons.map((text,index)=><p key={index}>{text}</p>)}<p>기존 제안과 날짜 변경 이유는 덮어쓰지 않고 보존해요.</p></details>
+    {!(plan.sessionId && plan.sessionPhase!=="finished") && <><h3>복습 날짜·조건 설정</h3>{locked && <p>전송한 입력을 보관하고 있어요. 같은 요청의 결과를 확인할 때까지 새 편집을 잠갔어요.</p>}<p>아래는 일정 설정이에요. ‘수락·변경 이유’는 답안을 쓰는 칸이 아니에요.</p><form onSubmit={(event):void=>{event.preventDefault();void send({action:"choose",id:plan.id,expectedVersion:plan.version,type,conditions:{goalDate:goalDate || null,retentionDays:retention,availableMinutes:minutes,requiredMinutes:plan.proposal.conditions.requiredMinutes},dueDate,reason});}}><label>복습 유형<select value={type} onChange={(event):void=>setType(learningType.parse(event.target.value))} disabled={busy || locked}>{learningType.options.map((value)=><option key={value} value={value}>{typeLabels[value]}</option>)}</select></label><label>목표일 · 선택<input type="date" value={goalDate} onChange={(event):void=>setGoalDate(event.target.value)} disabled={busy || locked}/></label><label>기억 유지 기간 · 일<input type="number" min={1} max={3650} required value={retention} onChange={(event):void=>setRetention(Number(event.target.value))} disabled={busy || locked}/></label><label>가용 시간 · 분<input type="number" min={0} max={1440} required value={minutes} onChange={(event):void=>setMinutes(Number(event.target.value))} disabled={busy || locked}/></label>{suggested ? <p>현재 입력 조건의 제안: {suggested.dueDate} · {suggested.adjustedDays}일. {suggested.needsTime ? "가용 시간을 늘린 뒤 수락할 수 있어요." : "수락 날짜는 아래에서 직접 정할 수 있어요."}</p> : <p role="alert">유지 기간과 가용 시간의 허용 범위를 확인해 주세요.</p>}<label>수락할 서울 날짜<input type="date" min={today} value={dueDate} required onChange={(event):void=>setDueDate(event.target.value)} disabled={busy || locked}/></label><label>수락·변경 이유<textarea value={reason} onChange={(event):void=>setReason(event.target.value)} required maxLength={2000} disabled={busy || locked}/></label><button disabled={busy || !suggested || suggested.needsTime}>이 조건과 날짜로 수락</button></form></>}
+    <details><summary>잘못 배운 내용·AI 설명 정정</summary><p>같은 오류에 연결된 복습 {related.length}개의 질문·해설·다음 행동을 함께 갱신합니다. 과거 답안과 도움 이력은 보존돼요.</p><form onSubmit={(event):void=>{event.preventDefault();void send({action:"correct",id:plan.id,expectedVersion:plan.errorVersion,correctionId:ids.current.correctionId,reason:correctionReason,evidence,question,explanation,nextAction,targets:related.map((item)=>({reviewId:item.id,expectedVersion:item.reviewVersion}))});}}>{[{label:"수정 이유",value:correctionReason,set:setCorrectionReason},{label:"근거",value:evidence,set:setEvidence},{label:"수정된 질문",value:question,set:setQuestion},{label:"수정된 해설",value:explanation,set:setExplanation},{label:"다음 행동",value:nextAction,set:setNextAction}].map((field)=><label key={field.label}>{field.label}<textarea required value={field.value} maxLength={2000} onChange={(event):void=>field.set(event.target.value)} disabled={busy || locked}/></label>)}<button disabled={busy || locked}>관련 복습 정정·재확인 표시</button></form></details>
   </details>{fragment === `#${checkId}` && <a className="check-return" href="/learn#check-navigation">← 두 가지 확인 화면으로</a>}</CheckTarget>;
 }

@@ -7,6 +7,8 @@ const eslintConfig = defineConfig([
   ...nextTs,
   globalIgnores([
     "dist/**",
+    // 검토용 시안의 생성 번들은 원본 소스 검사와 분리합니다.
+    ".taskmaster/prototype/build/**",
     "public/pdfjs-*/**",
     "lib/materials/jpeg-wasm/decoder.js",
     "lib/materials/pdf-wasm/validator.js",

@@ -87,3 +87,15 @@ test("외부 작업 조회와 재개는 운영 Worker에서도 소유자 인증 
     expect(await response.json()).toEqual({ error: "authentication_configuration_required" });
   }
 });
+
+
+test("소유자 설정 없는 실제 빌드의 학습 경로는 앱 탐색을 노출하지 않는다", async ({ request }) => {
+  const paths: readonly string[] = ["/learn", "/learn/materials", "/learn/advisor", "/learn/library", "/learn/tutor", "/learn/editor", "/learn/results", "/learn/calendar", "/learn/weekly", "/learn/weekly/version", "/learn/google", "/learn/google/references", "/learn/backup", "/learn/more", "/learn/diagnostics", "/learn/source/00000000-0000-4000-a000-000000000001"];
+  for (const path of paths) {
+    const response = await request.get(path);
+    expect([200, 401, 403, 503], path).toContain(response.status());
+    const body: string = await response.text();
+    expect(body, path).not.toMatch(/class="alter-shell"/);
+    expect(body, path).not.toContain('aria-label="주 탐색"');
+  }
+});

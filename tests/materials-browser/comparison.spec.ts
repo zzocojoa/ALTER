@@ -1,0 +1,61 @@
+import { expect, test } from "@playwright/test";
+import { materialBrowser, emptyMaterialLibrary, materialFixture } from "../fixtures/materials-scenario";
+import type { StoredExtractionPage } from "../../lib/extraction/state";
+import { checkAccessibility } from "../fixtures/accessibility";
+
+const card = materialFixture(301);
+const id: string = "00000000-0000-4000-a000-000000000302";
+const saved: StoredExtractionPage = { id, jobId: id, selectionRevision: 1, filePage: 1, version: 2, resultVersion: 1, resultId: id, state: "complete", printedPage: "iii", pendingAiKey: null, pendingImage: null, resultImage: null, failure: null, confirmedSegmentIds: [], result: { filePage: 1, method: "plain-text", status: "complete", width: null, height: null, rotation: 0, segments: [{ id: "s0", kind: "text", text: "확인 전 추출 문장", bounds: null, transform: null, uncertain: false, reason: null }], error: null, requiresConfirmation: true } };
+
+test("휴대폰 비교 탭과 넓은 비교 열에서 수정 초안·원본·닫기 초점을 유지한다", async ({ page }, info) => {
+  const calls: string[] = [];
+  await materialBrowser(page, { ...emptyMaterialLibrary, materials: [card] }, async (route): Promise<void> => {
+    const request = route.request(); const path: string = new URL(request.url()).pathname;
+    calls.push(request.method() + " " + path);
+    expect(["HEAD", "GET"]).toContain(request.method());
+    if (path.endsWith("/extraction")) { await route.fulfill({ json: { job: { jobId: id, revision: 1, uploadId: id, selection: { materialId: card.id, originalVersion: card.file.objectVersion, originalHash: card.file.sha256, pages: [{ filePage: 1, purpose: "study" }] } }, pages: [saved] } }); return; }
+    expect(path).toBe(card.file.sourceUrl); await route.fulfill({ contentType: "text/plain", body: "대조할 원본" });
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator(".alter-material-row").click();
+  const progress = page.getByRole("region", { name: "추출과 확인 단계", exact: true });
+  await expect(progress.getByRole("listitem")).toHaveCount(5);
+  await expect(progress.locator('[aria-current="step"]')).toContainText("원문 비교");
+  await expect(progress).toContainText("자동 확정하지 않아요");
+  await page.screenshot({ path: `outputs/ui-extraction/progress-${info.project.name}.png`, fullPage: true });
+  const comparison = page.getByRole("region", { name: "원본과 결과 비교", exact: true });
+  const resultTab = comparison.getByRole("tab", { name: "추출 결과 보기", exact: true });
+  const sourceTab = comparison.getByRole("tab", { name: "원본 보기", exact: true });
+  await expect(resultTab).toHaveAttribute("aria-selected", "true");
+  await comparison.getByText("추출 내용 수정", { exact: true }).click();
+  await comparison.getByRole("textbox", { name: "구간 1 수정", exact: true }).fill("저장 전 한글 수정 초안");
+  await comparison.getByRole("button", { name: "구간 1 원본 페이지", exact: true }).click();
+  const sourceRegion = comparison.getByRole("region", { name: "파일 1페이지 구간 대조", exact: true });
+  await expect(sourceRegion).toBeFocused();
+  await expect(sourceRegion).toContainText("위치 좌표가 없어요");
+  await expect(sourceRegion.locator(".alter-original-highlight")).toHaveCount(0);
+  await resultTab.click();
+  await resultTab.focus(); await page.keyboard.press("ArrowLeft");
+  await expect(sourceTab).toBeFocused(); await expect(resultTab).toHaveAttribute("aria-selected", "true");
+  await page.keyboard.press("Enter");
+  await expect(sourceTab).toHaveAttribute("aria-selected", "true");
+  await expect(comparison.getByRole("textbox", { name: "구간 1 수정", exact: true })).toBeHidden();
+  await comparison.getByRole("button", { name: "파일 1페이지 원본 크게 보기", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "파일 1페이지 원본", exact: true });
+  await expect(dialog).toContainText("대조할 원본");
+  await checkAccessibility(page, ".alter-dialog", info);
+  await page.getByRole("button", { name: "확대 화면 닫기", exact: true }).click();
+  await expect(comparison.getByRole("button", { name: "파일 1페이지 원본 크게 보기", exact: true })).toBeFocused();
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await expect(sourceTab).toBeHidden();
+  await expect(comparison.getByRole("textbox", { name: "구간 1 수정", exact: true })).toBeVisible();
+  await expect(comparison.getByLabel("텍스트 원본", { exact: true })).toBeVisible();
+  await expect(comparison.getByRole("textbox", { name: "구간 1 수정", exact: true })).toHaveValue("저장 전 한글 수정 초안");
+  await checkAccessibility(page, ".extraction-review", info);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(sourceTab).toHaveAttribute("aria-selected", "true");
+  await resultTab.click();
+  await expect(comparison.getByRole("textbox", { name: "구간 1 수정", exact: true })).toHaveValue("저장 전 한글 수정 초안");
+  expect(calls.every((call): boolean => /^(HEAD|GET) /.test(call))).toBe(true);
+  expect(await page.pageErrors()).toEqual([]);
+});

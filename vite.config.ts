@@ -48,7 +48,7 @@ export default defineConfig(async ({ command }) => {
   return {
     define: { __ALTER_LOCAL_IDENTITY__: JSON.stringify(localMockAuth) },
     // 첫 화면을 보낸 뒤 의존성을 다시 최적화하면 React 모듈 URL이 갈라질 수 있습니다.
-    optimizeDeps: { include: ["radix-ui", "lucide-react", "class-variance-authority", "clsx", "tailwind-merge"] },
+    optimizeDeps: { include: ["radix-ui", "lucide-react", "class-variance-authority", "clsx", "tailwind-merge"], exclude: ["next"] },
     server: {
       ...(managedLinux
         ? { host: "0.0.0.0", allowedHosts: ["terminal.local"] }

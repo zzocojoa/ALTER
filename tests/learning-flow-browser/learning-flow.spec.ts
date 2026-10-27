@@ -1,3 +1,5 @@
+import { confirmTutorAiTransmission } from "../fixtures/tutor-ai-consent";
+import { fixtureTutorBudget } from "../fixtures/tutor-budget";
 import { randomUUID } from "node:crypto";
 import { readFile,writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -35,6 +37,7 @@ for(const scenario of learningFlowCases) test(`${scenario.domain}: 수업·개�
     if(url.origin!=="https://flow.local.test") throw new Error(`예상하지 않은 브라우저 외부 요청: ${url.origin}`);
     const asset=scripts.find((item)=>url.pathname===`/${item.name}.js` || url.pathname===`/${item.name}.css`);
     if(asset){await route.fulfill({contentType:url.pathname.endsWith(".js")?"text/javascript; charset=utf-8":"text/css; charset=utf-8",body:url.pathname.endsWith(".js")?asset.js:asset.css});return;}
+    if (url.pathname === "/api/dashboard/usage") { await route.fulfill({ json: fixtureTutorBudget(Date.now()) }); return; }
     const api=/^\/api\/(tutor|editor|results)$/.exec(url.pathname);
     if(api){
       const input:unknown=request.method()==="POST" ? JSON.parse(request.postData() ?? "null") : url.searchParams.get("id");
@@ -52,32 +55,32 @@ for(const scenario of learningFlowCases) test(`${scenario.domain}: 수업·개�
   });
   await page.goto("https://flow.local.test/learn/tutor");
   await page.getByRole("button",{name:"수업 시작",exact:true}).click();
-  await page.getByRole("button",{name:"작은 개념 설명 받기",exact:true}).click();
+  await confirmTutorAiTransmission(page,"작은 개념 설명 받기");await page.getByRole("button",{name:"작은 개념 설명 받기",exact:true}).click();
   await expect(page.getByText(scenario.definition,{exact:true})).toBeVisible();
   await page.getByRole("button",{name:"자료와 설명 가리고 시작",exact:true}).click();
   await expect(page.getByText(scenario.definition,{exact:true})).toHaveCount(0);await expect(page.locator("blockquote")).toHaveCount(0);
   await expect(page.getByTestId("tutor-question")).toHaveText(scenario.question);
   await expect(page.getByRole("button",{name:"답안 제출·저장",exact:true})).toBeDisabled();
-  await page.getByLabel("나의 답안",{exact:true}).fill(scenario.explanationAnswer);await expect(page.getByText("초안 저장됨",{exact:true})).toBeVisible();
+  await page.getByLabel("나의 답안",{exact:true}).fill(scenario.explanationAnswer);await expect(page.getByText("서버 초안 저장을 확인했어요",{exact:true})).toBeVisible();
   await page.reload();await expect(page.getByLabel("나의 답안",{exact:true})).toHaveValue(scenario.explanationAnswer);
-  await page.getByRole("button",{name:"답안 제출·저장",exact:true}).click();await page.getByRole("button",{name:"저장한 답안 진단",exact:true}).click();
+  await page.getByRole("button",{name:"답안 제출·저장",exact:true}).click();await confirmTutorAiTransmission(page,"저장한 답안 진단");await page.getByRole("button",{name:"저장한 답안 진단",exact:true}).click();
   await page.getByRole("button",{name:"수업 마치기",exact:true}).click();await page.getByRole("link",{name:"이 수업 결과 확인·확정",exact:true}).click();
   await expect(page.getByText("단원 통과: 미통과 · 지연 재현: 미확인",{exact:true})).toBeVisible();
   await page.getByRole("button",{name:"내용 확인 후 공식 기록 확정",exact:true}).click();await expect(page.getByText("공식 확정 기록",{exact:true})).toBeVisible();
   flow=flowSchema.parse(await call("/scope",null,randomUUID()));
   await page.goto("https://flow.local.test/learn/editor");await page.getByRole("button",{name:"개선할 초안 시작",exact:true}).click();
-  await page.getByLabel("나의 초안",{exact:true}).fill("계산 순서를 반대로 적용한 초안입니다.");await expect(page.getByText("입력 저장됨",{exact:true})).toBeVisible();
-  await page.getByRole("button",{name:"초안 제출·저장",exact:true}).click();await page.getByRole("button",{name:"저장한 초안 피드백 받기",exact:true}).click();
+  await page.getByLabel("나의 초안",{exact:true}).fill("계산 순서를 반대로 적용한 초안입니다.");await expect(page.getByText("서버 초안 저장을 확인했어요",{exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"초안 제출·저장",exact:true}).click();await confirmTutorAiTransmission(page,"저장한 초안 피드백 받기");await page.getByRole("button",{name:"저장한 초안 피드백 받기",exact:true}).click();
   await expect(page.getByRole("heading",{name:"초안 1판 피드백",exact:true})).toBeVisible();
   await page.getByLabel("나의 수정본",{exact:true}).fill(scenario.revision);await expect(page.getByRole("button",{name:"수정본과 이유 제출·저장",exact:true})).toBeDisabled();
-  await page.getByLabel("수정 이유",{exact:true}).fill(scenario.reason);await expect(page.getByText("입력 저장됨",{exact:true})).toBeVisible();await page.reload();
-  await expect(page.getByLabel("나의 수정본",{exact:true})).toHaveValue(scenario.revision);await expect(page.getByLabel("수정 이유",{exact:true})).toHaveValue(scenario.reason);
-  await page.getByRole("button",{name:"수정본과 이유 제출·저장",exact:true}).click();await page.getByRole("button",{name:"수정본과 이유 재검토",exact:true}).click();
+  await page.getByRole("textbox",{name:"수정 이유",exact:true}).fill(scenario.reason);await expect(page.getByText("서버 초안 저장을 확인했어요",{exact:true})).toBeVisible();await page.reload();
+  await expect(page.getByLabel("나의 수정본",{exact:true})).toHaveValue(scenario.revision);await expect(page.getByRole("textbox",{name:"수정 이유",exact:true})).toHaveValue(scenario.reason);
+  await page.getByRole("button",{name:"수정본과 이유 제출·저장",exact:true}).click();await confirmTutorAiTransmission(page,"수정본과 이유 재검토");await page.getByRole("button",{name:"수정본과 이유 재검토",exact:true}).click();
   const improved=resumeSchema.parse(await call("/state",editorId,randomUUID()));expect(improved.state.answers.at(-1)?.helped).toBe(true);expect(improved.state.pending).toBeNull();
-  await page.getByRole("button",{name:"새 조건에서 직접 풀기",exact:true}).click();await expect(page.getByTestId("tutor-question")).toHaveText(scenario.variation);
+  await confirmTutorAiTransmission(page,"새 조건에서 직접 풀기");await page.getByRole("button",{name:"새 조건에서 직접 풀기",exact:true}).click();await expect(page.getByTestId("tutor-question")).toHaveText(scenario.variation);
   await expect(page.getByText("초안·수정 이유 이력 (2)",{exact:true})).toHaveCount(0);await expect(page.locator("blockquote")).toHaveCount(0);
-  await page.getByLabel("나의 답안",{exact:true}).fill(scenario.variationAnswer);await expect(page.getByText("초안 저장됨",{exact:true})).toBeVisible();
-  await page.getByRole("button",{name:"답안 제출·저장",exact:true}).click();await page.getByRole("button",{name:"저장한 답안 진단",exact:true}).click();
+  await page.getByLabel("나의 답안",{exact:true}).fill(scenario.variationAnswer);await expect(page.getByText("서버 초안 저장을 확인했어요",{exact:true})).toBeVisible();
+  await page.getByRole("button",{name:"답안 제출·저장",exact:true}).click();await confirmTutorAiTransmission(page,"저장한 답안 진단");await page.getByRole("button",{name:"저장한 답안 진단",exact:true}).click();
   await page.getByRole("button",{name:"수업 마치기",exact:true}).click();await page.getByRole("link",{name:"이 수업 결과 확인·확정",exact:true}).click();
   await expect(page.getByText("단원 통과: 통과 · 지연 재현: 미확인",{exact:true})).toBeVisible();
   await page.getByRole("button",{name:"내용 확인 후 공식 기록 확정",exact:true}).click();await expect(page.getByText("공식 확정 기록",{exact:true})).toBeVisible();await page.reload();await expect(page.getByText("공식 확정 기록",{exact:true})).toBeVisible();

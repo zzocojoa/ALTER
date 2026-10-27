@@ -7,3 +7,11 @@
 .calendar-weekdays input { width: 22px; height: 22px; }
 .calendar-status { margin: 20px 0; padding: 16px; background: var(--muted); overflow-wrap: anywhere; }
 .calendar-panel [role="status"] { overflow-wrap: anywhere; }
+
+[data-alter-ui] .calendar-meaning, [data-alter-ui] .calendar-transfer { margin:var(--alter-space-4) 0; padding:var(--alter-space-4); border:1px solid var(--alter-border); border-radius:var(--alter-radius-control); background:var(--alter-surface); overflow-wrap:anywhere; }
+[data-alter-ui] .calendar-transfer h3 { margin-top:0; }
+
+[data-alter-ui] .calendar-preview { padding:var(--alter-space-4); border:2px solid var(--alter-primary); border-radius:var(--alter-radius-control); background:var(--alter-surface); overflow-wrap:anywhere; }
+[data-alter-ui] .calendar-preview dl { display:grid; gap:var(--alter-space-3); }
+[data-alter-ui] .calendar-preview dt { font-weight:700; }
+[data-alter-ui] .calendar-preview dd { margin:0; }

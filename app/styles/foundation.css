@@ -1,0 +1,134 @@
+/* 기존 비계층 규칙과 함께 이전합니다. 새 화면·포털은 data-alter-ui를 명시합니다. */
+[data-alter-ui] {
+  font-family: var(--alter-font-sans);
+  font-size: var(--alter-text-body);
+  font-weight: var(--alter-weight-body);
+  line-height: var(--alter-leading-body);
+  color: var(--alter-ink);
+  font-synthesis: none;
+  color-scheme: light;
+}
+
+[data-alter-ui].alter-view {
+  min-inline-size: 0;
+  background: var(--alter-canvas);
+}
+
+/* 일반 레이아웃의 display 선언이 HTML 숨김 의미를 덮지 못하게 하는 한정 예외입니다. */
+[data-alter-ui][hidden]:not([hidden="until-found"]),
+[data-alter-ui] [hidden]:not([hidden="until-found"]) {
+  display: none !important;
+}
+
+[data-alter-ui] .alter-control {
+  box-sizing: border-box;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  min-block-size: var(--alter-control-height);
+  margin: 0;
+  padding: var(--alter-space-3) var(--alter-space-4);
+  border: var(--alter-border-width) solid var(--alter-border-control);
+  border-radius: var(--alter-radius-control);
+  background: var(--alter-surface);
+  color: var(--alter-ink);
+  font: inherit;
+  font-size: var(--alter-text-body);
+  line-height: var(--alter-leading-label);
+  text-align: start;
+}
+
+[data-alter-ui] .alter-control:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  background: var(--alter-disabled-surface);
+  color: var(--alter-disabled-ink);
+}
+
+[data-alter-ui] .alter-control:focus-visible,
+[data-alter-ui] .alter-link:focus-visible,
+[data-alter-ui] .alter-heading:focus-visible,
+[data-alter-ui] .alter-focus:focus-visible {
+  outline: var(--alter-focus-width) solid var(--alter-focus);
+  outline-offset: var(--alter-focus-offset);
+}
+
+[data-alter-ui] .alter-heading,
+[data-alter-ui] .alter-subheading {
+  margin: 0;
+  font-family: var(--alter-font-sans);
+  font-weight: var(--alter-weight-heading);
+  line-height: var(--alter-leading-tight);
+  letter-spacing: var(--alter-tracking-heading);
+  color: var(--alter-ink);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+[data-alter-ui] .alter-heading { font-size: var(--alter-text-title); }
+[data-alter-ui] .alter-subheading { font-size: var(--alter-text-section); }
+
+[data-alter-ui] .alter-body,
+[data-alter-ui] .alter-label,
+[data-alter-ui] .alter-caption {
+  margin: 0;
+  max-inline-size: var(--alter-measure);
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+[data-alter-ui] .alter-body { font-size: var(--alter-text-body); line-height: var(--alter-leading-body); }
+[data-alter-ui] .alter-label { font-size: var(--alter-text-label); font-weight: var(--alter-weight-label); line-height: var(--alter-leading-label); }
+[data-alter-ui] .alter-caption { font-size: var(--alter-text-caption); line-height: var(--alter-leading-body); color: var(--alter-ink-secondary); }
+[data-alter-ui] .alter-number { font-variant-numeric: tabular-nums lining-nums; }
+[data-alter-ui] .alter-url { word-break: break-all; overflow-wrap: anywhere; }
+[data-alter-ui] .alter-user-text { white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere; }
+
+/* 수식은 잘라내거나 임의로 줄이지 않고 독립 영역 안에서 원래 순서를 유지합니다. */
+[data-alter-ui] .alter-math {
+  display: block;
+  max-inline-size: 100%;
+  min-inline-size: 0;
+  overflow-x: auto;
+  white-space: pre;
+  font-family: var(--alter-font-mono);
+  font-size: var(--alter-text-body);
+  line-height: var(--alter-leading-body);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 48rem) {
+  [data-alter-ui] .alter-heading { font-size: var(--alter-text-display); }
+}
+
+[data-alter-ui] .alter-icon {
+  display: block;
+  flex: none;
+  inline-size: var(--alter-icon-size);
+  block-size: var(--alter-icon-size);
+  stroke-width: var(--alter-icon-stroke);
+  pointer-events: none;
+}
+[data-alter-ui] .alter-link {
+  display: inline-flex;
+  box-sizing: border-box;
+  align-items: center;
+  gap: var(--alter-space-2);
+  min-block-size: var(--alter-target);
+  max-inline-size: 100%;
+  padding: var(--alter-space-2);
+  border-radius: var(--alter-radius-small);
+  color: var(--alter-primary);
+  font-size: var(--alter-text-label);
+  line-height: var(--alter-leading-label);
+  overflow-wrap: anywhere;
+  text-decoration: underline;
+  text-underline-offset: var(--alter-space-1);
+}
+[data-alter-ui] .alter-link[aria-current="page"] {
+  background: var(--alter-surface-selected);
+  font-weight: var(--alter-weight-heading);
+}
+[data-alter-ui] [aria-current="page"] > .alter-icon,
+[data-alter-ui] [aria-selected="true"] > .alter-icon {
+  stroke-width: var(--alter-icon-stroke-selected);
+}
