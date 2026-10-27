@@ -20,6 +20,16 @@
   display: none !important;
 }
 
+/* 공통 컴포넌트 밖의 기존 네이티브 조작에도 최소 터치 크기를 보장합니다. */
+[data-alter-ui] :where(button, select, textarea, summary, input:not([type="checkbox"]):not([type="radio"])) {
+  min-block-size: var(--alter-target);
+}
+[data-alter-ui] :where(button, summary) { min-inline-size: var(--alter-target); }
+[data-alter-ui] :where(button, input, select, textarea, summary, a):focus-visible {
+  outline: var(--alter-focus-width) solid var(--alter-focus);
+  outline-offset: var(--alter-focus-offset);
+}
+
 [data-alter-ui] .alter-control {
   box-sizing: border-box;
   min-inline-size: 0;

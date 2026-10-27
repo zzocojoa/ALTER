@@ -23,7 +23,7 @@ const markup: string = `<!doctype html><html lang="ko"><meta charset="utf-8"><me
 <div hidden class="flex grid" id="hidden"><button type="button">숨긴 정답</button></div><div inert id="inert"><button type="button" id="inert-button">잠긴 동작</button></div>
 <button class="alter-control" disabled id="disabled" type="button">아직 제출할 수 없어요</button>
 </div></section></main>
-<div data-alter-ui id="portal"><button type="button" class="alter-control" id="portal-control">포털 닫기</button></div></body></html>`;
+<div data-alter-ui id="portal"><button id="native-button" type="button">시작</button><label for="native-select">범위</label><select id="native-select"><option>분수</option></select><details><summary id="native-summary">기존 진단 펼치기</summary><p>기존 내용</p></details><button type="button" class="alter-control" id="portal-control">포털 닫기</button></div></body></html>`;
 
 type StyleSnapshot = Readonly<{ selector: string; color: string; background: string; font: string; padding: string; border: string; display: string; outline: string; }>;
 async function legacySnapshot(page: Page): Promise<readonly StyleSnapshot[]> {
@@ -138,6 +138,15 @@ try {
   await expect(page.locator("#selected-link")).toHaveCSS("background-color", "rgb(232, 239, 230)");
   await page.locator("#selected-link").focus();
   await expect(page.locator("#selected-link")).toHaveCSS("outline-color", "rgb(28, 100, 73)");
+  for (const id of ["native-button", "native-select", "native-summary"]) {
+    const target = page.locator("#" + id);
+    const rectangle = await target.boundingBox();
+    expect(rectangle, id + ": 네이티브 조작 영역").not.toBeNull();
+    expect(rectangle!.height, id + ": 최소 터치 높이").toBeGreaterThanOrEqual(44);
+    expect(rectangle!.width, id + ": 최소 터치 너비").toBeGreaterThanOrEqual(44);
+    await target.focus();
+    await expect(target).toHaveCSS("outline-width", "3px");
+  }
   const typography: Array<Readonly<{ width: number; scale: number }>> = [];
   for (const width of [320, 390, 402, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 874 });
