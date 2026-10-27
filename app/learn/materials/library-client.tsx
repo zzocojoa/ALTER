@@ -65,7 +65,7 @@ export function MaterialLibraryClient({ initial, initialSelectedId }: Readonly<{
   const [message, setMessage] = useState<string>("");
   const [failure, setFailure] = useState<string>(initialSelectedId !== null && !initial.hidden && !initial.materials.some(item => item.id === initialSelectedId) ? "요청한 자료를 현재 목록에서 찾지 못했어요. 자료 목록을 새로 확인해 주세요." : "");
   const preview = useRef<HTMLElement>(null);
-  const returnMaterialId = useRef<string | null>(null);
+  const returnMaterialId = useRef<string | null>(selected?.id ?? null);
   const shouldReturnFocus = useRef<boolean>(false);
   const selectionEntry = useRef<boolean>(false);
   const newlyRegisteredId = useRef<string | null>(null);
