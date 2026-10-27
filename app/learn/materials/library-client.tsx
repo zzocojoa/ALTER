@@ -163,15 +163,19 @@ export function MaterialLibraryClient({ initial, initialSelectedId }: Readonly<{
     abort.current = new AbortController(); setCanStop(true);
     const signal: AbortSignal = abort.current.signal;
     let current: UploadQueueEntry | null = null;
+    let reservationDispatched: boolean = false;
     try {
       // 완료 응답을 확인한 뒤에만 다음 파일을 예약하며 재개 시 완료 항목은 건너뜁니다.
       for (const entry of queueRef.current) {
         if (entry.status === "registered") continue;
+        // 이전 예약 응답이 불명인 항목은 이번 해시 검사를 중단해도 안전한 미전송으로 바꾸지 않습니다.
+        reservationDispatched = entry.status === "attention" || entry.transferId !== null;
         signal.throwIfAborted();
         current = { ...entry, status: "registering", error: null }; updateEntry(current);
         setUploadPhase("checking");
         current = { ...current, metadata: { ...current.metadata, sha256: await hashClientFile(current.file) } }; updateEntry(current);
         signal.throwIfAborted(); setUploadPhase("reserving");
+        reservationDispatched = true;
         const started = transferReply.parse(await materialJson("/api/materials/uploads", { method: "POST", headers: { "content-type": "application/json", "idempotency-key": current.key }, body: JSON.stringify({ courseId: current.courseId, metadata: current.metadata }), signal }));
         current = { ...current, transferId: started.id, materialId: started.materialId }; updateEntry(current);
         if (started.state === "reserved") {
@@ -183,8 +187,13 @@ export function MaterialLibraryClient({ initial, initialSelectedId }: Readonly<{
       if (queueRef.current.length === 1) newlyRegisteredId.current = queueRef.current[0].materialId;
       setUploadPhase("confirmed"); setMessage(queueRef.current.length === 1 ? "자료 등록을 확인했어요. 새 자료의 원본을 열어요." : `${queueRef.current.length}개 자료를 모두 등록했어요. 아래 목록에서 원본을 열 수 있어요.`);
     } catch (error: unknown) {
-      if (current !== null) updateEntry({ ...current, status: current.transferId === null && isMaterialResponseFailure(error) && [400, 413, 415, 422, 507].includes(error.status) ? "waiting" : "attention", error: errorText(error) });
-      setUploadPhase("attention"); setIssue(queueRef.current.length === 0 ? null : uploadIssue(error, signal.aborted)); setFailure(materialFailure(error)); setMessage("선택한 원본과 파일별 등록 상태를 유지했어요. 다음 파일은 전송하지 않았어요.");
+      const beforeReservation: boolean = current !== null && !reservationDispatched;
+      const detail: string = beforeReservation && signal.aborted ? "서버 예약 전에 전송을 중단했어요." : errorText(error);
+      if (current !== null) updateEntry({ ...current, status: beforeReservation || current.transferId === null && isMaterialResponseFailure(error) && [400, 413, 415, 422, 507].includes(error.status) ? "waiting" : "attention", error: detail });
+      setUploadPhase(beforeReservation ? "invalid" : "attention");
+      setIssue(beforeReservation || queueRef.current.length === 0 ? null : uploadIssue(error, signal.aborted));
+      setFailure(beforeReservation && signal.aborted ? null : materialFailure(error));
+      setMessage(beforeReservation ? "현재 파일은 서버에 예약하지 않았어요. 선택 목록을 비우거나 같은 원본으로 다시 등록해 주세요." : "선택한 원본과 파일별 등록 상태를 유지했어요. 다음 파일은 전송하지 않았어요.");
     } finally { await finishOperation(); }
   }
   async function recover(item: PendingMaterial): Promise<void> {

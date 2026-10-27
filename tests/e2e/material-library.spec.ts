@@ -114,7 +114,7 @@ test("자료 등록과 PDF·사진·텍스트 원본을 키보드·모바일에�
   await expect(page.getByText("빈 페이지예요.", { exact: true })).toBeVisible();
   await registerFile(page, `사진 원본 ${suffix}`, "photo.jpg", "image/jpeg", image);
   await expect(page.getByRole("img", { name: `사진 원본 ${suffix}` })).toBeVisible();
-  await page.getByLabel("사진 확대", { exact: true }).focus();
+  await page.getByRole("slider", { name: "사진 확대", exact: true }).focus();
   await page.keyboard.press("ArrowRight");
   await expect(page.getByText("125%", { exact: true })).toBeVisible();
   await page.getByRole("region", { name: "사진 이동 영역" }).focus();
@@ -124,7 +124,7 @@ test("자료 등록과 PDF·사진·텍스트 원본을 키보드·모바일에�
   await expect(page.getByRole("img", { name: `PNG 원본 ${suffix}` })).toBeVisible();
   const photoExpand = page.getByRole("button", {name:"사진 원본 크게 보기",exact:true}); await photoExpand.click();
   const photoDialog = page.getByRole("dialog",{name:"사진 원본",exact:true}); await expect(photoDialog.getByRole("img")).toBeVisible();
-  await photoDialog.getByLabel("사진 확대",{exact:true}).focus(); await page.keyboard.press("ArrowRight"); await expect(photoDialog.getByText("125%",{exact:true})).toBeVisible();
+  await photoDialog.getByRole("slider",{name:"사진 확대",exact:true}).focus(); await page.keyboard.press("ArrowRight"); await expect(photoDialog.getByText("125%",{exact:true})).toBeVisible();
   await checkAccessibility(page,".alter-dialog:has(.alter-original-content)",info);
   await photoDialog.getByRole("button",{name:"자료로 돌아가기 · 확대 화면 닫기",exact:true}).click(); await expect(photoExpand).toBeFocused();
   const landscape: Buffer = await readFile("tests/fixtures/jpeg/testorig.jpg");

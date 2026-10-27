@@ -48,3 +48,53 @@ test("조회 실패는 이전 상태임을 알리고 접근 거부는 링크와 
   status = 200; await page.getByRole("button", { name: "보고서 연동 상태만 새로 확인" }).click();
   await expect(page.getByRole("link", { name: "검증된 주간 상세 보고서" })).toBeVisible();
 });
+
+const nonJsonFailures = [
+  { format: "HTML", contentType: "text/html", body: "<html><h1>Gateway response</h1></html>" },
+  { format: "빈 본문", contentType: "application/json", body: "" },
+] as const;
+for (const status of [401, 403] as const) for (const failure of nonJsonFailures) test(`HTTP ${status} ${failure.format} 권한 거부도 이전 보고서와 전송 제어를 제거하고 재조회로 복구`, async ({ page }): Promise<void> => {
+  let denied: boolean = false;
+  await mountGoogleReport(page, async route => {
+    expect(route.request().method()).toBe("GET");
+    if (denied) await route.fulfill({ status, contentType: failure.contentType, body: failure.body });
+    else await route.fulfill({ json: reportStatusFixture("partial", true) });
+  });
+  const refresh = page.getByRole("button", { name: "보고서 연동 상태만 새로 확인", exact: true });
+  await expect(page.getByText("일부 단계만 확인됨", { exact: true })).toBeVisible();
+  denied = true; await refresh.click();
+  await expect(page.getByRole("status")).toContainText(`HTTP ${status}`);
+  await expect(page.getByRole("alert")).toContainText("상태를 다시 읽어 주세요");
+  await expect(page.getByText("일부 단계만 확인됨", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("list")).toHaveCount(0);
+  await expect(page.getByRole("link")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Google 내보내기 이어서 진행", exact: true })).toHaveCount(0);
+  await expect(refresh).toBeEnabled();
+  denied = false; await refresh.click();
+  await expect(page.getByRole("link", { name: "검증된 주간 상세 보고서", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Google 내보내기 이어서 진행", exact: true })).toBeEnabled();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  expect(await page.pageErrors()).toEqual([]);
+});
+
+for (const failure of nonJsonFailures) test(`HTTP 503 ${failure.format} 조회 실패도 이전 결과를 구분하고 재조회로 복구`, async ({ page }): Promise<void> => {
+  let unavailable: boolean = false;
+  await mountGoogleReport(page, async route => {
+    expect(route.request().method()).toBe("GET");
+    if (unavailable) await route.fulfill({ status: 503, contentType: failure.contentType, body: failure.body });
+    else await route.fulfill({ json: reportStatusFixture("partial", true) });
+  });
+  const refresh = page.getByRole("button", { name: "보고서 연동 상태만 새로 확인", exact: true });
+  await expect(page.getByText("일부 단계만 확인됨", { exact: true })).toBeVisible();
+  unavailable = true; await refresh.click();
+  await expect(page.getByRole("status")).toContainText("HTTP 503");
+  await expect(page.getByRole("alert")).toContainText("아래는 이전 확인 결과");
+  await expect(page.getByText("일부 단계만 확인됨", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Google 내보내기 이어서 진행", exact: true })).toBeEnabled();
+  await expect(refresh).toBeEnabled();
+  unavailable = false; await refresh.click();
+  await expect(page.getByRole("link", { name: "검증된 주간 상세 보고서", exact: true })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  expect(await page.pageErrors()).toEqual([]);
+});

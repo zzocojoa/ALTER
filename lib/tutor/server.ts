@@ -1,3 +1,4 @@
+import { aiStartRejection } from "./ai-start-rejection";
 import { readTutorExposureCounts } from "../../db/repositories/tutor-exposure";
 import { readSessionResume } from "../../db/repositories/session-resume";
 import { startContextIssues } from "./start";
@@ -24,6 +25,10 @@ export async function readTutorView(owner:SiteIdentity,id:string):Promise<TutorV
   try {await requireCurrentTutor(env.DB,env.BUCKET,owner,state);}catch(error:unknown){if(!isDomainFailure(error) || error.code!=="reference_conflict") throw error;return {...view,current:false,issue:state.phase==="finished" ? "이 회차 이후 공식 기록·학습 범위가 갱신됐어요. 보관된 답안과 확정 결과는 아래에서 확인할 수 있어요." : "계획·원문·정정 기록이 달라졌어요. 답안은 보존되며 AI 진단을 계속하려면 새 학습 범위를 정해야 해요.",sources:[],lesson:null,help:null,diagnosis:null};}
   return view.help ? {...view,help:{...view.help,deliveredAt:await readHelpDelivery(env.DB,owner,view.help.id)}} : view; }
 export function tutorErrorResponse(error:unknown):Response {
+  if(isDomainFailure(error) && "aiStartRejection" in error) {
+    const rejection=aiStartRejection.parse(error.aiStartRejection);
+    return privateJson({error:error.code,operation:error.operation,aiStartRejection:rejection,message:"기록 조건이 바뀌어 AI 요청을 시작하지 않았어요. 새 생성·비용 예약은 실행하지 않았어요. 최신 기록을 확인한 뒤 진행해 주세요."},409);
+  }
   if(isDomainFailure(error) && ["tutor.recovery-existing-request-required","tutor.recovery-no-pending-request"].includes(error.operation)) return privateJson({error:error.code,operation:error.operation,message:"복구할 기존 AI 요청 기록을 확인하지 못했어요. 새 AI 생성이나 비용 예약은 실행하지 않았어요. 최신 수업 기록을 다시 확인해 주세요."},409);
   if(error instanceof z.ZodError) return privateJson({error:"tutor_input_invalid",message:"입력 형식과 첨부 파일을 확인해 주세요.",field:error.issues[0].path.join(".")},400);
   if(isDomainFailure(error)) return privateJson({error:error.code,operation:error.operation,message:error.code==="storage_failure" || error.code==="result_unknown" ? "저장 결과를 확인하지 못했어요. 입력을 보관한 채 최신 기록을 확인하고 같은 요청을 재시도해 주세요." : "기록 버전·원문·답안 조건이 바뀌었어요. 입력을 보관한 채 최신 기록을 확인해 주세요."},["storage_failure","result_unknown"].includes(error.code)?503:409);

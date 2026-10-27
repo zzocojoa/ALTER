@@ -4,7 +4,14 @@ import { advanceExternalWorkflow } from "../external/client";
 export const googleReportViewReply=z.object({versionId:z.string().uuid(),connected:z.boolean(),workflow:z.object({id:z.string().uuid(),state:externalWorkflowState,operations:z.array(z.object({kind:z.string(),state:externalOperationState}))}).nullable(),documentUrl:z.string().regex(/^https:\/\/docs\.google\.com\/document\/d\/[A-Za-z0-9_-]{1,200}\/edit$/).nullable(),spreadsheetUrl:z.string().regex(/^https:\/\/docs\.google\.com\/spreadsheets\/d\/[A-Za-z0-9_-]{1,200}\/edit$/).nullable()});
 export type GoogleReportClientView=z.infer<typeof googleReportViewReply>;
 async function reportResponse(response:Response,versionId:string):Promise<GoogleReportClientView> {
-  const data:unknown=await response.json();if(!response.ok){const error=z.object({message:z.string()}).safeParse(data);throw Object.assign(new Error(error.success?error.data.message:`보고서 상태를 확인하지 못했어요. (HTTP ${response.status})`),{status:response.status});}const view=googleReportViewReply.parse(data);if(view.versionId!==versionId)throw new Error("요청한 주간 확정본과 Google 연동 응답이 달라요. 상태를 다시 확인해 주세요.");return view;
+  const httpMessage:string=`보고서 상태를 확인하지 못했어요. (HTTP ${response.status})`;
+  let data:unknown;
+  try {data=await response.json();}
+  catch (cause:unknown) {
+    if(response.ok)throw cause;
+    throw Object.assign(new Error(httpMessage,{cause}),{status:response.status});
+  }
+  if(!response.ok){const error=z.object({message:z.string()}).safeParse(data);throw Object.assign(new Error(error.success?error.data.message:httpMessage),{status:response.status});}const view=googleReportViewReply.parse(data);if(view.versionId!==versionId)throw new Error("요청한 주간 확정본과 Google 연동 응답이 달라요. 상태를 다시 확인해 주세요.");return view;
 }
 export async function loadGoogleReportView(versionId:string):Promise<GoogleReportClientView> {z.string().uuid().parse(versionId);return reportResponse(await fetch(`/api/google/reports?versionId=${encodeURIComponent(versionId)}`,{cache:"no-store"}),versionId);}
 export async function sendGoogleWeeklyReport(versionId:string,onProgress:(message:string)=>void):Promise<void> {

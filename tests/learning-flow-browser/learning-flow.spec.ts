@@ -50,7 +50,7 @@ for(const scenario of learningFlowCases) test(`${scenario.domain}: 수업·개�
     const view=id ? await call(`/view/${screen}`,id,randomUUID()) : null;
     if(screen==="results" && !view) throw new Error("결과 화면 회차 ID가 없습니다.");
     const name=screen==="results" ? "result" : screen;
-    const data=JSON.stringify(screen==="results"?view:{overview:{history:[],scopes:[{id:flow.scopeId,title:scenario.title,date:"2026-10-25"}]},view}).replaceAll("<","\\u003c");
+    const data=JSON.stringify(screen==="results"?{draft:view,history:[]}:{overview:{history:[],scopes:[{id:flow.scopeId,title:scenario.title,date:"2026-10-25"}]},view}).replaceAll("<","\\u003c");
     await route.fulfill({contentType:"text/html; charset=utf-8",body:`<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/${name}.css"><main id="${name}-fixture"></main><script id="${name}-initial" type="application/json">${data}</script><script src="/${name}.js"></script></html>`});
   });
   await page.goto("https://flow.local.test/learn/tutor");
