@@ -44,7 +44,7 @@ test("휴대폰 비교 탭과 넓은 비교 열에서 수정 초안·원본·닫
   const dialog = page.getByRole("dialog", { name: "파일 1페이지 원본", exact: true });
   await expect(dialog).toContainText("대조할 원본");
   await checkAccessibility(page, ".alter-dialog", info);
-  await page.getByRole("button", { name: "확대 화면 닫기", exact: true }).click();
+  await page.getByRole("button", { name: "자료로 돌아가기 · 확대 화면 닫기", exact: true }).click();
   await expect(comparison.getByRole("button", { name: "파일 1페이지 원본 크게 보기", exact: true })).toBeFocused();
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(sourceTab).toBeHidden();

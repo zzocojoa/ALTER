@@ -21,5 +21,5 @@ export function originalErrorText(error: unknown): string {
 }
 
 export function OriginalFailure({ filePage, detail }: Readonly<{ filePage: number; detail: string }>): ReactElement {
-  return <div className="alter-original-failure" role="alert"><p><strong>파일 {filePage}페이지 원본을 열지 못했어요.</strong></p><p>{detail}</p><p>‘자료 목록으로’ 돌아가 상태를 확인한 뒤 다시 열어 주세요. 확대 창은 ‘확대 화면 닫기’로 나올 수 있어요.</p></div>;
+  return <div className="alter-original-failure" role="alert"><p><strong>파일 {filePage}페이지 원본을 열지 못했어요.</strong></p><p>{detail}</p><p>‘자료 목록으로’ 돌아가 상태를 확인한 뒤 다시 열어 주세요. 확대 창은 왼쪽 위 ‘자료로’로 나올 수 있어요.</p></div>;
 }

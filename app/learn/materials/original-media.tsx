@@ -5,6 +5,7 @@ import type { ReactElement } from "react";
 import type { MaterialCard } from "@/lib/materials/library";
 import { requireMaterialResponse } from "./client-api";
 import { OriginalFailure, originalErrorText, originalFailure } from "./original-failure";
+import { OriginalZoom } from "./original-zoom";
 import { OriginalHighlightBox } from "./original-highlight";
 import type { OriginalHighlight } from "./segment-location";
 type SourcePreviewProps = Readonly<{ material: MaterialCard; highlight: OriginalHighlight | null }>;
@@ -43,5 +44,5 @@ function ImageSource({ material, highlight }: SourcePreviewProps): ReactElement 
     return (): void => { stop.abort(); if (blobUrl !== null) URL.revokeObjectURL(blobUrl); };
   }, [material]);
   if (error) return <OriginalFailure filePage={1} detail={error} />;
-  return <section aria-label="사진 원본"><div className="material-toolbar"><label>사진 확대 <input type="range" min={100} max={300} step={25} value={zoom} onChange={(event): void => { setZoom(Number(event.target.value)); }} /></label><output>{zoom}%</output><button type="button" onClick={(): void => { setZoom(100); }}>크기 초기화</button></div><p className="material-note">확대한 사진은 스크롤하거나 방향키로 이동할 수 있어요.</p><div className="material-image" tabIndex={0} role="region" aria-label="사진 이동 영역">{source ? <div className="alter-original-surface" style={{ width: `${zoom}%` }}><img src={source} alt={material.metadata.title} style={{ width: "100%", maxWidth: "none" }} onError={(): void => { setError("사진을 표시할 수 없어요. 원본 상태를 확인해 주세요."); }} /><OriginalHighlightBox highlight={highlight} /></div> : <p role="status">사진을 불러오고 있어요…</p>}</div></section>;
+  return <section className="alter-original-image" aria-label="사진 원본"><OriginalZoom label="사진 확대" zoom={zoom} maximum={300} onZoom={setZoom} /><p className="material-note">확대한 사진은 스크롤하거나 방향키로 이동할 수 있어요.</p><div className="material-image" tabIndex={0} role="region" aria-label="사진 이동 영역">{source ? <div className="alter-original-surface" style={{ width: `${zoom}%` }}><img src={source} alt={material.metadata.title} style={{ width: "100%", maxWidth: "none" }} onError={(): void => { setError("사진을 표시할 수 없어요. 원본 상태를 확인해 주세요."); }} /><OriginalHighlightBox highlight={highlight} /></div> : <p role="status">사진을 불러오고 있어요…</p>}</div></section>;
 }

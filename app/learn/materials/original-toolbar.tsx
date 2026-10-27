@@ -2,6 +2,7 @@
 
 import { useId, useState, type ReactElement } from "react";
 import { ActionButton } from "@/components/alter/action-button";
+import { OriginalZoom } from "./original-zoom";
 import "./original.css";
 
 export type OriginalPageLabel = Readonly<{ filePage: number; printedPage: string | null }>;
@@ -32,6 +33,6 @@ export function OriginalToolbar({ filePage, pages, printedPage, zoom, zoomLabel,
       <p id={id + "-page-help"} className="alter-caption" role={failure === null ? undefined : "alert"}>{failure ?? `현재 원본: 파일 ${filePage}페이지`}</p>
     </div>}
     <p className="alter-caption">인쇄 쪽수: <strong>{printedPage ?? "미확인"}</strong> · 파일 페이지와 별도예요.</p>
-    <label className="alter-label alter-original-zoom" htmlFor={id + "-zoom"}>{zoomLabel}<input id={id + "-zoom"} type="range" min={100} max={200} step={25} value={zoom} onChange={(event): void => onZoom(Number(event.target.value))} /><output htmlFor={id + "-zoom"}>{zoom}%</output></label>
+    <OriginalZoom label={zoomLabel} zoom={zoom} maximum={200} onZoom={onZoom} />
   </div>;
 }

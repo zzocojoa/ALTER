@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactElement, type ReactNode } from "react";
-import { LearningDialog } from "@/components/alter/dialog";
+import { Dialog as DialogPrimitive } from "radix-ui";
+import { ArrowLeft } from "lucide-react";
+import { Dialog, DialogTrigger, DialogPortal, DialogOverlay, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { RECALL_START_EVENT } from "@/lib/tutor/client-privacy";
 import { originalErrorText, originalFailure } from "./original-failure";
 import "./original.css";
@@ -14,6 +16,7 @@ export function OriginalDialog(props: OriginalDialogProps): ReactElement {
 }
 function OriginalDialogSession({ label, url, children }: OriginalDialogProps): ReactElement {
   const request = useRef<AbortController | null>(null);
+  const heading = useRef<HTMLHeadingElement | null>(null);
   const [opened, setOpened] = useState<boolean>(false);
   const [busy, setBusy] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -37,9 +40,24 @@ function OriginalDialogSession({ label, url, children }: OriginalDialogProps): R
     return (): void => { request.current?.abort(); window.removeEventListener("pagehide", conceal); window.removeEventListener(RECALL_START_EVENT, conceal); document.removeEventListener("visibilitychange", visibility); };
   }, []);
   return <div>
-    <LearningDialog open={opened} onOpenChange={(value): void => { if (value) void open(); else close(); }} title={label} closeLabel="확대 화면 닫기" description="확대 비율은 방향키로 조절해요. 원본 이동 영역에서는 방향키로 이동하고, Escape로 닫을 수 있어요." trigger={<button type="button" className="alter-control alter-button" disabled={busy} aria-busy={busy}>{label} 크게 보기</button>}>
-      <div className="alter-original-content">{opened && children}</div>
-    </LearningDialog>
+    <Dialog open={opened} onOpenChange={(value): void => { if (value) void open(); else close(); }} modal>
+      <DialogTrigger asChild><button type="button" className="alter-control alter-button" disabled={busy} aria-busy={busy}>{label} 크게 보기</button></DialogTrigger>
+      <DialogPortal>
+        <DialogOverlay data-alter-ui className="alter-overlay" />
+        <DialogPrimitive.Content data-alter-ui className="alter-dialog alter-original-dialog" onOpenAutoFocus={(event): void => {
+          event.preventDefault();
+          if (heading.current === null) throw new TypeError("원본 뷰어 제목이 준비되지 않았습니다.");
+          heading.current.focus();
+        }} onInteractOutside={(event): void => event.preventDefault()}>
+          <div className="alter-dialog-header">
+            <DialogClose asChild><button type="button" className="alter-original-back" aria-label="자료로 돌아가기 · 확대 화면 닫기"><ArrowLeft aria-hidden="true" /><span>자료로</span></button></DialogClose>
+            <DialogTitle ref={heading} tabIndex={-1} className="alter-subheading alter-focus">{label}</DialogTitle>
+          </div>
+          <DialogDescription className="alter-caption">확대 비율은 방향키로 조절해요. 원본 이동 영역에서는 방향키로 이동하고, Escape로 닫을 수 있어요.</DialogDescription>
+          <div className="alter-dialog-body"><div className="alter-original-content">{opened && children}</div></div>
+        </DialogPrimitive.Content>
+      </DialogPortal>
+    </Dialog>
     {busy && <p className="alter-caption" role="status">원본 접근 권한을 확인하고 있어요.</p>}
     {error && <p role="alert">{error}</p>}
   </div>;

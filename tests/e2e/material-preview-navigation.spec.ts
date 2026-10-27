@@ -65,7 +65,7 @@ test("긴 목록에서 PDF 클릭·목록 복귀·재선택·다른 자료 선�
   for (const dimensions of [{ width: 800, height: 360 }, { width: 320, height: 400 }, { width: 390, height: 300 }]) {
     await page.setViewportSize(dimensions);
     await page.evaluate((): void => { document.documentElement.style.fontSize = "200%"; });
-    const closeButton = dialog.getByRole("button", { name: "확대 화면 닫기", exact: true });
+    const closeButton = dialog.getByRole("button", { name: "자료로 돌아가기 · 확대 화면 닫기", exact: true });
     await closeButton.focus();
     await expect(closeButton).toBeInViewport();
     const box = await closeButton.boundingBox();
@@ -145,4 +145,50 @@ test("실제 PDF 캔버스의 구간 표시가 선택 페이지와 확대 크기
   if (enlarged === null || largerMark === null) throw new Error("PDF 확대 좌표를 확인할 수 없습니다.");
   expect(largerMark.width).toBeCloseTo(enlarged.width * 0.3, 0);
   expect(methods.every((method): boolean => ["GET", "HEAD"].includes(method))).toBe(true); expect(await page.pageErrors()).toEqual([]);
+});
+
+
+test("원본 확대는 세로·가로에서 스크롤 전에 원본과 조작을 함께 보여 준다", async ({ page }, info): Promise<void> => {
+  const pdf: Uint8Array = readablePdf(3);
+  const library: MaterialLibrary = previewLibrary(pdf);
+  await page.goto("/signin-with-chatgpt?return_to=/learn/materials");
+  await page.route("**/api/materials", async (route): Promise<void> => { await route.fulfill({ json: library }); });
+  await page.route("**/api/materials/*/extraction", async (route): Promise<void> => { await route.fulfill({ json: { job: null, pages: [] } }); });
+  await page.route("**/api/materials/*/file", async (route): Promise<void> => {
+    expect(["GET", "HEAD"]).toContain(route.request().method());
+    await route.fulfill({ headers: { "content-type": "application/pdf", "content-length": String(pdf.length), etag: '"viewer-fit"' }, body: route.request().method() === "HEAD" ? undefined : Buffer.from(pdf) });
+  });
+  await page.getByRole("button", { name: "목록 새로 확인", exact: true }).click();
+  await page.locator(`#material-${library.materials[0].id}`).click();
+  const preview = page.getByRole("region", { name: "선택한 자료", exact: true });
+  await expect(preview.getByText("1페이지를 열었어요.", { exact: true })).toBeVisible();
+  await page.setViewportSize({ width: 844, height: 390 });
+  const trigger = preview.getByRole("button", { name: "파일 1페이지 원본 크게 보기", exact: true });
+  await trigger.click();
+  const dialog = page.getByRole("dialog", { name: "파일 1페이지 원본", exact: true });
+  const region = dialog.getByRole("region", { name: "대조 원본 이동 영역", exact: true });
+  await expect(region).toBeVisible();
+  const close = dialog.getByRole("button", { name: "자료로 돌아가기 · 확대 화면 닫기", exact: true });
+  const zoom = dialog.getByRole("slider", { name: "대조 원본 확대", exact: true });
+  for (const size of [{ width: 844, height: 390 }, { width: 390, height: 844 }, { width: 1280, height: 589 }, { width: 320, height: 400 }]) {
+    await page.setViewportSize(size);
+    await expect(close).toBeInViewport({ ratio: 1 });
+    await expect(zoom).toBeInViewport({ ratio: 1 });
+    const bounds = await region.boundingBox();
+    if (bounds === null) throw new Error("원본 표시 영역을 찾을 수 없습니다.");
+    expect(bounds.height, "원본이 화면 높이의 절반 이상을 차지해야 합니다.").toBeGreaterThanOrEqual(size.height * 0.55);
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(size.height);
+    expect(bounds.y, "원본이 제목 바로 아래에 보여야 합니다.").toBeLessThanOrEqual(100);
+    expect(await dialog.evaluate((element): number => element.scrollHeight - element.clientHeight)).toBeLessThanOrEqual(1);
+    await page.screenshot({ path: `outputs/ui-acceptance/W/original-fit-${info.project.name}-${size.width}x${size.height}.png` });
+  }
+  await zoom.focus(); await page.keyboard.press("ArrowRight"); await expect(zoom).toHaveValue("125");
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect(zoom).toHaveValue("125");
+  await expect(region).toBeInViewport({ ratio: 1 });
+  await checkAccessibility(page, ".alter-dialog", info);
+  await close.click();
+  await expect(dialog).toHaveCount(0); await expect(trigger).toBeFocused();
+  await expect(preview.getByLabel("파일 페이지", { exact: true })).toHaveValue("1");
+  expect(await page.pageErrors()).toEqual([]);
 });

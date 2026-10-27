@@ -126,7 +126,7 @@ test("자료 등록과 PDF·사진·텍스트 원본을 키보드·모바일에�
   const photoDialog = page.getByRole("dialog",{name:"사진 원본",exact:true}); await expect(photoDialog.getByRole("img")).toBeVisible();
   await photoDialog.getByLabel("사진 확대",{exact:true}).focus(); await page.keyboard.press("ArrowRight"); await expect(photoDialog.getByText("125%",{exact:true})).toBeVisible();
   await checkAccessibility(page,".alter-dialog:has(.alter-original-content)",info);
-  await photoDialog.getByRole("button",{name:"확대 화면 닫기",exact:true}).click(); await expect(photoExpand).toBeFocused();
+  await photoDialog.getByRole("button",{name:"자료로 돌아가기 · 확대 화면 닫기",exact:true}).click(); await expect(photoExpand).toBeFocused();
   const landscape: Buffer = await readFile("tests/fixtures/jpeg/testorig.jpg");
   await registerFile(page, `가로 사진 ${suffix}`, "landscape.jpg", "image/jpeg", landscape);
   await expect(page.getByRole("img", { name: `가로 사진 ${suffix}` })).toBeVisible();
