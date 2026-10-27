@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { resultDraftFixture, mountResultView } from "../fixtures/result-ui-browser";
+import { resultDraftFixture, mountResultView, mountResultViewWithHistory } from "../fixtures/result-ui-browser";
 import { tutorId } from "../fixtures/tutor-state";
 import type { ResultDraft } from "../../lib/results/contracts";
 import { checkAccessibility } from "../fixtures/accessibility";
@@ -87,10 +87,43 @@ test("정정 후 현재 재검토와 과거 확정 이력을 구분하고 과거
   await mountResultView(page, draft);
   const history = page.getByRole("region", { name: "확정 이력과 재검토", exact: true });
   await expect(history).toContainText("진도 완료 · 수행 독립 수행"); await expect(history).toContainText("진도 진행 중 · 수행 미확인"); await expect(history).toContainText("재검증 필요");
-  await page.getByText("저장된 회차 (1)", { exact: true }).click(); await expect(page.locator('.result-history-list a[aria-current="page"]')).toHaveAttribute("href", `/learn/results?id=${draft.id}`); await expect(page.locator(".result-history-list")).toContainText("공식 확정 2판");
+  await expect(page.locator('.result-history-list a[aria-current="page"]')).toHaveAttribute("href", `/learn/results?id=${draft.id}`); await expect(page.locator(".result-history-list")).toContainText("공식 확정 2판");
   await checkAccessibility(page, ".result-card", info);
   await page.route("**/api/results*", async (route): Promise<void> => { await route.fulfill({ json: { ...draft, confirmation: null } }); });
   await page.getByRole("button", { name: "서버 최신 기록 확인", exact: true }).click(); await expect(page.getByRole("alert")).toContainText("보존된 확정 이력");
   await expect(page.getByText("공식 확정 기록", { exact: true })).toBeVisible(); await expect(history).toContainText("진도 완료 · 수행 독립 수행");
   await page.screenshot({ path: `outputs/ui-results/recheck-p4-${info.project.name}.png`, fullPage: true });
+});
+
+
+test("미확정 최근 회차에서도 확정 기록을 펼치기 없이 찾아 열 수 있음", async ({ page }, info): Promise<void> => {
+  const draft: ResultDraft = resultDraftFixture();
+  const savedId: ResultDraft["id"] = tutorId(777);
+  await mountResultViewWithHistory(page, draft, [
+    { id: draft.id, version: draft.version, title: draft.title, confirmedOrdinal: null, confirmedAt: null },
+    { id: savedId, version: 14, title: "분수와 분자·분모의 의미", confirmedOrdinal: 3, confirmedAt: 1 },
+  ]);
+  const history = page.getByRole("region", { name: "수업 기록 찾기", exact: true });
+  const saved = history.getByRole("link", { name: /분수와 분자·분모의 의미/ });
+  await expect(history.getByRole("heading", { name: "확정된 수업 기록", exact: true })).toBeVisible();
+  await expect(saved).toBeVisible();
+  await expect(saved).toContainText("공식 확정 3판");
+  await expect(saved).toHaveAttribute("href", `/learn/results?id=${savedId}`);
+  await expect(history.locator(`a[href="/learn/results?id=${draft.id}"]`)).toBeHidden();
+  await checkAccessibility(page, ".result-history-list", info);
+  await page.screenshot({ path: `outputs/ui-results/confirmed-discovery-${info.project.name}.png`, fullPage: true });
+  await history.getByText("미확정 회차 (1)", { exact: true }).click();
+  await expect(history.locator('a[aria-current="page"]')).toContainText("사용자 미확정");
+  await saved.click();
+  await expect(page).toHaveURL(`https://result.local.test/learn/results?id=${savedId}`);
+});
+
+test("확정 기록이 없으면 미확정 회차를 확정으로 표시하지 않음", async ({ page }): Promise<void> => {
+  const draft: ResultDraft = resultDraftFixture();
+  await mountResultView(page, draft);
+  const history = page.getByRole("region", { name: "수업 기록 찾기", exact: true });
+  await expect(history.getByText("아직 확정된 수업 기록이 없어요.", { exact: true })).toBeVisible();
+  await history.getByText("미확정 회차 (1)", { exact: true }).click();
+  await expect(history.locator('a[aria-current="page"]')).toContainText("사용자 미확정");
+  await expect(history).not.toContainText("공식 확정");
 });
