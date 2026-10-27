@@ -67,13 +67,15 @@ test("전송 성공만으로 등록을 표시하지 않고 등록 응답까지 �
   await expect(page.locator(".alter-material-row")).toHaveCount(0);
   if (releaseConfirmation === null) throw new Error("등록 응답 제어가 준비되지 않았습니다.");
   (releaseConfirmation as () => void)();
-  await expect(progress).toHaveAttribute("data-phase", "confirmed");
+  // 원본을 자동으로 열면 등록 단계가 가려지므로 지속되는 완료 안내와 원본을 먼저 확인합니다.
+  await expect(page.locator(".material-feedback").getByRole("status")).toHaveText("자료 등록을 확인했어요. 새 자료의 원본을 열어요.");
   const preview = page.getByRole("region", { name: "선택한 자료", exact: true });
   await expect(preview).toBeFocused();
   await expect(preview).toContainText("검증용 문장");
   await expect(page).toHaveURL(new RegExp(`open=${materialId}`));
   await page.getByRole("button", { name: "자료 목록으로", exact: true }).click();
   await expect(page.locator(`#material-${materialId}`)).toBeFocused();
+  await expect(progress).toHaveAttribute("data-phase", "confirmed");
   await expect(page).not.toHaveURL(/open=/);
   await page.getByText("새 자료 등록", { exact: true }).click();
   await expect(page.getByLabel("자료 제목", { exact: true })).toHaveValue("시험 자료");
