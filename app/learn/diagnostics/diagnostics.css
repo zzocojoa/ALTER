@@ -8,3 +8,5 @@
 [data-alter-ui] .context-diagnostics { margin-block: var(--alter-space-8); padding: var(--alter-space-4); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); background: var(--alter-surface-muted); scroll-margin-block-start: var(--alter-space-5); }
 [data-alter-ui] .context-diagnostics pre { overflow-wrap: anywhere; white-space: pre-wrap; }
 [data-alter-ui] .diagnostic-tools :focus-visible, [data-alter-ui] .context-diagnostics:focus-visible { outline: var(--alter-focus-width) solid var(--alter-focus); outline-offset: var(--alter-focus-offset); }
+[data-alter-ui] .viewport-diagnostics { display: grid; gap: var(--alter-space-3); margin-block: var(--alter-space-6); padding: var(--alter-space-5); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); scroll-margin-block-start: var(--alter-space-5); }
+[data-alter-ui] .viewport-dimensions { font-size: var(--alter-text-body); font-weight: var(--alter-weight-label); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
