@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import "./styles/access.css";
 import { formatSeoulDate } from "@/lib/seoul-date";
 import type { SeoulDate } from "@/lib/seoul-date";
 import { Welcome } from "./welcome";
@@ -9,7 +10,7 @@ export const dynamic = "force-dynamic";
 export default function Home(): ReactElement {
   const today: SeoulDate = formatSeoulDate(new Date());
   return (
-    <div className="site-shell">
+    <div data-alter-ui className="site-shell public-entry">
       <a href="#main" className="skip-link">본문으로 건너뛰기</a>
       <header className="site-header">
         <span className="wordmark">ALTER<span aria-hidden="true">.</span></span>
@@ -20,9 +21,9 @@ export default function Home(): ReactElement {
           <section aria-labelledby="welcome-title">
             <p className="eyebrow">배움의 주도권을 나에게</p>
             <h1 id="welcome-title">나의 속도로,<br /><span>스스로 배우기</span></h1>
-            <p className="introduction">많이 읽는 것보다, 내 말로 설명할 수 있는 한 가지.<br className="desktop-break" /> 작은 이해를 차곡차곡 쌓는 공간을 준비하고 있어요.</p>
+            <p className="introduction">많이 읽는 것보다, 내 말로 설명할 수 있는 한 가지.<br className="desktop-break" /> 자료를 고르고, 직접 답하고, 배운 내용을 다시 확인해 보세요.</p>
+            <p><a className="alter-link access-primary" href={chatGPTSignInPath("/learn")} target="_top">내 학습 공간 열기</a></p>
             <Welcome />
-            <p><a href={chatGPTSignInPath("/learn")} target="_top">내 학습 공간 열기</a></p>
           </section>
           <aside className="learning-note" aria-labelledby="note-title">
             <p className="note-number" aria-hidden="true">A / 01</p>

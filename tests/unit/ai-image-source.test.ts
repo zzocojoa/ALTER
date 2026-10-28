@@ -30,7 +30,11 @@ async function withVerifiedSource(assertion: (fixture: SourceFixture) => Promise
   try {
     const db: D1Database = await runtime.getD1Database("DB") as unknown as D1Database;
     const journal: Readonly<{ entries: readonly Readonly<{ tag: string }>[] }> = JSON.parse(await readFile("drizzle/meta/_journal.json", "utf8"));
-    for (const entry of journal.entries) for (const statement of (await readFile(`drizzle/${entry.tag}.sql`, "utf8")).split("--> statement-breakpoint").map((sql: string): string => sql.trim()).filter(Boolean)) await db.prepare(statement).run();
+    // 테스트마다 빈 D1을 유지하며 마이그레이션별 왕복 호출만 합칩니다.
+    for (const entry of journal.entries) {
+      const statements: D1PreparedStatement[] = (await readFile(`drizzle/${entry.tag}.sql`, "utf8")).split("--> statement-breakpoint").map((sql: string): string => sql.trim()).filter(Boolean).map((sql: string): D1PreparedStatement => db.prepare(sql));
+      await db.batch(statements);
+    }
     const owner: SiteIdentity = { realm: "sites", userId: "image-source-owner" };
     const courseId: UploadInput["id"] = recordId.parse(crypto.randomUUID());
     const materialId: UploadInput["id"] = recordId.parse(crypto.randomUUID());

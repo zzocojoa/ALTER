@@ -1,0 +1,105 @@
+import { createHash } from "node:crypto";
+import { expect, test } from "@playwright/test";
+import { z } from "zod";
+import { materialBrowser, emptyMaterialLibrary, materialFixture } from "../fixtures/materials-scenario";
+import { extractionPdf } from "../fixtures/extraction-pdf";
+import { checkMaterialViewports } from "../fixtures/material-viewport";
+import { checkAccessibility } from "../fixtures/accessibility";
+import type { MaterialCard } from "../../lib/materials/library";
+import type { StoredExtractionPage } from "../../lib/extraction/state";
+import { fixtureVisionBudget } from "../fixtures/vision-budget";
+import { metadataOfImage } from "../../lib/extraction/state";
+import { preparedPageImage } from "../../lib/extraction/image";
+import { pageResult } from "../../lib/extraction/result";
+
+test("혼합 PDF는 페이지별 다음 행동을 제공하고 텍스트 페이지만 무료 추출한다", async ({ page }, info): Promise<void> => {
+  test.setTimeout(60_000);
+  const pdf: Buffer = Buffer.from(extractionPdf()); const sha256: string = createHash("sha256").update(pdf).digest("hex"); const base: MaterialCard = materialFixture(650);
+  const material: MaterialCard = { ...base, metadata: { ...base.metadata, kind: "pdf", mime: "application/pdf", filename: "synthetic-mixed.pdf", bytes: pdf.length, sha256 }, file: { ...base.file, kind: "pdf", pages: 7, bytes: pdf.length, sha256 } };
+  let pages: readonly StoredExtractionPage[] = Array.from({ length: 7 }, (_: unknown, index: number): StoredExtractionPage => ({ id: `00000000-0000-4000-a000-${String(651 + index).padStart(12, "0")}`, jobId: material.id, selectionRevision: 1, filePage: index + 1, version: 1, resultVersion: 0, resultId: null, state: "pending", printedPage: null, pendingAiKey: null, pendingImage: null, resultImage: null, failure: null, confirmedSegmentIds: [], result: null }));
+  const extracted: number[] = []; let visionPosts: number = 0;
+  const pendingVision: { finish: (() => Promise<void>) | null } = { finish: null };
+  await materialBrowser(page, { ...emptyMaterialLibrary, materials: [material] }, async (route): Promise<void> => {
+    const request = route.request(); const path: string = new URL(request.url()).pathname;
+    if (path.endsWith("/extraction")) { expect(request.method()).toBe("GET"); await route.fulfill({ json: { job: { jobId: material.id, revision: 1, uploadId: material.id, selection: { materialId: material.id, originalVersion: material.file.objectVersion, originalHash: sha256, pages: pages.map((saved) => ({ filePage: saved.filePage, purpose: "study" })) } }, pages } }); return; }
+    if (path.endsWith("/text")) {
+      const input = z.object({ filePage: z.number(), selectionRevision: z.literal(1), expectedVersion: z.literal(1), result: pageResult }).parse(request.postDataJSON());
+      expect([1, 4]).toContain(input.filePage); expect(input.result.status).toBe("complete"); extracted.push(input.filePage);
+      const current = pages.find((saved): boolean => saved.filePage === input.filePage); if (current === undefined) throw new Error("합성 저장 페이지가 없어요.");
+      const saved: StoredExtractionPage = { ...current, state: "complete", version: 2, resultVersion: 1, resultId: current.id, result: input.result };
+      pages = pages.map((entry): StoredExtractionPage => entry.id === saved.id ? saved : entry); await route.fulfill({ json: { page: saved } }); return;
+    }
+    if (path === "/api/dashboard/usage") { expect(request.method()).toBe("GET"); await route.fulfill({ json: fixtureVisionBudget(Date.now()) }); return; }
+    if (path.endsWith("/vision")) {
+      visionPosts++;
+      const input = z.object({ filePage: z.literal(2), selectionRevision: z.literal(1), expectedVersion: z.literal(1), comparedWithOriginal: z.literal(true), image: preparedPageImage }).parse(request.postDataJSON());
+      const current = pages.find((saved): boolean => saved.filePage === 2); if (current === undefined) throw new Error("합성 이미지 페이지가 없어요.");
+      const saved: StoredExtractionPage = { ...current, state: "complete", version: 2, resultVersion: 1, resultId: current.id, printedPage: "ix", resultImage: metadataOfImage(input.image), result: { filePage: 2, method: "vision", status: "complete", width: input.image.width, height: input.image.height, rotation: 0, segments: [{ id: "s0", kind: "text", text: "모의 AI 판독 저장 결과", bounds: null, transform: null, uncertain: true, reason: "합성 응답 · 원본 대조 필요" }], error: null, requiresConfirmation: true } };
+      pendingVision.finish = async (): Promise<void> => { pages = pages.map((entry): StoredExtractionPage => entry.id === saved.id ? saved : entry); await route.fulfill({ json: { page: saved } }); }; return;
+    }
+    expect(path).toBe(material.file.sourceUrl); expect(["HEAD", "GET"]).toContain(request.method());
+    await route.fulfill({ headers: { "content-type": "application/pdf", etag: '\"fixture\"', "content-length": String(pdf.length) }, body: request.method() === "HEAD" ? undefined : pdf });
+  });
+  await page.locator(".alter-material-row").click();
+  const actions = page.getByRole("listitem", { name: "파일 2페이지 다음 행동", exact: true });
+  await expect(actions).toContainText("텍스트층이 없는 이미지 페이지");
+  await expect(page.getByRole("listitem", { name: "파일 3페이지 다음 행동", exact: true })).toContainText("빈 페이지");
+  await expect(page.getByRole("listitem", { name: "파일 4페이지 다음 행동", exact: true })).toContainText("텍스트와 이미지가 함께");
+  await expect(page.getByRole("listitem", { name: "파일 5페이지 다음 행동", exact: true })).toContainText("원본 확인이 필요한");
+  await expect(page.getByRole("status").filter({ hasText: "페이지별 다음 행동" })).toBeVisible(); expect(visionPosts).toBe(0);
+  await checkMaterialViewports(page, info, "analysis-ready");
+  await page.getByRole("button", { name: "선택 페이지 텍스트 추출", exact: true }).click();
+  await expect.poll((): number => extracted.length).toBe(2); expect(extracted).toEqual([1, 4]);
+  await expect(page.getByRole("button", { name: "선택 페이지 텍스트 추출", exact: true })).toHaveCount(0);
+  const fourth = page.getByRole("listitem", { name: "파일 4페이지 다음 행동", exact: true });
+  await fourth.getByRole("button", { name: "저장된 결과 확인", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "파일 4페이지 · 결과 1판", exact: true })).toBeFocused();
+  await expect(page.getByRole("article", { name: "파일 4페이지 추출 결과", exact: true })).toContainText("Text and image");
+  const comparison = page.getByRole("region", { name: "원본과 결과 비교", exact: true });
+  await comparison.getByText("추출 내용 수정", { exact: true }).click();
+  const draft = comparison.getByRole("textbox", { name: "구간 1 수정", exact: true });
+  await comparison.getByRole("checkbox", { name: "구간 1 확인", exact: true }).check();
+  await draft.fill("페이지 A의 미저장 초안");
+  await expect(comparison.getByRole("button", { name: "선택 구간 확인 저장", exact: true })).toBeDisabled();
+  await actions.getByRole("button", { name: "파일 2페이지 이미지 준비", exact: true }).click();
+  await expect(page.getByRole("form", { name: "파일 2페이지 AI 판독", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "AI 없이 직접 전사", exact: true }).click();
+  await expect(comparison.getByRole("textbox", { name: "구간 1 수정", exact: true })).toBeFocused();
+  await expect(comparison.getByRole("heading", { name: "파일 2페이지 · 결과 0판", exact: true })).toBeVisible();
+  await checkMaterialViewports(page, info, "prepared");
+  expect(visionPosts).toBe(0); await checkAccessibility(page, ".extraction-panel", info);
+  await page.getByRole("listitem", { name: "파일 5페이지 다음 행동", exact: true }).getByRole("button", { name: "원본 확인", exact: true }).click();
+  await expect(page.getByRole("region", { name: "파일 5페이지 구간 대조", exact: true })).toBeFocused();
+  expect(visionPosts).toBe(0);
+  await fourth.getByRole("button", { name: "저장된 결과 확인", exact: true }).click();
+  await comparison.getByText("추출 내용 수정", { exact: true }).click();
+  await expect(draft).toHaveValue("페이지 A의 미저장 초안");
+  const vision = page.getByRole("form", { name: "파일 2페이지 AI 판독", exact: true });
+  await vision.getByRole("button", { name: "저장된 비용·승인 조건 확인", exact: true }).click();
+  await vision.getByRole("checkbox").check(); expect(visionPosts).toBe(0);
+  await vision.getByRole("button", { name: "이 페이지 AI 판독", exact: true }).click();
+  await expect.poll((): number => visionPosts).toBe(1);
+  await checkMaterialViewports(page, info, "running");
+  await draft.focus();
+  if (pendingVision.finish === null) throw new Error("명시적 모의 AI 요청이 시작되지 않았어요.");
+  await pendingVision.finish();
+  await expect(page.getByRole("status").filter({ hasText: "파일 2페이지 · 결과 1판을 저장" })).toBeVisible();
+  await expect(draft).toBeFocused();
+  const showSaved = page.getByRole("button", { name: "파일 2페이지 저장된 결과 확인", exact: true });
+  await showSaved.focus(); await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "파일 2페이지 · 결과 1판", exact: true })).toBeFocused();
+  await expect(comparison.getByRole("article")).toContainText("모의 AI 판독 저장 결과");
+  await page.getByRole("region", { name: "PDF 원본", exact: true }).getByRole("textbox", { name: "파일 페이지", exact: true }).fill("2");
+  await page.getByText("PDF 텍스트층 보기", { exact: true }).click();
+  await expect(page.getByRole("region", { name: "PDF 원본", exact: true })).toContainText("PDF 텍스트층이 없어요");
+  await expect(page.getByRole("listitem", { name: "파일 2페이지 다음 행동", exact: true })).toContainText("인쇄 ix쪽");
+  await comparison.getByRole("button", { name: "페이지별 다음 행동으로 돌아가기", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "필요한 페이지만 선택", exact: true })).toBeFocused();
+  await fourth.getByRole("button", { name: "저장된 결과 확인", exact: true }).click();
+  await comparison.getByText("추출 내용 수정", { exact: true }).click();
+  await expect(draft).toHaveValue("페이지 A의 미저장 초안");
+  await expect(comparison.getByRole("checkbox", { name: "구간 1 확인", exact: true })).toBeChecked();
+  await checkMaterialViewports(page, info, "result");
+  await expect(draft).toHaveValue("페이지 A의 미저장 초안");
+  expect(visionPosts).toBe(1); expect(await page.pageErrors()).toEqual([]);
+});

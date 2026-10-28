@@ -1,0 +1,15 @@
+[data-alter-ui].access-screen { max-inline-size: 48rem; padding-block: var(--alter-space-6); }
+[data-alter-ui] .access-card { margin-block: var(--alter-space-8); padding: var(--alter-space-6); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); background: var(--alter-surface); }
+[data-alter-ui] .access-card .alter-page-header { margin-block-end: var(--alter-space-5); }
+[data-alter-ui] .access-actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--alter-space-3); margin-block-start: var(--alter-space-6); }
+[data-alter-ui] .access-actions .alter-link { min-block-size: 48px; }
+[data-alter-ui] .access-actions form { margin: 0; }
+[data-alter-ui] .alter-link.access-primary { display: inline-flex; justify-content: center; align-items: center; min-block-size: 48px; padding: var(--alter-space-3) var(--alter-space-4); border-radius: var(--alter-radius-control); background: var(--alter-primary); color: var(--alter-on-primary); }
+[data-alter-ui].public-entry .intro-grid { padding-block: var(--alter-space-10); gap: var(--alter-space-8); }
+[data-alter-ui].public-entry h1 { font-family: var(--alter-font-sans); font-size: clamp(2rem, 5vw, 3.75rem); font-weight: var(--alter-weight-heading); line-height: 1.22; letter-spacing: -.035em; }
+[data-alter-ui].public-entry .introduction { font-size: var(--alter-text-body); line-height: var(--alter-leading-body); margin-block: var(--alter-space-6); }
+[data-alter-ui].public-entry .learning-note { padding: var(--alter-space-6); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); background: var(--alter-surface); }
+[data-alter-ui].public-entry .learning-note h2 { font-family: var(--alter-font-sans); font-size: var(--alter-text-section); }
+[data-alter-ui].public-entry .welcome { margin-block-start: var(--alter-space-6); padding-block-start: var(--alter-space-4); border-block-start: 1px solid var(--alter-border); }
+[data-alter-ui].public-entry .welcome-message { margin-block-end: var(--alter-space-3); }
+@media (max-width: 47.99rem) { [data-alter-ui] .access-card { padding: var(--alter-space-5); } [data-alter-ui].public-entry .intro-grid { grid-template-columns: minmax(0, 1fr); } }

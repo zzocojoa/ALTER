@@ -1,0 +1,41 @@
+[data-alter-ui].alter-shell { min-block-size: 100dvh; background: var(--alter-canvas); }
+[data-alter-ui] .alter-workspace { min-inline-size: 0; padding-block-end: calc(6rem + env(safe-area-inset-bottom)); }
+[data-alter-ui] .alter-workspace > .site-shell { inline-size: 100%; max-inline-size: var(--alter-page-width); padding: var(--alter-space-5); }
+[data-alter-ui] .alter-skip { position: fixed; inset-block-start: var(--alter-space-2); inset-inline-start: var(--alter-space-2); transform: translateY(-200%); z-index: var(--alter-layer-skip); background: var(--alter-surface); }
+[data-alter-ui] .alter-skip:focus { transform: none; }
+[data-alter-ui] .alter-brand-row { display: none; }
+[data-alter-ui] .alter-navigation { position: fixed; z-index: var(--alter-layer-navigation); inset: auto 0 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--alter-space-1); padding: var(--alter-space-2) max(var(--alter-space-2), env(safe-area-inset-right)) calc(var(--alter-space-2) + env(safe-area-inset-bottom)) max(var(--alter-space-2), env(safe-area-inset-left)); border-block-start: var(--alter-border-width) solid var(--alter-border); background: var(--alter-surface); }
+[data-alter-ui] .alter-nav-item { display: flex; flex-direction: column; justify-content: center; min-inline-size: 0; gap: var(--alter-space-1); padding: var(--alter-space-2) var(--alter-space-1); color: var(--alter-ink-secondary); text-decoration: none; text-align: center; font-size: var(--alter-text-caption); }
+[data-alter-ui] .alter-nav-item[aria-current="page"] { color: var(--alter-primary); }
+/* 폼 전체의 초점을 기준으로 유지하여 입력창에서 제출 버튼으로 이동할 때 탐색이 끼어들지 않습니다. */
+[data-alter-ui].alter-shell:has(form:focus-within, textarea:focus, input:focus, select:focus) .alter-navigation { visibility: hidden; }
+@media (min-width: 768px) {
+  [data-alter-ui].alter-shell { display: grid; grid-template-columns: 224px minmax(0, 1fr); }
+  [data-alter-ui].alter-shell[data-collapsed="true"] { grid-template-columns: 80px minmax(0, 1fr); }
+  [data-alter-ui] .alter-workspace { padding-block-end: var(--alter-space-8); }
+  [data-alter-ui] .alter-sidebar { position: sticky; inset-block-start: 0; block-size: 100dvh; overflow-y: auto; border-inline-end: var(--alter-border-width) solid var(--alter-border); background: var(--alter-surface); padding: var(--alter-space-4); }
+  [data-alter-ui] .alter-brand-row { display: flex; align-items: center; justify-content: space-between; gap: var(--alter-space-2); margin-block-end: var(--alter-space-6); }
+  [data-alter-ui] .alter-brand { padding: 0; text-decoration: none; font: var(--alter-weight-heading) var(--alter-text-section) var(--alter-font-brand); letter-spacing: -.05em; }
+  [data-alter-ui] .alter-brand > span { color: var(--alter-brand-dot); margin-inline-start: -.4rem; }
+  [data-alter-ui] .alter-sidebar-toggle { display: grid; place-items: center; padding: var(--alter-space-2); min-inline-size: var(--alter-target); }
+  [data-alter-ui] .alter-navigation { position: static; display: flex; flex-direction: column; padding: 0; border: 0; gap: var(--alter-space-2); }
+  [data-alter-ui] .alter-nav-item { flex-direction: row; justify-content: flex-start; gap: var(--alter-space-3); padding: var(--alter-space-3); font-size: var(--alter-text-label); }
+  [data-alter-ui].alter-shell:has(form:focus-within, textarea:focus, input:focus, select:focus) .alter-navigation { visibility: visible; }
+  [data-alter-ui].alter-shell[data-collapsed="true"] .alter-brand { display: none; }
+  [data-alter-ui].alter-shell[data-collapsed="true"] .alter-nav-label { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip-path: inset(50%); }
+  [data-alter-ui].alter-shell[data-collapsed="true"] .alter-nav-item { justify-content: center; }
+  [data-alter-ui] .alter-workspace > .site-shell { padding: var(--alter-space-8); }
+}
+@media (min-width: 1024px) { [data-alter-ui].alter-shell { grid-template-columns: 248px minmax(0, 1fr); } }
+
+[data-alter-ui] .alter-page-header { display: grid; gap: var(--alter-space-3); margin-block-end: var(--alter-space-6); }
+[data-alter-ui] .alter-page-back { justify-self: start; }
+[data-alter-ui] .alter-page-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--alter-space-4); }
+[data-alter-ui] .alter-page-heading > div { min-inline-size: 0; }
+[data-alter-ui] .alter-page-action { flex: none; max-inline-size: 100%; }
+[data-alter-ui] #learn-main { scroll-margin-block: var(--alter-space-4); }
+
+/* 집중 상태는 기존 회차의 단계에서만 유도하며 저장·나가기 제어는 본문에 유지합니다. */
+[data-alter-ui].alter-shell:has([data-learning-focus="true"]) { grid-template-columns: minmax(0, 1fr); }
+[data-alter-ui].alter-shell:has([data-learning-focus="true"]) .alter-sidebar { display: none; }
+[data-alter-ui].alter-shell:has([data-learning-focus="true"]) .alter-workspace { inline-size: 100%; max-inline-size: var(--alter-reading-width); margin-inline: auto; padding-block-end: calc(var(--alter-space-8) + env(safe-area-inset-bottom)); }

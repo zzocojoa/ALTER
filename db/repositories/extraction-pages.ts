@@ -6,6 +6,10 @@ import type { ImageMetadata, StoredExtractionPage } from "../../lib/extraction/s
 import { validatePageResult } from "../../lib/extraction/result.ts";
 import type { PageResult } from "../../lib/extraction/result.ts";
 import type { VerifiedExtractionPage } from "../../lib/extraction/server.ts";
+import { correctedPage, correctionInput } from "../../lib/extraction/confirmation.ts";
+import type { CorrectionInput } from "../../lib/extraction/confirmation.ts";
+import { initialTranscription, transcriptionEntry, transcriptionInput } from "../../lib/extraction/transcription.ts";
+import type { TranscriptionInput } from "../../lib/extraction/transcription.ts";
 import { executeAtomic, guardedUpdate, readStorage, requireInBatch } from "./atomic.ts";
 import type { Receipt, SqlValue } from "./atomic.ts";
 
@@ -31,14 +35,18 @@ export function requireExtractionPageBinding(page: StoredExtractionPage, proof: 
   if (page.jobId !== proof.job.jobId || page.selectionRevision !== proof.job.revision || page.filePage !== proof.filePage || context.owner.userId !== proof.owner.userId) throw domainFailure("reference_conflict", "extraction.page.binding", null);
 }
 
-async function commitPageResult(db: D1Database, context: Command, proof: VerifiedExtractionPage, page: StoredExtractionPage, result: PageResult, image: ImageMetadata | null, aiCallId: string | null, condition: string, values: readonly SqlValue[]): Promise<Receipt> {
+function pageResultWrites(db: D1Database, context: Command, proof: VerifiedExtractionPage, page: StoredExtractionPage, result: PageResult, image: ImageMetadata | null, aiCallId: string | null, condition: string, values: readonly SqlValue[], requestId: string): readonly D1PreparedStatement[] {
   requireExtractionPageBinding(page, proof, context); validatePageResult(result, page.filePage);
   const resultId: string = crypto.randomUUID();
-  return executeAtomic(db, context, "extraction.result", { pageId: page.id, result, image, aiCallId }, page.id, context.expectedVersion + 1, (requestId: string) => [
+  return [
     extractionSelectionGuard(db, proof, requestId),
     ...guardedUpdate(db, "extraction_pages", context.owner.userId, page.id, context.expectedVersion, requestId, 1, "result_version=result_version+1,result_id=?,state=?,failure=?,pending_ai_key=NULL,pending_image=NULL,updated_at=?", [resultId, result.status === "failed" ? "failed" : "complete", result.error, Date.now()], condition, values),
     db.prepare("INSERT INTO extraction_results (owner_id,id,page_id,result_version,upload_id,original_version,original_hash,result,image,ai_call_id,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)").bind(context.owner.userId, resultId, page.id, page.resultVersion + 1, proof.transfer.id, proof.job.selection.originalVersion, proof.job.selection.originalHash, JSON.stringify(result), image === null ? null : JSON.stringify(image), aiCallId, Date.now()),
-  ]);
+  ];
+}
+async function commitPageResult(db: D1Database, context: Command, proof: VerifiedExtractionPage, page: StoredExtractionPage, result: PageResult, image: ImageMetadata | null, aiCallId: string | null, condition: string, values: readonly SqlValue[]): Promise<Receipt> {
+  requireExtractionPageBinding(page, proof, context); validatePageResult(result, page.filePage);
+  return executeAtomic(db, context, "extraction.result", { pageId: page.id, result, image, aiCallId }, page.id, context.expectedVersion + 1, (requestId: string): readonly D1PreparedStatement[] => pageResultWrites(db, context, proof, page, result, image, aiCallId, condition, values, requestId));
 }
 
 export async function saveTextExtraction(db: D1Database, context: Command, proof: VerifiedExtractionPage, page: StoredExtractionPage, value: PageResult): Promise<Receipt> {
@@ -63,7 +71,24 @@ export async function recordVisionFailure(db: D1Database, context: Command, proo
 }
 
 /** 편집본은 새 결과 버전을 만들며 이전 확인 구간을 복사하지 않습니다. */
-export async function saveExtractionCorrection(db: D1Database, context: Command, proof: VerifiedExtractionPage, page: StoredExtractionPage, result: PageResult): Promise<Receipt> {
-  if (result.method !== "manual-correction" || page.result === null || result.filePage !== page.filePage) throw domainFailure("validation", "extraction.correction", null);
-  return commitPageResult(db, context, proof, page, result, page.resultImage, null, "state='complete' AND result_id=?", [page.resultId]);
+export async function saveExtractionCorrection(db: D1Database, context: Command, proof: VerifiedExtractionPage, page: StoredExtractionPage, value: CorrectionInput): Promise<Receipt> {
+  const input: CorrectionInput = correctionInput.parse(value);
+  requireExtractionPageBinding(page, proof, context);
+  if (context.expectedVersion !== input.expectedVersion) throw domainFailure("validation", "extraction.correction.version", null);
+  return executeAtomic(db, context, "extraction.correction", { pageId: page.id, input }, page.id, context.expectedVersion + 1, (requestId: string): readonly D1PreparedStatement[] => {
+    const result: PageResult = correctedPage(page, input);
+    return pageResultWrites(db, context, proof, page, result, page.resultImage, null, "state IN ('complete','failed') AND result_id=?", [input.resultId], requestId);
+  });
+}
+
+/** 첫 전사는 결과 없음 또는 실패한 빈 결과에만 저장하며 기존 결과 판은 이력으로 남깁니다. */
+export async function saveInitialTranscription(db: D1Database, context: Command, proof: VerifiedExtractionPage, page: StoredExtractionPage, value: TranscriptionInput): Promise<Receipt> {
+  const input: TranscriptionInput = transcriptionInput.parse(value);
+  requireExtractionPageBinding(page, proof, context);
+  if (context.expectedVersion !== input.expectedVersion || input.selectionRevision !== page.selectionRevision || input.filePage !== page.filePage) throw domainFailure("validation", "extraction.transcription.binding", null);
+  const result: PageResult = initialTranscription(input);
+  return executeAtomic(db, context, "extraction.transcription", { pageId: page.id, input }, page.id, context.expectedVersion + 1, (requestId: string): readonly D1PreparedStatement[] => {
+    if (transcriptionEntry(page) !== "create" || page.resultId !== input.resultId) throw domainFailure("reference_conflict", "extraction.transcription.current-result", null);
+    return pageResultWrites(db, context, proof, page, result, null, null, "state IN ('pending','failed') AND result_id IS ?", [input.resultId], requestId);
+  });
 }

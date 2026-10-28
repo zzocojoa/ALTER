@@ -5,3 +5,62 @@
 .learning-flow-nav{display:flex;flex-wrap:wrap;gap:.75rem;position:relative}.learning-flow-nav a{display:inline-flex;min-height:44px;align-items:center;padding:.25rem .5rem}.tutor-panel textarea{scroll-margin-block:6rem}.tutor-panel form{padding-bottom:env(safe-area-inset-bottom,0px)}.tutor-panel a{display:inline-flex;min-height:44px;align-items:center}
 
 .review-start{margin:1rem 0;padding:1rem;border:2px solid #265948;border-radius:.7rem;background:#eef2e8}.review-start h3{margin-top:0}.review-start button,.review-start a{box-sizing:border-box;display:flex;align-items:center;justify-content:center;width:100%;margin:.8rem 0;min-height:52px;padding:.8rem 1rem;background:#265948;color:#fff;border:2px solid #265948;border-radius:.4rem;font-weight:700;text-decoration:none}.review-start button:disabled{opacity:1;background:#e0e6dc;color:#405646;border-color:#7b8e7e;cursor:not-allowed}.review-start ol{padding-left:1.5rem;line-height:1.7}.review-start li+li{margin-top:.5rem}.review-start a:focus-visible{outline:3px solid #b58b41;outline-offset:3px}
+[data-alter-ui] .tutor-workspace { max-inline-size: 56rem; min-inline-size: 0; margin-block: var(--alter-space-5); }
+[data-alter-ui] .tutor-panel { max-inline-size: none; margin: 0 0 var(--alter-space-6); }
+[data-alter-ui] .tutor-panel > header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--alter-space-3); padding-block-end: var(--alter-space-3); margin-block-end: var(--alter-space-4); border-block-end: 1px solid var(--alter-border); }
+[data-alter-ui] .tutor-panel > header h2 { font-size: var(--alter-text-lead); margin: 0; }
+[data-alter-ui] .tutor-panel > header p { font-size: var(--alter-text-label); color: var(--alter-ink-secondary); margin: 0; }
+[data-alter-ui] .tutor-current-prompt { padding: var(--alter-space-5); background: var(--alter-surface-selected); border-radius: var(--alter-radius-panel); margin-block: var(--alter-space-4); }
+[data-alter-ui] .tutor-current-prompt .tutor-privacy { padding: 0; margin: 0 0 var(--alter-space-3); background: transparent; font-size: var(--alter-text-label); color: var(--alter-ink-secondary); }
+[data-alter-ui] .tutor-current-prompt h3 { font-size: var(--alter-text-section); margin: 0; overflow-wrap: anywhere; }
+[data-alter-ui] .tutor-answer-form { padding: var(--alter-space-5); border: 1px solid var(--alter-border); background: var(--alter-surface); border-radius: var(--alter-radius-panel); margin-block-end: var(--alter-space-5); }
+[data-alter-ui] .tutor-answer-form #tutor-answer { min-block-size: 10rem; border-radius: var(--alter-radius-control); border-color: var(--alter-border-control); background: var(--alter-surface); color: var(--alter-ink); }
+[data-alter-ui] .tutor-record-controls { display: grid; gap: var(--alter-space-3); padding-block: var(--alter-space-5); border-block-start: 1px solid var(--alter-border); }
+[data-alter-ui] .tutor-record-controls label, [data-alter-ui] .tutor-start label { display: grid; gap: var(--alter-space-2); }
+[data-alter-ui] .tutor-start { padding: var(--alter-space-5); background: var(--alter-surface); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); margin-block: var(--alter-space-5); }
+[data-alter-ui] .tutor-record-controls select, [data-alter-ui] .tutor-start select { inline-size: 100%; min-inline-size: 0; max-inline-size: 100%; font: inherit; padding: var(--alter-space-3); border: 1px solid var(--alter-border-control); background: var(--alter-surface); border-radius: var(--alter-radius-control); }
+
+[data-alter-ui] .tutor-answer-field { margin-block: 1rem; }
+[data-alter-ui] .tutor-field-required { margin-inline-start: .5rem; color: var(--alter-ink-secondary); font-size: .8rem; font-weight: 400; }
+[data-alter-ui] .tutor-field-hint { color: var(--alter-ink-secondary); font-size: .875rem; }
+[data-alter-ui] .tutor-field-issue { color: var(--alter-danger); font-size: .875rem; }
+[data-alter-ui] .tutor-answer-field textarea[aria-invalid="true"] { border-color: var(--alter-danger); }
+[data-alter-ui] .tutor-answer-form fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
+
+[data-alter-ui] .tutor-photo-field { padding-block-start: var(--alter-space-4); border-block-start: 1px solid var(--alter-border); }
+[data-alter-ui] .tutor-photo-field > label { font-weight: var(--alter-weight-label); }
+[data-alter-ui] .tutor-photo-field input::file-selector-button { padding: .6rem .8rem; border: 1px solid var(--alter-border-control); border-radius: var(--alter-radius-small); font: inherit; color: var(--alter-primary); background: var(--alter-surface); cursor: pointer; margin-inline-end: .6rem; }
+[data-alter-ui] .tutor-photo-field input { min-block-size: var(--alter-target); }
+[data-alter-ui] .tutor-photo-progress { padding: var(--alter-space-3); border-radius: var(--alter-radius-small); background: var(--alter-surface-muted); font-size: var(--alter-text-label); }
+[data-alter-ui] .tutor-photo-field li { margin-block: var(--alter-space-2); }
+
+[data-alter-ui] .tutor-answer-field > label { font-size: var(--alter-text-lead); font-weight: var(--alter-weight-label); }
+[data-alter-ui] .tutor-panel .alter-button { margin: 0; border-radius: var(--alter-radius-control); }
+[data-alter-ui] .tutor-panel .alter-button[data-tone="primary"] { color: var(--alter-on-primary); background: var(--alter-primary); border-color: var(--alter-primary); }
+[data-alter-ui] .tutor-panel .alter-button:disabled { opacity: 1; color: var(--alter-disabled-ink); background: var(--alter-disabled-surface); border-color: var(--alter-border); }
+[data-alter-ui] .tutor-answer-form { padding-block-end: max(var(--alter-space-5), env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 47.99rem) {
+  [data-alter-ui] .tutor-workspace:has(.tutor-answer-form:focus-within) .tutor-current-prompt { padding: var(--alter-space-3); }
+  [data-alter-ui] .tutor-workspace:has(.tutor-answer-form:focus-within) .tutor-current-prompt .tutor-privacy { font-size: var(--alter-text-caption); margin-block-end: var(--alter-space-1); }
+}
+
+[data-alter-ui] .tutor-help-history { padding: var(--alter-space-4); border-block-start: 1px solid var(--alter-border); margin-block-start: var(--alter-space-5); }
+[data-alter-ui] .tutor-help-history h3 { font-size: var(--alter-text-lead); margin-block-start: 0; }
+[data-alter-ui] .tutor-help-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); list-style: none; padding: 0; gap: var(--alter-space-2); }
+[data-alter-ui] .tutor-help-steps li { border: 1px solid var(--alter-border); border-radius: var(--alter-radius-small); padding: var(--alter-space-3); color: var(--alter-ink-secondary); }
+[data-alter-ui] .tutor-help-steps li[data-used="true"] { background: var(--alter-surface-selected); border-color: var(--alter-primary); color: var(--alter-ink); }
+[data-alter-ui] .tutor-help-steps small, [data-alter-ui] .tutor-help-records small { font-size: var(--alter-text-caption); }
+[data-alter-ui] .tutor-help-records { padding-inline-start: 1.5rem; }
+[data-alter-ui] .tutor-help-records li + li { margin-block-start: var(--alter-space-3); }
+@media (max-width: 47.99rem) { [data-alter-ui] .tutor-help-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+[data-alter-ui] .tutor-ai-action { margin-block: var(--alter-space-4); }
+[data-alter-ui] .tutor-ai-action > p { margin-block: 0 var(--alter-space-2); }
+[data-alter-ui] .tutor-ai-recovery { border: 1px solid var(--alter-border-control); border-radius: var(--alter-radius-panel); background: var(--alter-surface-muted); padding: var(--alter-space-4); margin-block: var(--alter-space-4); }
+[data-alter-ui] .tutor-ai-recovery h3 { margin-block-start: 0; font-size: var(--alter-text-lead); }
+[data-alter-ui] .tutor-ai-action { border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); background: var(--alter-surface); padding: var(--alter-space-4); }
+[data-alter-ui] .tutor-ai-action h3 { font-size: var(--alter-text-lead); margin-block-start: 0; }
+[data-alter-ui] .tutor-panel .tutor-ai-consent { display: flex; align-items: flex-start; gap: var(--alter-space-3); }
+[data-alter-ui] .tutor-panel .tutor-ai-consent input { width: 1.25rem; height: 1.25rem; flex: 0 0 auto; margin-block-start: .25rem; }
+[data-alter-ui] .tutor-ai-cost { padding: var(--alter-space-3); margin-block: var(--alter-space-3); background: var(--alter-surface-muted); border-radius: var(--alter-radius-small); }
+[data-alter-ui] .tutor-ai-issues { padding-inline-start: 1.25rem; color: var(--alter-danger); }

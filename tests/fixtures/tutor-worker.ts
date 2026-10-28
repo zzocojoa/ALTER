@@ -1,10 +1,14 @@
+import { expectAiNotStarted,verifyAiStartAmbiguity,loseCommittedBatchResponse } from "./ai-start-rejection";
+import { readTutorAiObservation } from "../../db/repositories/tutor-ai-observation";
+import { recoverStoredTutorAi } from "../../lib/tutor/recovery";
+import { readAiRequestStatus } from "../../db/repositories/ai-status";
 import { beginTutorVariation,tutorIndependentCandidate } from "../../lib/tutor/variation";
 import { beginTutorHelp } from "../../lib/tutor/help";
 import { acknowledgeTutorHelp,readHelpDelivery } from "../../db/repositories/tutor-help";
 import { requireCurrentTutor } from "../../lib/tutor/current";
 import { learningRuntimeFixture } from "./learning-ai-runtime";
 import { tutorOutputFixture } from "./tutor-output";
-import { tutorContext,tutorRequest,processTutorAi,dispatchTutor } from "../../lib/tutor/ai";
+import { beginStoredTutorAi,tutorContext,tutorRequest,processTutorAi,dispatchTutor } from "../../lib/tutor/ai";
 import { readTutorAnswerImages } from "../../lib/tutor/images";
 import pdf from "../../lib/materials/pdf-wasm/validator.wasm";
 import jpeg from "../../lib/materials/jpeg-wasm/decoder.wasm";
@@ -57,27 +61,43 @@ async function verify(db:D1Database,bucket:R2Bucket,owner:SiteIdentity,scopeId:s
   await dispatchTutorAction(db,bucket,cmd(state.version),{action:"pause",id:input.id,expectedVersion:state.version},Date.now());state=await getTutor(db,owner,input.id);await denied(()=>requireMaterialVisibility(db,owner),"material_access_required");
   await dispatchTutorAction(db,bucket,cmd(state.version),{action:"resume",id:input.id,expectedVersion:state.version},Date.now());state=await getTutor(db,owner,input.id);check(state.question.attemptId===replacement,"재개 질문 변경");
   const finalAnswer=id();await submitStoredTutorAnswer(db,bucket,cmd(state.version),input.id,finalAnswer,{text:"모르겠습니다",fileIds:[]},Date.now());state=await getTutor(db,owner,input.id);
-  const evaluating=beginTutorDiagnosis(state);await saveTutorTransition(db,cmd(state.version),evaluating,"diagnose",{id:state.id},emptyTutorPlan);
+  const observationCmd=cmd(state.version);const observationIntent={key:recordId.parse(observationCmd.requestKey),input:{action:"diagnose" as const,id:state.id,expectedVersion:state.version}};
+  const unread=await readTutorAiObservation(db,owner,observationIntent);check(unread.status==="unobserved" && unread.requestId===null,"미관찰 요청을 완료로 추정");
+  await denied(()=>readTutorAiObservation(db,{realm:"sites",userId:"other"},observationIntent),"reference_conflict");
+  const evaluating=beginTutorDiagnosis(state);await beginStoredTutorAi(loseCommittedBatchResponse(db),bucket,observationCmd,input.id,"diagnose");await beginStoredTutorAi(db,bucket,observationCmd,input.id,"diagnose");
+  const rejectedStart=cmd(state.version);await expectAiNotStarted(()=>beginStoredTutorAi(db,bucket,rejectedStart,input.id,"diagnose"),rejectedStart,input.id,"diagnose");
+  await verifyAiStartAmbiguity(db,observationCmd,input.id,"diagnose");
+  const pendingObservation=await readTutorAiObservation(db,owner,observationIntent);check(pendingObservation.status==="pending" && pendingObservation.logicalKey===evaluating.pending?.key && pendingObservation.requestId!==null,"원래 명령 영수증 조회 실패");
+  await denied(()=>readTutorAiObservation(db,owner,{...observationIntent,input:{...observationIntent.input,expectedVersion:state.version+1}}),"request_key_reused");
   const ai=learningRuntimeFixture(db,owner,async ()=>tutorContext(await getTutor(db,owner,input.id)),async ()=>tutorOutputFixture(await getTutor(db,owner,input.id)));
   const request=tutorRequest(evaluating,[]);
+  await denied(()=>recoverStoredTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,request,new AbortController().signal),"result_unknown");check(ai.generations()===0 && (await readAiRequestStatus(db,owner,evaluating.pending!.key)).length===0,"기존 요청이 없는 복구에서 생성 또는 예약 발생");
+  await denied(()=>recoverStoredTutorAi(ai.runtime,bucket,{realm:"sites",userId:"other"},input.id,ai.pricing,request,new AbortController().signal),"reference_conflict");
   await db.prepare(`CREATE TRIGGER tutor_ai_save_failure BEFORE INSERT ON tutor_events WHEN NEW.version=${evaluating.version+1} BEGIN SELECT RAISE(ABORT,'tutor_ai_save_failure'); END`).run();
   await denied(()=>processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,request,dispatchTutor,new AbortController().signal),"reference_conflict");
   await db.prepare("DROP TRIGGER tutor_ai_save_failure").run();check(ai.generations()===1,"첫 AI 시도 불일치");
-  let complete=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,request,dispatchTutor,new AbortController().signal);check(ai.generations()===1 && complete.phase==="diagnosed","AI 재호출 또는 저장 실패");
+  let complete=await recoverStoredTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,request,new AbortController().signal);check(ai.generations()===1 && complete.phase==="diagnosed","AI 재호출 또는 저장 실패");
+  await denied(()=>recoverStoredTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,request,new AbortController().signal),"reference_conflict");
+  const observedComplete=await readTutorAiObservation(db,owner,observationIntent);check(observedComplete.status==="completed" && observedComplete.version===complete.version && observedComplete.requestId===pendingObservation.requestId && ai.generations()===1,"같은 요청의 완료 사건 조회 또는 생성 수 불일치");
   const storedDiagnosis=await getTutor(db,owner,input.id);check(storedDiagnosis.diagnosis!==null && storedDiagnosis.diagnosis.citations.length>0 && publicTutorView(storedDiagnosis).diagnosis?.citations.length===0,"진단 인용의 서버 보존 또는 응답 비노출 실패");
   for(let stage=0;stage<4;stage+=1){
-    const helpPending=beginTutorHelp(complete);await saveTutorTransition(db,cmd(complete.version),helpPending,"help",{id:input.id},emptyTutorPlan);
+    const helpCmd=cmd(complete.version);const helpIntent={key:recordId.parse(helpCmd.requestKey),input:{action:"help" as const,id:input.id,expectedVersion:complete.version}};
+    const helpPending=beginTutorHelp(complete);await saveTutorTransition(db,helpCmd,helpPending,"help",{id:input.id},emptyTutorPlan);
+    check((await readTutorAiObservation(db,owner,helpIntent)).status==="pending","도움 대기 명령 관찰 실패");
     const request=tutorRequest(helpPending,[]);const beforeCalls=ai.generations();
     if(stage===0){await db.prepare("CREATE TRIGGER tutor_help_save_failure BEFORE INSERT ON tutor_help_details BEGIN SELECT RAISE(ABORT,'tutor_help_save_failure'); END").run();await denied(()=>processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,request,dispatchTutor,new AbortController().signal),"reference_conflict");await db.prepare("DROP TRIGGER tutor_help_save_failure").run();check((await getTutor(db,owner,input.id)).help.length===0,"저장 실패 도움 노출");}
     const shown=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,request,dispatchTutor,new AbortController().signal);const help=shown.help.at(-1);if(!help) throw new Error("도움 이력 누락");check(ai.generations()===beforeCalls+1,"도움 저장 복구 중 재생성");
+    const observedHelp=await readTutorAiObservation(db,owner,helpIntent);check(observedHelp.status==="completed" && observedHelp.version===shown.version && ai.generations()===beforeCalls+1,"도움 완료 영수증 조회 중 재생성 또는 잘못된 버전");
     check(await readHelpDelivery(db,owner,help.id)===null,"미확인 수신을 성공으로 단정");const ack=cmd(1);await acknowledgeTutorHelp(db,ack,input.id,help.id,Date.now());await acknowledgeTutorHelp(db,ack,input.id,help.id,Date.now());check(await readHelpDelivery(db,owner,help.id)!==null,"도움 수신 기록 누락");
     await submitStoredTutorAnswer(db,bucket,cmd(shown.version),input.id,id(),{text:"모르겠습니다",fileIds:[]},Date.now());const submitted=await getTutor(db,owner,input.id);check(submitted.answers.at(-1)?.helped===true,"도움 본 답안을 무도움으로 변경");
     const diagnosing=beginTutorDiagnosis(submitted);await saveTutorTransition(db,cmd(submitted.version),diagnosing,"diagnose",{id:input.id},emptyTutorPlan);complete=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,tutorRequest(diagnosing,[]),dispatchTutor,new AbortController().signal);
   }
   check(complete.help.length===4,"도움 단계 이력 누락");
   check(tutorIndependentCandidate(complete)===null,"도움 받은 원문제를 독립 수행으로 승격");
-  const variation=beginTutorVariation(complete);await saveTutorTransition(db,cmd(complete.version),variation,"variation",{id:input.id},emptyTutorPlan);
+  const variationCmd=cmd(complete.version);const variationIntent={key:recordId.parse(variationCmd.requestKey),input:{action:"variation" as const,id:input.id,expectedVersion:complete.version}};
+  const variation=beginTutorVariation(complete);await saveTutorTransition(db,variationCmd,variation,"variation",{id:input.id},emptyTutorPlan);
   const changed=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,tutorRequest(variation,[]),dispatchTutor,new AbortController().signal);check(changed.question.id!==complete.question.id && changed.variations.at(-1)?.helpEventIds.length===4,"새 조건과 도움 참조 누락");
+  const observedVariation=await readTutorAiObservation(db,owner,variationIntent);check(observedVariation.status==="completed" && observedVariation.version===changed.version,"새 조건 완료 영수증 조회 실패");
   const independentId=id();await submitStoredTutorAnswer(db,bucket,cmd(changed.version),input.id,independentId,{text:"다섯 조각 중 둘은 2/5입니다.",fileIds:[]},Date.now());state=await getTutor(db,owner,input.id);check(state.answers.at(-1)?.helped===false,"새 문제의 도움 이력 오염");
   const pendingNew=beginTutorDiagnosis(state);await saveTutorTransition(db,cmd(state.version),pendingNew,"diagnose",{id:input.id},emptyTutorPlan);complete=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,tutorRequest(pendingNew,[]),dispatchTutor,new AbortController().signal);check(tutorIndependentCandidate(complete)===independentId && complete.help.length===4,"새 조건 증거 또는 원문제 이력 유실");
   await dispatchTutorAction(db,bucket,cmd(complete.version),{action:"revise",id:input.id,expectedVersion:complete.version,attemptId:id()},Date.now());state=await getTutor(db,owner,input.id);
@@ -94,7 +114,7 @@ async function verify(db:D1Database,bucket:R2Bucket,owner:SiteIdentity,scopeId:s
   await submitStoredTutorAnswer(db,bucket,cmd(state.version),input.id,id(),state.draft,Date.now());state=await getTutor(db,owner,input.id);const recoveredPending=beginTutorDiagnosis(state);await saveTutorTransition(db,cmd(state.version),recoveredPending,"diagnose",{id:input.id},emptyTutorPlan);complete=await processTutorAi(ai.runtime,bucket,owner,input.id,ai.pricing,tutorRequest(recoveredPending,photos),dispatchTutor,new AbortController().signal);
   await dispatchTutorAction(db,bucket,cmd(complete.version),{action:"finish",id:input.id,expectedVersion:complete.version},Date.now());await requireMaterialVisibility(db,owner);
   await denied(()=>db.prepare("UPDATE tutor_events SET created_at=0").run().catch((error:unknown)=>{throw Object.assign(error instanceof Error ? error : new Error("이력"),{code:"immutable"});}),"immutable");
-  return ["tutor-diagnosis-citation-stored-but-not-delivered","tutor-budget-denial-preserves-text-and-photo","tutor-three-retries-reserved-and-unknown-recovery-no-regeneration","tutor-direct-draft-after-ai-failure","tutor-variation-distinct-question-original-help-reference","tutor-real-unassisted-answer-candidate-only","tutor-help-four-stages-committed-before-delivery","tutor-help-write-failure-no-body-and-no-regeneration","tutor-help-delivery-separate-idempotent","tutor-help-history-survives-reanswers","tutor-current-file-page-and-printed-page-verified","tutor-real-sdk-mock-diagnosis-reservation-recovery","tutor-photo-owner-hash-pixels-before-ai","tutor-verified-photo-upload-before-answer-ai","tutor-owner-and-idempotency","tutor-hidden-response-and-direct-url-denial","tutor-other-session-history-blocked-during-recall","tutor-draft-reload","tutor-answer-before-ai-and-single-copy","tutor-content-key-conflict","tutor-stale-update-full-rollback","tutor-late-diagnosis-rejected","tutor-save-failure-preserves-state","tutor-invalid-file-rejected","tutor-pause-resume-same-question","tutor-immutable-events"];
+  return ["tutor-ai-start-commit-response-loss-reconciles-exact-receipt","tutor-ai-start-definitive-rejection-proof","tutor-ai-start-existing-receipt-and-unknown-remain-ambiguous","tutor-help-and-variation-exact-completion-observation","tutor-ai-observation-unobserved-pending-completed-exact-receipts","tutor-ai-observation-owner-and-key-payload-denial","tutor-ai-observation-no-generation-or-reservation","tutor-recovery-no-request-no-generation-no-reservation","tutor-recovery-owner-and-completed-request-denial","tutor-diagnosis-citation-stored-but-not-delivered","tutor-budget-denial-preserves-text-and-photo","tutor-three-retries-reserved-and-unknown-recovery-no-regeneration","tutor-direct-draft-after-ai-failure","tutor-variation-distinct-question-original-help-reference","tutor-real-unassisted-answer-candidate-only","tutor-help-four-stages-committed-before-delivery","tutor-help-write-failure-no-body-and-no-regeneration","tutor-help-delivery-separate-idempotent","tutor-help-history-survives-reanswers","tutor-current-file-page-and-printed-page-verified","tutor-real-sdk-mock-diagnosis-reservation-recovery","tutor-photo-owner-hash-pixels-before-ai","tutor-verified-photo-upload-before-answer-ai","tutor-owner-and-idempotency","tutor-hidden-response-and-direct-url-denial","tutor-other-session-history-blocked-during-recall","tutor-draft-reload","tutor-answer-before-ai-and-single-copy","tutor-content-key-conflict","tutor-stale-update-full-rollback","tutor-late-diagnosis-rejected","tutor-save-failure-preserves-state","tutor-invalid-file-rejected","tutor-pause-resume-same-question","tutor-immutable-events"];
 }
 async function fetch(request:Request,env:Readonly<{DB:D1Database;BUCKET:R2Bucket}>):Promise<Response> {return runLibrarianFixture(request,env,verify);}
 const worker={fetch};

@@ -1,3 +1,4 @@
+import { rejectAiStart } from "./ai-start-rejection.ts";
 import { domainFailure } from "../../lib/domain/contracts.ts";
 import type { SiteIdentity,Command } from "../../lib/domain/contracts.ts";
 import type { TutorState } from "../../lib/tutor/contracts.ts";
@@ -11,8 +12,10 @@ import { guardedUpdate } from "./atomic.ts";
 import type { Receipt } from "./atomic.ts";
 
 export async function beginStoredEditorFeedback(db:D1Database,bucket:R2Bucket,cmd:Command,id:string):Promise<Receipt> {
-  const previous=await previousTutor(db,cmd,id);await requireCurrentTutor(db,bucket,cmd.owner,previous);const next=beginEditorFeedback(previous);
-  return saveTutorTransition(db,cmd,next,"editor-feedback",{id},(requestId)=>tutorEvidenceGuards(db,cmd.owner,next,requestId));
+  try {
+    const previous=await previousTutor(db,cmd,id);await requireCurrentTutor(db,bucket,cmd.owner,previous);const next=beginEditorFeedback(previous);
+    return await saveTutorTransition(db,cmd,next,"editor-feedback",{id},(requestId)=>tutorEvidenceGuards(db,cmd.owner,next,requestId));
+  } catch(error:unknown) { return rejectAiStart(db,cmd,id,"feedback",error); }
 }
 export async function saveStoredEditorFeedback(db:D1Database,bucket:R2Bucket,owner:SiteIdentity,state:TutorState,output:EditorFeedbackOutput,now:number):Promise<Receipt> {
   if(!state.pending) throw domainFailure("version_conflict","editor.feedback-pending",null);

@@ -20,7 +20,7 @@ test("소유자 로그인·파일 보호·저장소·로그아웃을 연결한�
   const login = page.getByRole("link", { name: "내 학습 공간 열기" });
   await expect(login).toHaveAttribute("target", "_top");
   await login.click();
-  await expect(page.getByRole("heading", { name: "나의 학습 공간" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "오늘의 한 걸음", exact: true })).toBeVisible();
   const session = await page.request.get("/api/session");
   expect(session.status()).toBe(200);
   expect(session.headers()["cache-control"]).toContain("no-store");
@@ -37,6 +37,7 @@ test("소유자 로그인·파일 보호·저장소·로그아웃을 연결한�
   const inventory = await page.request.post("/api/materials/storage-check", { headers: { origin } });
   expect(inventory.status()).toBe(200);
   expect((await inventory.json()).status).toBe("verified");
+  await page.goto("/learn/more");
   await page.getByRole("link", { name: "로그아웃" }).click();
   expect((await page.request.get("/api/session")).status()).toBe(401);
   await page.goto("/learn");
@@ -60,7 +61,7 @@ test("소유자 설정 후 후보 등록과 인증 정보 없는 Google 복귀�
 
 test("로컬 인증 쿠키가 만료되면 이전 학습 화면과 API를 재사용하지 않는다", async ({ page, context }) => {
   await page.goto("/signin-with-chatgpt?return_to=/learn");
-  await expect(page.getByRole("heading", { name: "나의 학습 공간" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "오늘의 한 걸음", exact: true })).toBeVisible();
   const cookie = (await context.cookies()).find((item) => item.name === "__sites_local_auth");
   if (!cookie) throw new Error("로컬 인증 검사용 쿠키를 찾을 수 없습니다.");
   await context.addCookies([{ ...cookie, expires: Math.floor(Date.now() / 1000) + 2 }]);
@@ -68,6 +69,6 @@ test("로컬 인증 쿠키가 만료되면 이전 학습 화면과 API를 재사
   await expect.poll(async () => (await page.request.get("/api/session")).status(), { timeout: 7000 }).toBe(401);
   await page.goBack();
   await expect(page.getByRole("heading", { name: "내 학습 공간에 로그인" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "나의 학습 공간", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "오늘의 한 걸음", exact: true })).toHaveCount(0);
   expect((await page.request.get(`/api/files/${randomUUID()}`)).status()).toBe(401);
 });

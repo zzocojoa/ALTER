@@ -27,7 +27,7 @@ test("Google 연결 준비 상태는 새로고침과 좁은 화면에서도 명�
   await expect(page.getByRole("button", { name: "연결 상태 새로 확인", exact: true })).toBeEnabled();
   await page.reload(); await expect(page.getByRole("heading", { name: "Google 연결", exact: true })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-  await page.goto("/learn"); await page.getByRole("link", { name: "Google 연결 관리", exact: true }).click();
+  await page.goto("/learn"); await page.getByRole("link", { name: "더보기", exact: true }).click(); await page.getByRole("link", { name: "Google 연결 관리", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Google 연결", exact: true })).toBeVisible();
   expect(await page.pageErrors()).toEqual([]);
 });

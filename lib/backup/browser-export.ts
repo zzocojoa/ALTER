@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { requireBackupResponse } from "./browser-request.ts";
 import { recordId, canonicalJson } from "../domain/contracts.ts";
 import { backupCatalog } from "./catalog.ts";
 import { backupBasis, backupCatalogHash, backupObjectEntry, backupPagePath, backupPolicy, validateBackupManifest, validateBackupPage } from "./contracts.ts";
@@ -13,14 +14,7 @@ export type BackupExportRuntime = Readonly<{ fetch: typeof fetch; storage: Backu
 export type BackupExportResult = Readonly<{ manifest: BackupManifest; archive: Blob }>;
 async function response(runtime: BackupExportRuntime, url: string, init: RequestInit): Promise<Response> {
   const result = await runtime.fetch(url, { ...init, credentials: "same-origin", cache: "no-store", signal: runtime.signal });
-  return requireResponse(result, url);
-}
-async function requireResponse(result: Response, url: string): Promise<Response> {
-  if (!result.ok) {
-    const value: unknown = await result.json(); const detail = z.object({ error: z.string(), field: z.string().optional(), location: z.string().optional(), message: z.string().optional() }).passthrough().parse(value);
-    throw new Error(`${detail.message ?? "백업 요청을 마치지 못했습니다. 저장 상태를 확인해 주세요."} (${result.status} · ${url} · ${detail.error} · ${detail.field ?? detail.location ?? ""})`);
-  }
-  return result;
+  return requireBackupResponse(result, url);
 }
 async function post(runtime: BackupExportRuntime, url: string, value: unknown): Promise<Response> { return response(runtime, url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(value) }); }
 async function archiveSaved(runtime: BackupExportRuntime, manifest: BackupManifest): Promise<BackupExportResult> {
@@ -34,7 +28,7 @@ export async function exportBrowserBackup(id: string, runtime: BackupExportRunti
   recordId.parse(id); const base: string = `/api/backup/${id}`;
   const lookup = await runtime.fetch(base, { method: "GET", credentials: "same-origin", cache: "no-store", signal: runtime.signal });
   if (lookup.status === 404) z.object({ error: z.literal("missing-export") }).passthrough().parse(await lookup.json());
-  const run = runSchema.parse(await (lookup.status === 404 ? await post(runtime, "/api/backup", { id }) : await requireResponse(lookup, base)).json());
+  const run = runSchema.parse(await (lookup.status === 404 ? await post(runtime, "/api/backup", { id }) : await requireBackupResponse(lookup, base)).json());
   if (run.id !== id) throw new Error("서버 백업 ID가 요청과 다릅니다.");
   if (run.state === "complete") {
     const manifest = validateBackupManifest(await (await response(runtime, `${base}/complete`, { method: "GET" })).json(), await backupCatalogHash());

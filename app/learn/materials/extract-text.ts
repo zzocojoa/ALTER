@@ -1,6 +1,4 @@
-import type { PDFPageProxy } from "pdfjs-dist";
-import type { TextItem } from "pdfjs-dist/types/src/display/api";
-import { pageResult, positionText, validatePageResult } from "@/lib/extraction/result";
+import { validatePageResult } from "@/lib/extraction/result";
 import type { PageResult } from "@/lib/extraction/result";
 import { requireSelectedPage } from "@/lib/extraction/selection";
 import type { SelectionBinding } from "@/lib/extraction/selection";
@@ -8,27 +6,13 @@ import type { PdfDocumentHandle } from "./pdf-document";
 import { hashFile } from "@/lib/learning-upload";
 import type { MaterialCard } from "@/lib/materials/library";
 import { requireMaterialResponse } from "./client-api";
-import { errorText } from "./client-api";
+import { analyzePdfPage } from "./analyze-pdf-page";
+import type { PdfPageAnalysis } from "./analyze-pdf-page";
 
 /** 선택한 한 페이지만 읽으며 실패는 다른 페이지의 결과와 분리합니다. */
 export async function extractPdfPage(handle: PdfDocumentHandle, binding: SelectionBinding, filePage: number, signal: AbortSignal): Promise<PageResult> {
-  requireSelectedPage(binding, binding.jobId, binding.revision, filePage);
-  await handle.assertCurrent(signal);
-  let page: PDFPageProxy | null = null;
-  try {
-    page = await handle.document.getPage(filePage);
-    signal.throwIfAborted();
-    const viewport = page.getViewport({ scale: 1 });
-    const content = await page.getTextContent({ disableNormalization: true });
-    signal.throwIfAborted();
-    const segments = positionText(content.items.filter((item): item is TextItem => "str" in item), viewport);
-    const operators = segments.length === 0 ? await page.getOperatorList() : null;
-    await handle.assertCurrent(signal);
-    return validatePageResult({ filePage, method: "text-layer", status: segments.length > 0 ? "complete" : operators?.fnArray.length === 0 ? "blank" : "no-text", width: viewport.width, height: viewport.height, rotation: ((page.rotate % 360) + 360) % 360, segments, error: null, requiresConfirmation: true }, filePage);
-  } catch (error: unknown) {
-    signal.throwIfAborted();
-    return pageResult.parse({ filePage, method: "text-layer", status: "failed", width: null, height: null, rotation: 0, segments: [], error: errorText(error).slice(0, 1000), requiresConfirmation: true });
-  } finally { page?.cleanup(); }
+  const analysis: PdfPageAnalysis = await analyzePdfPage(handle, binding, filePage, signal);
+  return analysis.result;
 }
 
 /** 한 페이지의 저장이 끝난 뒤 다음 선택 페이지를 읽어 메모리와 재개 범위를 제한합니다. */

@@ -17,12 +17,13 @@ test("OPFS 손상 중단·이어받기·TAR 다운로드·새로고침 및 작�
       if (url.pathname.startsWith("/api/")) { const response = await fixture.respond(url.href, route.request().method()); await route.fulfill({ status: response.status, headers: Object.fromEntries(response.headers), body: Buffer.from(await response.arrayBuffer()) }); return; }
       await route.fulfill({ contentType: "text/html; charset=utf-8", body: '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>백업 검증</title><link rel="stylesheet" href="/fixture.css"><div id="backup-fixture"></div><script src="/fixture.js"></script></html>' });
     });
-    await page.goto("https://backup.local.test/learn/backup"); await page.getByRole("button", { name: "같은 백업 이어받기" }).click();
+    await page.goto("https://backup.local.test/learn/backup"); expect(fixture.requests).toHaveLength(0); await page.getByRole("button", { name: "같은 백업 이어받기" }).click();
     await expect(page.getByRole("alert")).toContainText("체크섬"); await expect(page.getByRole("link", { name: "검증한 백업 파일 다운로드" })).toHaveCount(0); expect(fixture.requests.some(item => item.endsWith("/received"))).toBe(false);
     fixture.state.damagedPath = null; await page.getByRole("button", { name: "같은 백업 이어받기" }).click();
     await expect(page.getByRole("status")).toContainText("백업 수신·검증 완료", { timeout: 45000 });
+    await expect(page.locator('[data-backup-step="verify"]')).toContainText("기록 테이블");
     const downloadEvent = page.waitForEvent("download"); await page.getByRole("link", { name: "검증한 백업 파일 다운로드" }).click(); const download = await downloadEvent;
-    expect(download.suggestedFilename()).toBe(`ALTER-backup-${fixture.manifest.backupId}.tar`); expect(await download.failure()).toBeNull();
+    await expect(page.locator('[data-backup-step="download"]')).toContainText("다운로드 요청 · 기기에서 확인 필요"); expect(download.suggestedFilename()).toBe(`ALTER-backup-${fixture.manifest.backupId}.tar`); expect(await download.failure()).toBeNull();
     const before: number = fixture.requests.length; await page.reload(); await page.getByRole("button", { name: "같은 백업 이어받기" }).click();
     await expect(page.getByRole("status")).toContainText("백업 수신·검증 완료"); expect(fixture.requests.slice(before).every(item => item.startsWith("GET "))).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); await checkAccessibility(page, "main", info); expect(await page.pageErrors()).toEqual([]);

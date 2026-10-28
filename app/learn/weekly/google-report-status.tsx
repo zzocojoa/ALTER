@@ -1,13 +1,70 @@
 "use client";
-import { verifyExternalWorkflowConflict } from "@/lib/external/client";
-import { useEffect,useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ReactElement } from "react";
-import { loadGoogleReportView,sendGoogleWeeklyReport } from "@/lib/google-report/client";
+import { verifyExternalWorkflowConflict } from "@/lib/external/client";
+import { loadGoogleReportView, sendGoogleWeeklyReport } from "@/lib/google-report/client";
 import type { GoogleReportClientView } from "@/lib/google-report/client";
-export function GoogleReportStatus({versionId,disabled,refreshToken}:Readonly<{versionId:string;disabled:boolean;refreshToken:number}>):ReactElement {
-  const [view,setView]=useState<GoogleReportClientView|null>(null);const [message,setMessage]=useState<string>("");const [busy,setBusy]=useState<boolean>(false);
-  useEffect(()=>{let active:boolean=true;void loadGoogleReportView(versionId).then(result=>{if(active)setView(result);}).catch((error:unknown)=>{if(!(error instanceof Error))throw error;if(active)setMessage(error.message);});return()=>{active=false;};},[versionId,refreshToken]);
-  async function resume():Promise<void>{setBusy(true);try{await sendGoogleWeeklyReport(versionId,setMessage);}catch(error:unknown){if(!(error instanceof Error))throw error;setMessage(error.message);}finally{try{setView(await loadGoogleReportView(versionId));}catch(error:unknown){if(!(error instanceof Error))throw error;setMessage(`상태 재조회를 마치지 못했어요. 확인된 기존 상태를 유지했으니 다시 확인해 주세요. ${error.message}`);}finally{setBusy(false);}}}
-  async function recheck():Promise<void>{if(!view?.workflow)throw new Error("확인할 Google 작업이 없어요.");setBusy(true);try{await verifyExternalWorkflowConflict(view.workflow.id);setMessage("Google 현재 내용을 다시 확인했어요.");}catch(error:unknown){if(!(error instanceof Error))throw error;setMessage(error.message);}finally{try{setView(await loadGoogleReportView(versionId));}catch(error:unknown){if(!(error instanceof Error))throw error;setMessage(`상태 재조회를 마치지 못했어요. 확인된 기존 상태를 유지했으니 다시 확인해 주세요. ${error.message}`);}finally{setBusy(false);}}}
-  return <section aria-label="Google 보고서 연동"><h3>Google 보고서</h3>{view&&!view.connected&&<p>내부 기록은 보관돼 있어요. <a href="/learn/google">Google 연결 확인</a></p>}{view?.workflow&&<p>{view.workflow.operations.filter(operation=>operation.state==="confirmed").length}/{view.workflow.operations.length}단계 확인 · {view.workflow.state==="confirmed"?"연동 완료":view.workflow.state==="conflict"?"Google 내용 변경 확인 필요":"미확인 단계 있음"}</p>}{view?.documentUrl&&<p><a href={view.documentUrl} target="_blank" rel="noreferrer">검증된 주간 상세 보고서</a></p>}{view?.spreadsheetUrl&&<p><a href={view.spreadsheetUrl} target="_blank" rel="noreferrer">검증된 주간 성과표</a></p>}{view?.connected&&view.workflow?.state!=="confirmed"&&view.workflow?.state!=="conflict"&&<button disabled={disabled||busy} onClick={()=>{void resume();}}>Google 내보내기 이어서 진행</button>}{view?.connected&&view.workflow?.state==="conflict"&&<><p>Google 내용을 덮어쓰지 않고 현재 결과만 다시 확인해요.</p><button disabled={disabled||busy} onClick={()=>{void recheck();}}>Google 결과 다시 확인</button></>}{message&&<p role="status">{message}</p>}</section>;
+import { googleTransferPresentations, googleOperationLabels } from "@/lib/ui/google-transfer";
+import { StatusBadge } from "@/components/alter/status";
+
+export function GoogleReportStatus({ versionId, disabled, refreshToken }: Readonly<{ versionId: string; disabled: boolean; refreshToken: number }>): ReactElement {
+  const [view, setView] = useState<GoogleReportClientView | null>(null);
+  const [message, setMessage] = useState<string>("");
+  const [busy, setBusy] = useState<boolean>(false);
+  const [fresh, setFresh] = useState<boolean>(false);
+  const requestVersion = useRef<number>(0);
+  const operationVersion = useRef<number>(0);
+  const inFlight = useRef<boolean>(false);
+  const reload = useCallback((): Promise<void> => {
+    const version: number = ++requestVersion.current;
+    return loadGoogleReportView(versionId).then(result => {
+      if (version !== requestVersion.current) return;
+      setView(result); setFresh(true);
+    }).catch((error: unknown) => {
+      if (!(error instanceof Error)) throw error;
+      if (version !== requestVersion.current) return;
+      setFresh(false);
+      if ("status" in error && [401, 403].includes(Number(error.status))) setView(null);
+      setMessage(`상태 재조회를 마치지 못했어요. 이전 확인 결과는 현재 상태를 보장하지 않아요. 다시 확인해 주세요. ${error.message}`);
+    });
+  }, [versionId]);
+  useEffect(() => { void reload(); return (): void => { requestVersion.current += 1; }; }, [reload, refreshToken]);
+  useEffect(() => (): void => { operationVersion.current += 1; }, [versionId]);
+  async function resume(): Promise<void> {
+    if (inFlight.current || disabled) return;
+    inFlight.current = true; setBusy(true); setMessage("");
+    const operation: number = operationVersion.current;
+    try { await sendGoogleWeeklyReport(versionId, text => { if (operation === operationVersion.current) setMessage(text); }); }
+    catch (error: unknown) { if (!(error instanceof Error)) throw error; if (operation === operationVersion.current) setMessage(error.message); }
+    finally { try { if (operation === operationVersion.current) await reload(); } finally { inFlight.current = false; if (operation === operationVersion.current) setBusy(false); } }
+  }
+  async function recheck(): Promise<void> {
+    if (inFlight.current || disabled) return;
+    if (!view?.workflow) throw new Error("확인할 Google 작업이 없어요.");
+    inFlight.current = true; setBusy(true); setMessage("");
+    const operation: number = operationVersion.current;
+    try { await verifyExternalWorkflowConflict(view.workflow.id); if (operation === operationVersion.current) setMessage("Google 현재 내용을 다시 확인했어요."); }
+    catch (error: unknown) { if (!(error instanceof Error)) throw error; if (operation === operationVersion.current) setMessage(error.message); }
+    finally { try { if (operation === operationVersion.current) await reload(); } finally { inFlight.current = false; if (operation === operationVersion.current) setBusy(false); } }
+  }
+  async function refresh(): Promise<void> {
+    if (inFlight.current || disabled) return;
+    inFlight.current = true; setBusy(true); setMessage("");
+    try { await reload(); } finally { inFlight.current = false; setBusy(false); }
+  }
+  const workflow = view?.workflow;
+  const presentation = workflow ? googleTransferPresentations[workflow.state] : null;
+  return <section className="google-report-status" aria-label="Google 보고서 연동">
+    <h3>Google 보고서</h3><p>ALTER 내부 확정본 보관과 Google 반영은 별도예요.</p>
+    {!fresh && <p role="alert">현재 연동 상태 미확인{view ? " · 아래는 이전 확인 결과예요." : " · 상태를 다시 읽어 주세요."}</p>}
+    {view && !view.connected && <p>Google 연결·인증 갱신 또는 파일 권한을 확인해 주세요. 내부 기록은 보관돼 있어요. <a href="/learn/google">Google 연결 확인</a></p>}
+    {view && !workflow && <p>준비된 전송 작업이 없어요. 내보내기를 요청하기 전까지 Google에 쓰지 않아요.</p>}
+    {workflow && presentation && <><StatusBadge label={presentation.label} tone={presentation.tone}/><p>{presentation.detail}</p><p>{workflow.operations.filter(operation => operation.state === "confirmed").length}/{workflow.operations.length}단계 확인</p><ol>{workflow.operations.map((operation, index) => <li key={index}>{index + 1}단계 · {googleOperationLabels[operation.state]}</li>)}</ol></>}
+    {fresh && view?.documentUrl && <p><a className="alter-link" href={view.documentUrl} target="_blank" rel="noreferrer">검증된 주간 상세 보고서</a></p>}
+    {fresh && view?.spreadsheetUrl && <p><a className="alter-link" href={view.spreadsheetUrl} target="_blank" rel="noreferrer">검증된 주간 성과표</a></p>}
+    {view?.connected && workflow?.state !== "confirmed" && workflow?.state !== "conflict" && <><p>기존 작업이 있으면 같은 작업에서 미확인 단계를 확인하고 남은 전송을 이어가요.</p><button className="alter-control alter-button" data-tone="primary" disabled={disabled || busy} onClick={() => { void resume(); }}>Google 내보내기 이어서 진행</button></>}
+    {view?.connected && workflow?.state === "conflict" && <><p>Google 내용을 덮어쓰지 않고 현재 결과만 다시 확인해요.</p><button className="alter-control alter-button" data-tone="secondary" disabled={disabled || busy} onClick={() => { void recheck(); }}>Google 결과 다시 확인</button></>}
+    <button className="alter-control alter-button" data-tone="secondary" disabled={disabled || busy} onClick={() => { void refresh(); }}>보고서 연동 상태만 새로 확인</button>
+    {message && <p role="status">{message}</p>}
+  </section>;
 }

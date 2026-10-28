@@ -1,0 +1,65 @@
+/* 자료 목록과 등록 영역만 이전하며 원본·추출 뷰어는 다음 단계에서 다룹니다. */
+[data-alter-ui] .alter-material-list { margin: 0; padding: 0; list-style: none; background: var(--alter-surface); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); }
+[data-alter-ui] .alter-material-list li + li { border-top: 1px solid var(--alter-border); }
+[data-alter-ui] .alter-material-row { display: grid; grid-template-columns: 2.75rem minmax(0, 1fr) auto; gap: var(--alter-space-3); align-items: center; width: 100%; padding: var(--alter-space-4); border: 0; border-radius: inherit; text-align: left; background: transparent; color: var(--alter-ink); }
+[data-alter-ui] .alter-material-row[aria-pressed="true"] { background: var(--alter-surface-selected); }
+[data-alter-ui] .alter-material-row:hover:enabled { background: var(--alter-surface-muted); }
+[data-alter-ui] .alter-material-row:disabled { opacity: 1; color: var(--alter-disabled-ink); cursor: not-allowed; }
+[data-alter-ui] .alter-material-format { display: grid; justify-items: center; gap: var(--alter-space-1); color: var(--alter-primary); font-size: var(--alter-text-caption); }
+[data-alter-ui] .alter-material-copy { display: grid; min-width: 0; gap: var(--alter-space-1); overflow-wrap: anywhere; }
+[data-alter-ui] .alter-material-copy strong { font-size: var(--alter-text-body); font-weight: var(--alter-weight-label); line-height: var(--alter-leading-label); }
+[data-alter-ui] .alter-material-copy .alter-badge { justify-self: start; }
+[data-alter-ui] .alter-material-open { display: flex; align-items: center; flex-wrap: wrap; gap: var(--alter-space-1); font-size: var(--alter-text-label); }
+@media (max-width: 479px) {
+  [data-alter-ui] .alter-material-row { grid-template-columns: 2.25rem minmax(0, 1fr); }
+  [data-alter-ui] .alter-material-open { grid-column: 2; }
+}
+[data-alter-ui] .material-layout { grid-template-columns: minmax(0, 1fr); gap: var(--alter-space-6); }
+[data-alter-ui] .alter-registration { display: grid; gap: var(--alter-space-5); }
+[data-alter-ui] .alter-registration form { display: grid; gap: var(--alter-space-4); margin-top: var(--alter-space-4); }
+[data-alter-ui] .alter-registration label { gap: var(--alter-space-2); }
+[data-alter-ui] .alter-registration .alter-input,
+[data-alter-ui] .alter-registration .alter-file,
+[data-alter-ui] .alter-registration .alter-textarea { background: var(--alter-surface); border-color: var(--alter-border-control); border-radius: var(--alter-radius-control); font-size: var(--alter-text-body); }
+[data-alter-ui] .alter-course-create { padding: var(--alter-space-3); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-small); }
+[data-alter-ui] .alter-course-create summary { cursor: pointer; min-height: var(--alter-target); display: flex; align-items: center; }
+[data-alter-ui] .alter-material-limits { padding-left: var(--alter-space-5); margin: 0; color: var(--alter-ink-secondary); font-size: var(--alter-text-label); }
+[data-alter-ui] .alter-registration-actions { display: flex; flex-wrap: wrap; gap: var(--alter-space-3); align-items: start; }
+[data-alter-ui] .alter-registration .alter-button[data-tone="primary"] { color: var(--alter-on-primary); background: var(--alter-primary); border-color: var(--alter-primary); }
+[data-alter-ui] .alter-registration .alter-button[data-tone="primary"]:hover:enabled { background: var(--alter-primary-hover); }
+[data-alter-ui] .alter-registration .alter-button:disabled { opacity: 1; background: var(--alter-disabled-surface); color: var(--alter-disabled-ink); border-color: var(--alter-border); }
+[data-alter-ui] .material-section-heading { flex-wrap: wrap; }
+[data-alter-ui] .alter-upload-progress { padding: var(--alter-space-4); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); background: var(--alter-surface); }
+[data-alter-ui] .alter-upload-progress ol { display: flex; flex-wrap: wrap; gap: var(--alter-space-3) var(--alter-space-6); list-style-position: inside; margin: 0 0 var(--alter-space-3); padding: 0; color: var(--alter-ink-secondary); font-size: var(--alter-text-label); }
+[data-alter-ui] .alter-upload-progress li[aria-current="step"] { color: var(--alter-primary); font-weight: var(--alter-weight-heading); text-decoration: underline; text-underline-offset: .3em; }
+[data-alter-ui] .alter-upload-progress[data-phase="attention"] { background: var(--alter-warning-surface); border-color: var(--alter-warning); }
+[data-alter-ui] .alter-upload-progress[data-phase="confirmed"] { background: var(--alter-success-surface); }
+[data-alter-ui] .alter-upload-progress p { margin: 0; font-size: var(--alter-text-label); }
+[data-alter-ui] .alter-pending-materials { padding: var(--alter-space-4); margin: var(--alter-space-4) 0; border: 1px solid var(--alter-warning); background: var(--alter-warning-surface); border-radius: var(--alter-radius-panel); overflow-wrap: anywhere; }
+[data-alter-ui] .alter-pending-materials article { display: grid; gap: var(--alter-space-3); padding: var(--alter-space-4) 0; }
+[data-alter-ui] .alter-pending-materials article + article { border-top: 1px solid var(--alter-border); }
+[data-alter-ui] .alter-pending-materials h4 { font-weight: var(--alter-weight-heading); }
+[data-alter-ui] .alter-pending-materials .alter-button[data-tone="primary"] { background: var(--alter-primary); color: var(--alter-on-primary); }
+[data-alter-ui] .alter-pending-materials .alter-button[data-tone="primary"]:hover:enabled { background: var(--alter-primary-hover); }
+[data-alter-ui] .alter-pending-materials .alter-button:disabled { opacity: 1; color: var(--alter-disabled-ink); background: var(--alter-disabled-surface); }
+[data-alter-ui] .alter-pending-cleanup summary { min-height: var(--alter-target); display: flex; align-items: center; cursor: pointer; }
+[data-alter-ui] .material-library[data-detail="true"] > .material-summary,
+[data-alter-ui] .material-library[data-detail="true"] > button,
+[data-alter-ui] .material-library[data-detail="true"] .material-layout > .alter-disclosure,
+[data-alter-ui] .material-library[data-detail="true"] .material-layout > .alter-upload-progress { display: none; }
+[data-alter-ui] .material-library .material-preview { margin-top: 0; padding: var(--alter-space-5); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); background: var(--alter-surface); }
+[data-alter-ui] .alter-source-filename { overflow-wrap: anywhere; margin: var(--alter-space-2) 0; }
+[data-alter-ui] .material-preview-heading > div { min-width: 0; }
+[data-alter-ui] .material-preview-heading h2 { overflow-wrap: anywhere; }
+
+[data-alter-ui] .alter-registration-fields { display: grid; gap: var(--alter-space-4); min-width: 0; margin: 0; padding: 0; border: 0; }
+[data-alter-ui] .alter-file-selection { padding: var(--alter-space-3); border-radius: var(--alter-radius-small); background: var(--alter-surface-muted); overflow-wrap: anywhere; }
+[data-alter-ui] .alter-file-selection ul { max-height: 12rem; overflow: auto; margin: 0; padding-left: var(--alter-space-5); font-size: var(--alter-text-label); }
+[data-alter-ui] .alter-upload-queue { padding: var(--alter-space-4); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); background: var(--alter-surface); overflow-wrap: anywhere; }
+[data-alter-ui] .alter-upload-queue ol { margin: 0; padding-left: var(--alter-space-5); }
+[data-alter-ui] .alter-upload-queue li { padding: var(--alter-space-3) 0; }
+[data-alter-ui] .alter-upload-queue li + li { border-top: 1px solid var(--alter-border); }
+[data-alter-ui] .alter-upload-queue li > div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: var(--alter-space-2); }
+[data-alter-ui] .alter-upload-queue li span { font-size: var(--alter-text-label); white-space: nowrap; }
+[data-alter-ui] .alter-upload-queue [data-upload-state="registered"] span { color: var(--alter-primary); }
+[data-alter-ui] .material-library[data-detail="true"] .alter-upload-queue { display: none; }

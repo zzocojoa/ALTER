@@ -1,0 +1,20 @@
+[data-alter-ui] .google-settings { margin:var(--alter-space-5) 0; }
+[data-alter-ui] .google-connection-details { display:grid; grid-template-columns:minmax(0,1fr); gap:var(--alter-space-4); margin:var(--alter-space-5) 0; }
+[data-alter-ui] .google-card { padding:var(--alter-space-5); border:1px solid var(--alter-border); border-radius:var(--alter-radius-panel); background:var(--alter-surface); min-width:0; overflow-wrap:anywhere; }
+[data-alter-ui] .google-card h3 { margin-top:0; }
+[data-alter-ui] .google-card dl { display:grid; gap:var(--alter-space-4); }
+[data-alter-ui] .google-card dd { margin:var(--alter-space-2) 0; }
+[data-alter-ui] .google-account { font-weight:var(--alter-weight-label); }
+[data-alter-ui] .google-connect-actions { padding:var(--alter-space-4); background:var(--alter-surface-muted); border-radius:var(--alter-radius-control); }
+[data-alter-ui] .google-disconnect { margin-top:var(--alter-space-6); border-inline-start:3px solid var(--alter-danger); }
+[data-alter-ui] .google-settings button { min-height:48px; margin:var(--alter-space-2) 0; padding:var(--alter-space-3) var(--alter-space-4); }
+@media(min-width:60rem) { [data-alter-ui] .google-connection-details { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media(max-width:480px) { [data-alter-ui] .google-settings button { width:100%; } }
+
+[data-alter-ui] .google-file-selection { margin:var(--alter-space-6) 0; padding:var(--alter-space-5); border:1px solid var(--alter-border); border-radius:var(--alter-radius-panel); background:var(--alter-surface); }
+[data-alter-ui] .google-file-selection label { display:grid; gap:var(--alter-space-2); margin:var(--alter-space-4) 0; }
+[data-alter-ui] .google-file-selection select { width:100%; min-height:48px; padding:var(--alter-space-3); }
+[data-alter-ui] .google-file-selection button { min-height:48px; margin:var(--alter-space-3) 0; }
+[data-alter-ui] .google-selection-steps { padding-inline-start:var(--alter-space-5); }
+[data-alter-ui] .google-selection-steps li { margin:var(--alter-space-3) 0; }
+[data-alter-ui] .google-role-description { border-inline-start:3px solid var(--alter-primary); padding:var(--alter-space-3); background:var(--alter-surface-muted); }

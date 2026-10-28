@@ -1,3 +1,4 @@
+import { publicSupportCondition } from "./ai-support.ts";
 import { restoredExecution } from "../backup/restore-execution.ts";
 import { z } from "zod";
 import { policy, recordId, timestamp } from "../domain/contracts.ts";
@@ -18,7 +19,7 @@ export const externalWorkflowView = z.object({ id: recordId, kind: z.string(), s
 const storageView = z.object({ limitBytes: z.string(), usedBytes: z.string(), reservedBytes: z.string(), current: z.boolean(), checkedAt: timestamp, validUntil: timestamp }).strict();
 export const usageDashboard = z.object({
   restoration: restoredExecution.nullable(), asOf: timestamp, source: z.literal("saved-ledgers-no-provider-call"),
-  ai: z.object({ model: z.literal(policy.model), configuration: z.enum(["configured", "missing", "invalid", "owner-mismatch"]), windows: z.array(costWindowView).max(2), pricing: pricingVersion.nullable(), pricingHistory: z.array(pricingVersion).max(100), funding: fundingView.nullable(), probeCommittedUsdMicros: units, liveProviderBilling: z.null() }).strict(),
+  ai: z.object({ support:z.array(publicSupportCondition).max(6), model: z.literal(policy.model), configuration: z.enum(["configured", "missing", "invalid", "owner-mismatch"]), windows: z.array(costWindowView).max(2), pricing: pricingVersion.nullable(), pricingHistory: z.array(pricingVersion).max(100), funding: fundingView.nullable(), probeCommittedUsdMicros: units, liveProviderBilling: z.null() }).strict(),
   google: z.object({ connection: z.object({ email: z.string(), state: z.string(), refreshExpiresAt: timestamp.nullable(), filesAllowed: z.boolean(), calendarAllowed: z.boolean(), providerRevocation: z.string() }).strict().nullable(), methods: z.array(googleUsageRow).max(250), limits: z.array(googleLimitView).max(300), pickerQueries: z.null(), pickerLimits: z.array(pickerLimitView).max(5), storage: storageView.nullable(), blocks: z.array(z.object({ api: z.string(), reason: z.string(), until: timestamp.nullable() }).strict()).max(100) }).strict(),
   platform: z.object({ material: z.object({ limitBytes: units, occupiedBytes: units, reservedBytes: units, untrackedBytes: units, activeTransfers: units, blocked: z.boolean(), checkedAt: timestamp, validUntil: timestamp }).strict().nullable(), accountR2Remaining: z.null(), d1ProviderRemaining: z.null(), sitesProviderRemaining: z.null(), d1Read: z.literal("observed-success"), r2Probe: z.literal("saved-observation-only") }).strict(),
   workflows: z.array(externalWorkflowView).max(200), operations: z.array(externalOperationView).max(2000)

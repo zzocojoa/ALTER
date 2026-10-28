@@ -7,9 +7,12 @@ import { saveTutorAnswer } from "../../lib/tutor/state";
 import { tutorId,tutorStartFixture } from "./tutor-state";
 import { editorFeedbackFixture } from "./editor-output";
 import type { TutorState } from "../../lib/tutor/contracts";
-export function editorWaitingFixture():TutorState {
+export function editorSubmittedFixture():TutorState {
   const initial=initialEditor(tutorId(11),tutorStartFixture(),tutorId(12),tutorId(13));
-  const state=beginEditorFeedback(recordEditorDraft(saveTutorAnswer({...initial,draft:{text:"1/4은 네 조각",fileIds:[]}},{id:tutorId(14),questionId:initial.question.id,attemptId:initial.question.attemptId,text:"1/4은 네 조각",fileIds:[],submittedAt:1,helped:false})));
+  return recordEditorDraft(saveTutorAnswer({...initial,draft:{text:"1/4은 네 조각",fileIds:[]}},{id:tutorId(14),questionId:initial.question.id,attemptId:initial.question.attemptId,text:"1/4은 네 조각",fileIds:[],submittedAt:1,helped:false}));
+}
+export function editorWaitingFixture():TutorState {
+  const state=beginEditorFeedback(editorSubmittedFixture());
   return finishEditorFeedback(state,{id:tutorId(20),helpEventId:tutorId(21),helpAttemptId:tutorId(23),itemIds:[tutorId(22)],output:editorFeedbackFixture(state),committedAt:2});
 }
 

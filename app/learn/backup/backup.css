@@ -10,3 +10,23 @@
 .backup-tools [role="alert"] { padding: .75rem; border-left: 4px solid #934321; background: #fff0e7; color: #713116; overflow-wrap: anywhere; }
 .backup-tools pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 1rem; background: #e4e9df; }
 .backup-tools .backup-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }
+
+[data-alter-ui] .backup-export { gap: var(--alter-space-4); }
+[data-alter-ui] .backup-steps { display: grid; gap: var(--alter-space-3); list-style: none; margin: 0; padding: 0; }
+[data-alter-ui] .backup-steps > li { padding: var(--alter-space-4); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); background: var(--alter-surface); min-inline-size: 0; }
+[data-alter-ui] .backup-steps h3 { font-size: var(--alter-text-body); font-weight: var(--alter-weight-heading); margin-block-end: var(--alter-space-3); }
+[data-alter-ui] .backup-steps p { font-size: var(--alter-text-label); }
+[data-alter-ui] .backup-export .backup-download { display: inline-flex; inline-size: fit-content; min-block-size: var(--alter-control-height); padding: var(--alter-space-3) var(--alter-space-4); background: var(--alter-primary); color: var(--alter-on-primary); border-radius: var(--alter-radius-control); }
+@media (min-width: 64rem) { [data-alter-ui] .backup-steps { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+[data-alter-ui] .restore-tools { gap: var(--alter-space-5); }
+[data-alter-ui] .restore-step { padding-block: var(--alter-space-4); border-block-end: 1px solid var(--alter-border); }
+[data-alter-ui] .restore-step h3, [data-alter-ui] .restore-activation h3, [data-alter-ui] .restore-summary h3 { font-size: var(--alter-text-section); font-weight: var(--alter-weight-heading); margin-block-end: var(--alter-space-3); }
+[data-alter-ui] .restore-summary { padding: var(--alter-space-4); background: var(--alter-surface-muted); border-radius: var(--alter-radius-panel); overflow-wrap: anywhere; }
+[data-alter-ui] .restore-summary dl, [data-alter-ui] dl.restore-summary { display: grid; gap: var(--alter-space-3); }
+[data-alter-ui] .restore-summary dt { font-size: var(--alter-text-label); color: var(--alter-ink-secondary); }
+[data-alter-ui] .restore-summary dd { margin: 0; font-weight: var(--alter-weight-label); }
+[data-alter-ui] .restore-activation { padding: var(--alter-space-5); background: var(--alter-danger-surface); border: 1px solid var(--alter-danger); border-radius: var(--alter-radius-panel); }
+
+/* 비활성 색에서 위험 색으로 바뀌는 중간 프레임도 충분한 명암을 유지합니다. */
+[data-alter-ui] .backup-tools .alter-button { transition: none; }

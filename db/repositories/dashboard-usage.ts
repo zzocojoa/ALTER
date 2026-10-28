@@ -1,3 +1,4 @@
+import { publicAiSupport } from "../../lib/dashboard/ai-support.ts";
 import { readRestoredExecution } from "./restore-execution.ts";
 import { contentHash, domainFailure, policy, siteIdentity } from "../../lib/domain/contracts.ts";
 import type { SiteIdentity } from "../../lib/domain/contracts.ts";
@@ -23,7 +24,7 @@ async function readCosts(db: D1Database, owner: SiteIdentity, raw: string | unde
   requireBound(history.results.length, 100, "dashboard.price-history-limit");
   const committed = await readStorage("dashboard.probe-commitment", () => db.prepare("SELECT coalesce(sum(json_extract(snapshot,'$.reservationUsdMicros')),0) AS amount FROM ai_funding_checks WHERE owner_id=? AND json_type(snapshot,'$.prepaidProbe')='object'").bind(owner.userId).first<number>("amount"));
   if (committed === null) throw domainFailure("storage_failure", "dashboard.probe-commitment-missing", null);
-  return { model: policy.model, configuration: configuration.state, windows: rows.results.map(row => costWindowView.parse(row)), pricing: configuration.value?.pricing ?? null, pricingHistory: history.results.map(row => pricingVersion.parse(JSON.parse(row.snapshot))), funding: configuration.value ? publicFunding(configuration.value, now) : null, probeCommittedUsdMicros: committed, liveProviderBilling: null };
+  return { support:publicAiSupport(configuration.value,now), model: policy.model, configuration: configuration.state, windows: rows.results.map(row => costWindowView.parse(row)), pricing: configuration.value?.pricing ?? null, pricingHistory: history.results.map(row => pricingVersion.parse(JSON.parse(row.snapshot))), funding: configuration.value ? publicFunding(configuration.value, now) : null, probeCommittedUsdMicros: committed, liveProviderBilling: null };
 }
 async function readGoogleLimits(db: D1Database, owner: SiteIdentity, connection: ManagedGoogleConnection | null, now: number): Promise<Readonly<{ limits: UsageDashboard["google"]["limits"]; pickerLimits: UsageDashboard["google"]["pickerLimits"] }>> {
   if (await readRestoredExecution(db, owner) !== null) return { limits: [], pickerLimits: [] };

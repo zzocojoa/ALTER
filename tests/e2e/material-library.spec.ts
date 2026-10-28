@@ -5,21 +5,31 @@ import type { Page } from "@playwright/test";
 import { pngImage } from "../fixtures/png-bytes";
 import { pageTreePdf, readablePdf, scannedPdf } from "../fixtures/pdf-bytes";
 
+async function openRegistration(page: Page): Promise<void> {
+  const returnButton = page.getByRole("button", { name: "자료 목록으로", exact: true });
+  if (await returnButton.isVisible()) await returnButton.click();
+  const registration = page.locator(".alter-disclosure").filter({ has: page.getByText("새 자료 등록", { exact: true }) });
+  if (await registration.getAttribute("open") === null) await page.getByText("새 자료 등록", { exact: true }).click();
+}
+
 async function registerFile(page: Page, title: string, name: string, mimeType: string, buffer: Uint8Array): Promise<void> {
+  await openRegistration(page);
   await page.getByRole("combobox", { name: "입력 방식", exact: true }).selectOption("file");
   await page.getByLabel("자료 제목", { exact: true }).fill(title);
   await page.getByLabel("원본 파일").setInputFiles({ name, mimeType, buffer: Buffer.from(buffer) });
   await page.getByRole("button", { name: "자료 등록하기", exact: true }).click();
-  await expect(page.getByText("자료를 등록했어요. 목록에서 원본을 열어 보세요.", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: new RegExp(title) }).click();
+  await expect(page.getByText("자료 등록을 확인했어요. 새 자료의 원본을 열어요.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "선택한 자료", exact: true }).getByRole("heading", { name: title, exact: true })).toBeVisible();
 }
 
 test("자료 등록과 PDF·사진·텍스트 원본을 키보드·모바일에서 확인한다", async ({ page }, info): Promise<void> => {
+  test.setTimeout(60_000);
   await page.goto("/signin-with-chatgpt?return_to=/learn/materials");
   await expect(page.getByRole("heading", { name: "자료 보관함", exact: true })).toBeVisible();
   await page.getByRole("button", { name: "저장 공간 확인", exact: true }).click();
   await expect(page.getByText("실제 저장 공간과 쓰기·읽기를 확인했어요. 자료를 등록할 수 있어요.", { exact: true })).toBeVisible();
-  const courseForm = page.locator("details").filter({ has: page.getByText("새 과정 이름 만들기", { exact: true }) });
+  await openRegistration(page);
+  const courseForm = page.locator(".alter-course-create");
   if (await courseForm.getAttribute("open") === null) await page.getByText("새 과정 이름 만들기", { exact: true }).click();
   const extractionPosts: { filePage: number; result: { filePage: number; segments: { text: string }[] } }[] = [];
   page.on("request", (request): void => { if (request.method() === "POST" && /\/extraction\/pages\/[^/]+\/text$/.test(new URL(request.url()).pathname)) extractionPosts.push(request.postDataJSON()); });
@@ -33,13 +43,13 @@ test("자료 등록과 PDF·사진·텍스트 원본을 키보드·모바일에�
   const literal: string = "<script>window.ALTER_UNSAFE=1</script>\n" + "학습 원본을 그대로 확인합니다.\n".repeat(150);
   await page.getByLabel("텍스트 원본", { exact: true }).fill(literal);
   await page.getByRole("button", { name: "자료 등록하기", exact: true }).click();
-  await expect(page.getByText("자료를 등록했어요. 목록에서 원본을 열어 보세요.", { exact: true })).toBeVisible();
-  await page.getByRole("button", { name: new RegExp(`문자 원본 ${suffix}`) }).click();
+  await expect(page.getByText("자료 등록을 확인했어요. 새 자료의 원본을 열어요.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: `문자 원본 ${suffix}`, exact: true })).toBeVisible();
   await expect(page.getByLabel("텍스트 원본", { exact: true }).last()).toContainText("<script>window.ALTER_UNSAFE=1</script>");
   expect(await page.evaluate((): boolean => "ALTER_UNSAFE" in window)).toBe(false);
   await registerFile(page, `PDF 원본 ${suffix}`, "multi.pdf", "application/pdf", readablePdf(3));
   await expect(page.getByText("1페이지를 열었어요.", { exact: true })).toBeVisible();
-  await page.getByText("이 페이지의 텍스트", { exact: true }).click();
+  await page.getByText("PDF 텍스트층 보기", { exact: true }).click();
   await expect(page.locator("pre.material-text")).toContainText("ALTER page 1");
   await page.getByRole("button", { name: "다음 페이지", exact: true }).focus();
   await page.keyboard.press("Enter");
@@ -61,7 +71,7 @@ test("자료 등록과 PDF·사진·텍스트 원본을 키보드·모바일에�
   expect(extractionPosts.map((body): number => body.filePage)).toEqual([1, 3]);
   expect(JSON.stringify(extractionPosts)).not.toContain("ALTER page 2");
   await page.reload();
-  await page.getByRole("button", { name: new RegExp(`PDF 원본 ${suffix}`) }).click();
+  await expect(page.getByRole("heading", { name: `PDF 원본 ${suffix}`, exact: true })).toBeVisible();
   await expect(page.getByLabel("파일 1페이지 추출 결과", { exact: true })).toContainText("ALTER page 1");
   await page.getByRole("button", { name: "파일 3페이지 결과", exact: true }).click();
   await expect(page.getByLabel("파일 3페이지 추출 결과", { exact: true })).toContainText("ALTER page 3");
@@ -76,9 +86,9 @@ test("자료 등록과 PDF·사진·텍스트 원본을 키보드·모바일에�
   await result.getByRole("button", { name: "확인 구간 출처 연결", exact: true }).click();
   await expect(result).toContainText("학습 근거로 연결됨 · 파일 3페이지 · 인쇄 쪽수 iii");
   if (info.project.name === "mobile-chromium") {
-    await page.getByRole("button", { name: "원본 보기", exact: true }).click();
+    await page.getByRole("tab", { name: "원본 보기", exact: true }).click();
     await expect(page.getByLabel("대조 원본 3페이지", { exact: true })).toBeVisible();
-    await page.getByRole("button", { name: "추출 결과 보기", exact: true }).click();
+    await page.getByRole("tab", { name: "추출 결과 보기", exact: true }).click();
   }
   await page.screenshot({ path: `outputs/extraction-confirmed-${info.project.name}.png`, fullPage: true });
   await result.getByText("추출 내용 수정", { exact: true }).click();
@@ -96,16 +106,55 @@ test("자료 등록과 PDF·사진·텍스트 원본을 키보드·모바일에�
   await expect(page.getByText("1페이지를 열었어요.", { exact: true })).toBeVisible();
   await page.getByLabel("학습할 파일 페이지", { exact: true }).fill("1");
   await page.getByRole("button", { name: "선택 범위 확인", exact: true }).click();
-  await page.getByRole("button", { name: "선택 페이지 텍스트 추출", exact: true }).click();
-  await expect(page.getByText("추출된 텍스트가 없어요. 원본을 확인한 뒤 비전 판독이나 직접 전사를 선택해 주세요.", { exact: true })).toBeVisible();
+  await expect(page.getByRole("listitem", { name: "파일 1페이지 다음 행동", exact: true })).toContainText("텍스트층이 없는 이미지 페이지");
+  await expect(page.getByRole("button", { name: "선택 페이지 텍스트 추출", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "파일 1페이지 이미지 준비", exact: true }).click();
+  await expect(page.getByRole("img", { name: "파일 1페이지 판독 이미지", exact: true })).toBeVisible();
+  expect(extractionPosts.map((body): number => body.filePage)).toEqual([1, 3]);
+  let visionCalls: number = 0; let manualPosts: number = 0;
+  page.on("request", (request): void => { if (request.method() === "POST" && new URL(request.url()).pathname.endsWith("/vision")) visionCalls++; });
+  await page.getByRole("button", { name: "AI 없이 직접 전사", exact: true }).click();
+  const manual = page.getByRole("article", { name: "파일 1페이지 추출 결과", exact: true });
+  const transcription = manual.getByRole("textbox", { name: "구간 1 수정", exact: true });
+  await expect(transcription).toBeFocused();
+  await transcription.fill("스캔 원본의 합성 직접 전사");
+  await page.route("**/extraction/pages/*/edit", async (route): Promise<void> => {
+    manualPosts++;
+    expect(route.request().postDataJSON()).toMatchObject({ intent: "transcribe", resultId: null, filePage: 1 });
+    const response = await route.fetch(); expect(response.status()).toBe(200);
+    await route.abort("failed");
+  }, { times: 1 });
+  await manual.getByRole("button", { name: "전사본 저장", exact: true }).click();
+  await expect(manual.getByRole("alert")).toContainText("저장 실패·결과 미확정");
+  await expect(transcription).toHaveValue("스캔 원본의 합성 직접 전사");
+  await manual.getByRole("button", { name: "저장 결과 다시 읽기", exact: true }).click();
+  await expect(manual).toContainText("내용이 현재 저장값과 일치해요");
+  await expect(manual.getByRole("heading", { name: "파일 1페이지 · 결과 1판", exact: true })).toBeVisible();
+  expect(manualPosts).toBe(1); expect(visionCalls).toBe(0);
+  await page.reload();
+  await expect(manual.locator("pre.material-text")).toContainText("스캔 원본의 합성 직접 전사");
+  await manual.getByRole("button", { name: "구간 1 원본 페이지", exact: true }).click();
+  await expect(page.getByRole("region", { name: "파일 1페이지 구간 대조", exact: true })).toBeFocused();
+  if (info.project.name === "mobile-chromium") await page.getByRole("tab", { name: "추출 결과 보기", exact: true }).click();
+  await manual.getByRole("checkbox", { name: "구간 1 확인", exact: true }).check();
+  await manual.getByRole("checkbox", { name: "선택한 구간을 이 파일 페이지의 원본과 대조했어요.", exact: true }).check();
+  await manual.getByRole("button", { name: "선택 구간 확인 저장", exact: true }).click();
+  await expect(manual.getByText("텍스트 · 확인됨", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(manual.getByText("텍스트 · 확인됨", { exact: true })).toBeVisible();
+  expect(visionCalls).toBe(0);
   await registerFile(page, `빈 PDF ${suffix}`, "blank.pdf", "application/pdf", pageTreePdf(1, 1));
   await page.getByLabel("학습할 파일 페이지", { exact: true }).fill("1");
   await page.getByRole("button", { name: "선택 범위 확인", exact: true }).click();
-  await page.getByRole("button", { name: "선택 페이지 텍스트 추출", exact: true }).click();
-  await expect(page.getByText("빈 페이지예요.", { exact: true })).toBeVisible();
+  const blankPage = page.getByRole("listitem", { name: "파일 1페이지 다음 행동", exact: true });
+  await expect(blankPage).toContainText("빈 페이지로 확인됐어요");
+  await expect(page.getByRole("button", { name: "선택 페이지 텍스트 추출", exact: true })).toHaveCount(0);
+  await blankPage.getByRole("button", { name: "원본 확인", exact: true }).click();
+  await expect(page.getByRole("region", { name: "파일 1페이지 구간 대조", exact: true })).toBeFocused();
+  expect(extractionPosts.map((body): number => body.filePage)).toEqual([1, 3]);
   await registerFile(page, `사진 원본 ${suffix}`, "photo.jpg", "image/jpeg", image);
   await expect(page.getByRole("img", { name: `사진 원본 ${suffix}` })).toBeVisible();
-  await page.getByLabel("사진 확대", { exact: true }).focus();
+  await page.getByRole("slider", { name: "사진 확대", exact: true }).focus();
   await page.keyboard.press("ArrowRight");
   await expect(page.getByText("125%", { exact: true })).toBeVisible();
   await page.getByRole("region", { name: "사진 이동 영역" }).focus();
@@ -115,9 +164,9 @@ test("자료 등록과 PDF·사진·텍스트 원본을 키보드·모바일에�
   await expect(page.getByRole("img", { name: `PNG 원본 ${suffix}` })).toBeVisible();
   const photoExpand = page.getByRole("button", {name:"사진 원본 크게 보기",exact:true}); await photoExpand.click();
   const photoDialog = page.getByRole("dialog",{name:"사진 원본",exact:true}); await expect(photoDialog.getByRole("img")).toBeVisible();
-  await photoDialog.getByLabel("사진 확대",{exact:true}).focus(); await page.keyboard.press("ArrowRight"); await expect(photoDialog.getByText("125%",{exact:true})).toBeVisible();
-  await checkAccessibility(page,".original-dialog[open]",info);
-  await photoDialog.getByRole("button",{name:"확대 화면 닫기",exact:true}).click(); await expect(photoExpand).toBeFocused();
+  await photoDialog.getByRole("slider",{name:"사진 확대",exact:true}).focus(); await page.keyboard.press("ArrowRight"); await expect(photoDialog.getByText("125%",{exact:true})).toBeVisible();
+  await checkAccessibility(page,".alter-dialog:has(.alter-original-content)",info);
+  await photoDialog.getByRole("button",{name:"자료로 돌아가기 · 확대 화면 닫기",exact:true}).click(); await expect(photoExpand).toBeFocused();
   const landscape: Buffer = await readFile("tests/fixtures/jpeg/testorig.jpg");
   await registerFile(page, `가로 사진 ${suffix}`, "landscape.jpg", "image/jpeg", landscape);
   await expect(page.getByRole("img", { name: `가로 사진 ${suffix}` })).toBeVisible();
@@ -160,7 +209,7 @@ for (const fault of ["missing-worker", "mismatched-worker", "corrupt-pdf", "encr
       await route.fulfill({ status: 200, headers: { "content-type": "application/pdf", "content-length": String(body.length), etag: '"injected"' }, body: route.request().method() === "HEAD" ? undefined : body });
     });
     await page.getByRole("button", { name: /PDF 원본/ }).first().click();
-    await expect(page.getByRole("alert").filter({ hasText: fault === "missing-worker" ? "PDF 작업 파일" : fault === "mismatched-worker" ? "does not match" : fault === "encrypted-pdf" ? "암호" : "손상" }).first()).toBeVisible();
+    await expect(page.getByRole("alert").filter({ hasText: fault === "missing-worker" ? "PDF 작업 파일" : fault === "mismatched-worker" ? "버전이 달라요" : fault === "encrypted-pdf" ? "암호" : "손상" }).first()).toBeVisible();
     await expect(page.locator("canvas")).toHaveCount(0);
   });
 }

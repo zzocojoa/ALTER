@@ -1,3 +1,4 @@
+import { readTutorExposureCounts } from "../../db/repositories/tutor-exposure";
 import pdf from "../../lib/materials/pdf-wasm/validator.wasm";
 import jpeg from "../../lib/materials/jpeg-wasm/decoder.wasm";
 import { recordId } from "../../lib/domain/contracts";
@@ -39,6 +40,12 @@ async function fetch(request: Request, environment: Readonly<{ DB: D1Database; B
   await recordMaterialExposure(DB, owner, transfer);
   const count = (table: "material_exposures" | "help_events" | "answer_files"): Promise<number | null> => DB.prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE owner_id=?`).bind(owner.userId).first<number>("n");
   ensure(await count("material_exposures") === 1 && await count("help_events") === 1, "동시 범위 요청 노출 중복");
+  const exposure = await readTutorExposureCounts(DB, owner, sessionId, questionId);
+  ensure(exposure.currentQuestionCount === 1 && exposure.sessionCount === 1, "원본 열기 수 누락");
+  ensure(JSON.stringify(await readTutorExposureCounts(DB, owner, sessionId, questionId)) === JSON.stringify(exposure), "조회로 원본 열기 이력 변경");
+  await reject(() => readTutorExposureCounts(DB, { realm:"sites",userId:"other" }, sessionId, questionId), /reference_conflict/);
+  const anotherQuestion = await readTutorExposureCounts(DB, owner, sessionId, uuid());
+  ensure(anotherQuestion.currentQuestionCount === 0 && anotherQuestion.sessionCount === 1, "이전 질문 도움 기록 혼동");
   await reject(() => DB.prepare("UPDATE material_exposures SET shown_at=shown_at+1 WHERE owner_id=?").bind(owner.userId).run(), /immutable/);
   await reject(() => DB.prepare("DELETE FROM material_exposures WHERE owner_id=?").bind(owner.userId).run(), /immutable/);
   await submitAnswer(DB, context(2), { id: answerId, attemptId, text: "답안", submittedAt: Date.now() });
@@ -58,7 +65,7 @@ async function fetch(request: Request, environment: Readonly<{ DB: D1Database; B
   await reject(() => requireMaterialVisibility(DB, owner), /material-hidden-during-recall/);
   await reject(() => recordMaterialExposure(DB, owner, transfer), /material-hidden-during-recall/);
   ensure(await count("help_events") === 1, "거부된 접근이 도움을 추가함");
-  return Response.json({ status: "passed", checks: transfer.metadata.role === "answer" ? 10 : 7, objectKey: transfer.objectKey, role: transfer.metadata.role, exposureCount: 1, helpCount: 1, attached: await count("answer_files") });
+  return Response.json({ status: "passed", checks: transfer.metadata.role === "answer" ? 10 : 7, objectKey: transfer.objectKey, role: transfer.metadata.role, exposureCount: 1, helpCount: 1, exposureProjection:"current-history-owner-readonly-passed", attached: await count("answer_files") });
 }
 const worker = { fetch };
 export default worker;

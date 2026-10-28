@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { OPS } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { positionText, validatePageResult } from "../../lib/extraction/result";
 import type { PageResult } from "../../lib/extraction/result";
 import { extractSelectedText } from "../../app/learn/materials/extract-text";
@@ -19,21 +20,21 @@ describe("선택 텍스트와 좌표 보존", (): void => {
   it("정수가 아닌 좌표는 허용하되 NaN과 비정상 크기는 거부한다", (): void => { expect(() => positionText([{ ...item, width: NaN }], geometry)).toThrow(); expect(() => positionText([item], { ...geometry, height: 0 })).toThrow(); });
   it("부분 실패 후에도 다른 선택 페이지만 저장하고 리소스를 정리한다", async (): Promise<void> => {
     const cleanup = vi.fn();
-    const getPage = vi.fn(async (page: number) => { if (page === 2) throw new Error("page-2-corrupt"); return { getViewport: () => geometry, getTextContent: async () => ({ items: [item] }), cleanup, rotate: 0 }; });
-    const handle = { document: { getPage }, assertCurrent: vi.fn(), close: vi.fn(), etag: '"v1"' } as unknown as PdfDocumentHandle;
+    const getPage = vi.fn(async (page: number) => { if (page === 2) throw new Error("page-2-corrupt"); return { getViewport: () => geometry, getTextContent: async () => ({ items: [item] }), getOperatorList: async () => ({ fnArray: [OPS.showText] }), getAnnotations: async () => [], cleanup, rotate: 0 }; });
+    const handle = { document: { getPage }, imageOperators: OPS, assertCurrent: vi.fn(), close: vi.fn(), etag: '"v1"' } as unknown as PdfDocumentHandle;
     const results: PageResult[] = [];
     await extractSelectedText(handle, binding, new AbortController().signal, async (result: PageResult): Promise<void> => { results.push(result); });
     expect(getPage.mock.calls.map(([page]): number => page)).toEqual([2, 4]); expect(results.map((result): string => result.status)).toEqual(["failed", "complete"]); expect(results[1].requiresConfirmation).toBe(true); expect(cleanup).toHaveBeenCalledOnce();
   });
   it("취소 이후 다음 페이지를 읽지 않는다", async (): Promise<void> => {
     const abort: AbortController = new AbortController();
-    const getPage = vi.fn(async () => ({ getViewport: () => geometry, getTextContent: async () => ({ items: [item] }), cleanup: vi.fn(), rotate: 0 }));
-    const handle = { document: { getPage }, assertCurrent: vi.fn(), close: vi.fn(), etag: '"v1"' } as unknown as PdfDocumentHandle;
+    const getPage = vi.fn(async () => ({ getViewport: () => geometry, getTextContent: async () => ({ items: [item] }), getOperatorList: async () => ({ fnArray: [OPS.showText] }), getAnnotations: async () => [], cleanup: vi.fn(), rotate: 0 }));
+    const handle = { document: { getPage }, imageOperators: OPS, assertCurrent: vi.fn(), close: vi.fn(), etag: '"v1"' } as unknown as PdfDocumentHandle;
     await expect(extractSelectedText(handle, binding, abort.signal, async (): Promise<void> => { abort.abort(); })).rejects.toThrow(); expect(getPage).toHaveBeenCalledTimes(1);
   });
   it("빈 페이지와 그림만 있는 페이지를 구분한다", async (): Promise<void> => {
-    const getPage = vi.fn(async (page: number) => ({ getViewport: () => geometry, getTextContent: async () => ({ items: [] }), getOperatorList: async () => ({ fnArray: page === 2 ? [] : [85] }), cleanup: vi.fn(), rotate: 0 }));
-    const handle = { document: { getPage }, assertCurrent: vi.fn(), close: vi.fn(), etag: '"v1"' } as unknown as PdfDocumentHandle;
+    const getPage = vi.fn(async (page: number) => ({ getViewport: () => geometry, getTextContent: async () => ({ items: [] }), getOperatorList: async () => ({ fnArray: page === 2 ? [] : [OPS.paintImageXObject] }), getAnnotations: async () => [], cleanup: vi.fn(), rotate: 0 }));
+    const handle = { document: { getPage }, imageOperators: OPS, assertCurrent: vi.fn(), close: vi.fn(), etag: '"v1"' } as unknown as PdfDocumentHandle;
     const results: PageResult[] = []; await extractSelectedText(handle, binding, new AbortController().signal, async (result: PageResult): Promise<void> => { results.push(result); }); expect(results.map((result): string => result.status)).toEqual(["blank", "no-text"]);
   });
   it("다른 페이지·좌표 초과·중복 구간을 결과로 받지 않는다", (): void => {

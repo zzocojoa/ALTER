@@ -1,0 +1,63 @@
+import { expect, test } from "@playwright/test";
+import { editorAction } from "../../lib/editor/actions";
+import { publicEditorView } from "../../lib/editor/view";
+import { saveEditorRevisionDraft, submitEditorRevision } from "../../lib/editor/revision";
+import { editorWaitingFixture } from "../fixtures/editor-state";
+import { mountEditorView } from "../fixtures/editor-ui-browser";
+import { checkAccessibility } from "../fixtures/accessibility";
+
+test("수정본과 이유는 동일 DOM에 유지되고 한글 조합 후 함께 저장·제출", async ({ page }, info): Promise<void> => {
+  let state = editorWaitingFixture();
+  let posts: number = 0;
+  await mountEditorView(page, publicEditorView(state));
+  await page.route("**/api/editor", async (route): Promise<void> => {
+    const input = editorAction.parse(route.request().postDataJSON());
+    posts += 1;
+    if (input.action === "revision-draft") state = saveEditorRevisionDraft(state, input.draft, input.reason);
+    else if (input.action === "revision-submit") state = submitEditorRevision(state, { answerId: input.answerId, attemptId: input.attemptId, draft: input.draft, reason: input.reason, submittedAt: 10 });
+    else throw new Error(`입력 검사 중 예상하지 않은 동작: ${input.action}`);
+    await route.fulfill({ json: publicEditorView(state) });
+  });
+  await page.getByRole("link", { name: "수정본·이유 쓰기로 이동 ↓", exact: true }).click();
+  await expect(page.locator("#editor-text")).toBeInViewport();
+  await expect(page.getByText("무엇을 왜 바꿨는지 수정 이유를 적어 주세요.", { exact: true })).toBeVisible();
+  await page.getByRole("textbox", { name: "수정 이유", exact: true }).fill("전체와 부분을 구분했습니다.");
+  await page.locator("#editor-text").dispatchEvent("compositionstart");
+  await page.locator("#editor-text").fill("같은 크기 네 조각 중 한 조각입니다.");
+  await page.waitForTimeout(1100);
+  expect(posts).toBe(0);
+  await expect(page.getByRole("button", { name: "수정본과 이유 제출·저장", exact: true })).toBeDisabled();
+  await expect(page.locator("#editor-draft-status")).toContainText("한글을 입력");
+  await page.locator("#editor-text").evaluate((element): void => element.setAttribute("data-retained-input", "same"));
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await page.setViewportSize({ width: 360, height: 800 });
+  await expect(page.locator("#editor-text")).toHaveAttribute("data-retained-input", "same");
+  await expect(page.getByRole("textbox", { name: "수정 이유", exact: true })).toHaveValue("전체와 부분을 구분했습니다.");
+  await page.locator("#editor-text").dispatchEvent("compositionend");
+  await expect(page.locator("#editor-draft-status")).toContainText("서버 초안 저장을 확인했어요");
+  expect(posts).toBe(1);
+  expect(state.draft.text).toBe("같은 크기 네 조각 중 한 조각입니다.");
+  expect(state.editor?.draftReason).toBe("전체와 부분을 구분했습니다.");
+  await checkAccessibility(page, ".editor-input-card", info);
+  await page.screenshot({ path: `outputs/ui-editor/input-o3-${info.project.name}.png`, fullPage: true });
+  await page.getByRole("button", { name: "수정본과 이유 제출·저장", exact: true }).click();
+  await expect(page.getByRole("button", { name: "수정본과 이유 재검토", exact: true })).toBeVisible();
+  expect(posts).toBe(2);
+  expect(state.editor?.versions.at(-1)?.reason).toBe("전체와 부분을 구분했습니다.");
+});
+
+test("글·이유의 초과 입력을 자르지 않고 자동 저장과 제출을 막음", async ({ page }): Promise<void> => {
+  await mountEditorView(page, publicEditorView(editorWaitingFixture()));
+  await page.getByLabel("나의 수정본", { exact: true }).fill("가".repeat(60001));
+  await page.waitForTimeout(1100);
+  await expect(page.getByLabel("나의 수정본", { exact: true })).toHaveValue("가".repeat(60001));
+  await expect(page.getByLabel("나의 수정본", { exact: true })).toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByRole("button", { name: "수정본과 이유 제출·저장", exact: true })).toBeDisabled();
+  await page.getByRole("textbox", { name: "수정 이유", exact: true }).fill("나".repeat(4001));
+  await page.getByLabel("나의 수정본", { exact: true }).fill("고친 문장");
+  await page.waitForTimeout(1100);
+  await expect(page.getByRole("textbox", { name: "수정 이유", exact: true })).toHaveValue("나".repeat(4001));
+  await expect(page.getByRole("textbox", { name: "수정 이유", exact: true })).toHaveAttribute("aria-invalid", "true");
+  await expect(page.getByRole("button", { name: "수정본과 이유 제출·저장", exact: true })).toBeDisabled();
+  expect(await page.pageErrors()).toEqual([]);
+});

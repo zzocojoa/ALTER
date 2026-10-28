@@ -1,3 +1,4 @@
+import { rejectAiStart } from "./ai-start-rejection.ts";
 import { domainFailure } from "../../lib/domain/contracts.ts";
 import type { Command,SiteIdentity } from "../../lib/domain/contracts.ts";
 import type { TutorState } from "../../lib/tutor/contracts.ts";
@@ -9,8 +10,10 @@ import { previousTutor,readTutorAttempt,saveTutorTransition,tutorEvidenceGuards 
 import { editorFeedbackStatements } from "./editor-feedback.ts";
 import type { Receipt } from "./atomic.ts";
 export async function beginStoredEditorReview(db:D1Database,bucket:R2Bucket,cmd:Command,id:string):Promise<Receipt> {
-  const state=await previousTutor(db,cmd,id);await requireCurrentTutor(db,bucket,cmd.owner,state);const next=beginEditorReview(state);
-  return saveTutorTransition(db,cmd,next,"editor-review",{id},(requestId)=>tutorEvidenceGuards(db,cmd.owner,next,requestId));
+  try {
+    const state=await previousTutor(db,cmd,id);await requireCurrentTutor(db,bucket,cmd.owner,state);const next=beginEditorReview(state);
+    return await saveTutorTransition(db,cmd,next,"editor-review",{id},(requestId)=>tutorEvidenceGuards(db,cmd.owner,next,requestId));
+  } catch(error:unknown) { return rejectAiStart(db,cmd,id,"review",error); }
 }
 export async function saveStoredEditorReview(db:D1Database,bucket:R2Bucket,owner:SiteIdentity,state:TutorState,output:EditorReviewOutput,now:number):Promise<Receipt> {
   if(!state.pending) throw domainFailure("version_conflict","editor.review-pending",null);await requireCurrentTutor(db,bucket,owner,state);

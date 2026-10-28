@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("소유자 화면에서 실제 제품 API 수용 검사를 실행한다", async ({ page }): Promise<void> => {
   // 원본 6개 전송과 60초 결과 확인보다 전체 제한을 길게 둡니다.
   test.setTimeout(90_000);
-  await page.goto("/signin-with-chatgpt?return_to=/learn");
+  await page.goto("/signin-with-chatgpt?return_to=/learn/diagnostics");
   await expect(page.locator("details").filter({ has: page.getByText("자료 등록 기능 확인", { exact: true }) })).not.toHaveAttribute("inert");
   await page.getByText("자료 등록 기능 확인", { exact: true }).click();
   await page.getByRole("button", { name: "운영 자료 검사 실행", exact: true }).click();

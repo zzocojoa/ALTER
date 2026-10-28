@@ -23,7 +23,7 @@ export function requireConfirmableSegments(page: StoredExtractionPage, input: Co
 
 export function correctedPage(page: StoredExtractionPage, value: CorrectionInput): PageResult {
   const input: CorrectionInput = correctionInput.parse(value);
-  if (page.state !== "complete" || page.result === null || page.resultId !== input.resultId || page.selectionRevision !== input.selectionRevision || page.filePage !== input.filePage || new Set(input.segments.map((segment): string => segment.id)).size !== input.segments.length) throw materialFailure("material_version_conflict", "correction-current-result", 409);
+  if (!["complete", "failed"].includes(page.state) || page.result === null || page.result.status === "failed" || page.resultId !== input.resultId || page.selectionRevision !== input.selectionRevision || page.filePage !== input.filePage || new Set(input.segments.map((segment): string => segment.id)).size !== input.segments.length) throw materialFailure("material_version_conflict", "correction-current-result", 409);
   if (page.result.segments.length === 0) {
     if (input.segments.length !== 1 || input.segments[0].id !== "s0" || !input.segments[0].text.trim()) throw materialFailure("material_request_invalid", "correction-empty-transcription", 400);
     return validatePageResult({ ...page.result, method: "manual-correction", status: "complete", error: null, segments: [{ id: "s0", kind: "text", text: input.segments[0].text, bounds: page.result.width === null ? null : { x: 0, y: 0, width: 1, height: 1 }, transform: null, uncertain: true, reason: "사용자가 직접 전사한 내용입니다. 원본과 다시 대조해 주세요." }] }, page.filePage);
@@ -33,5 +33,6 @@ export function correctedPage(page: StoredExtractionPage, value: CorrectionInput
     const change = input.segments.find((item): boolean => item.id === segment.id);
     return change === undefined ? { ...segment, uncertain: true, reason: "수정본 전체를 원본과 다시 확인해 주세요." } : { ...segment, kind: segment.kind === "unreadable" ? "text" : segment.kind, text: change.text, uncertain: true, reason: "사용자가 수정한 내용입니다. 원본과 다시 대조해 주세요." };
   });
+  if (!segments.some((segment): boolean => segment.text.trim().length > 0)) throw materialFailure("material_request_invalid", "correction-empty-transcription", 400);
   return validatePageResult({ ...page.result, method: "manual-correction", status: "complete", segments, error: null, requiresConfirmation: true }, page.filePage);
 }

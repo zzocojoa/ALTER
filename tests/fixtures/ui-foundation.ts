@@ -1,0 +1,12 @@
+import "../../app/globals.css";
+import "../../app/learn/dashboard.css";
+import "../../app/learn/tutor/tutor.css";
+import "../../app/learn/editor/editor.css";
+import "../../app/learn/library/library.css";
+import "../../app/learn/advisor/advisor.css";
+import "../../app/learn/results/results.css";
+import "../../app/learn/weekly/weekly.css";
+import "../../app/learn/calendar/calendar.css";
+import "../../app/learn/backup/backup.css";
+import "../../app/learn/check-target.css";
+import "../../app/learn/navigation-check.css";

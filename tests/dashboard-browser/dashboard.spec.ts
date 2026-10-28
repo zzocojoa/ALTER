@@ -9,6 +9,7 @@ test("대시보드 복수 과정·조회 실패·인출 가림·뒤로가기·�
   const script = await readFile(".sites-runtime/dashboard-browser/fixture.iife.js", "utf8");
   const css = await readFile(".sites-runtime/dashboard-browser/fixture.css", "utf8");
   let status: number = 200;
+  let responseDelay: number = 0;
   let data: LearningDashboard = { asOf: Date.now(), today: "2026-10-25", revision: "1:1", visibility: "visible", scopes: [], sessions: [], reviews: [], legacyReviews: 0, results: [
     { title: "분수 의미", course: "수학 과정", sessionId: id, record: { unitId: id, resultVersionId: id, progress: "완료", performance: "독립 수행", correctionId: null, nextAction: "새 조건 풀이" } },
     { title: "문장 쓰기", course: "글쓰기 과정", sessionId: otherId, record: { unitId: otherId, resultVersionId: otherId, progress: "진행 중", performance: "도움받아 수행", correctionId: null, nextAction: "수정 이유 쓰기" } }
@@ -17,15 +18,29 @@ test("대시보드 복수 과정·조회 실패·인출 가림·뒤로가기·�
     const path = new URL(route.request().url()).pathname;
     if (path === "/fixture.js") { await route.fulfill({ contentType: "text/javascript", body: script }); return; }
     if (path === "/fixture.css") { await route.fulfill({ contentType: "text/css", body: css }); return; }
-    if (path === "/api/dashboard") { expect(route.request().method()).toBe("GET"); await route.fulfill({ status, json: data }); return; }
-    await route.fulfill({ contentType: "text/html; charset=utf-8", body: '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/fixture.css"><main id="dashboard-fixture"></main><script src="/fixture.js"></script></html>' });
+    if (path === "/api/dashboard") {
+      expect(route.request().method()).toBe("GET");
+      const capturedStatus: number = status;
+      const capturedData: LearningDashboard = data;
+      if (responseDelay > 0) await new Promise<void>((done): void => { setTimeout(done, responseDelay); });
+      await route.fulfill({ status: capturedStatus, json: capturedData }); return;
+    }
+    await route.fulfill({ contentType: "text/html; charset=utf-8", body: '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/fixture.css"><div id="dashboard-fixture"></div><script src="/fixture.js"></script></html>' });
   });
   await page.goto("https://dashboard.local.test/learn");
   await expect(page.getByText("수학 과정", { exact: true })).toBeVisible();
   await expect(page.getByText("글쓰기 과정", { exact: true })).toBeVisible();
-  await expect(page.getByText("독립 수행", { exact: true })).toBeVisible();
+  await expect(page.getByRole("region", { name: "확정된 진도와 다음 행동", exact: true }).getByText("독립 수행", { exact: true })).toBeVisible();
   await expect(page.getByText("도움받아 수행", { exact: true })).toBeVisible();
+  const metrics = page.getByRole("region", { name: "진도와 수행 요약", exact: true });
+  await expect(metrics.locator("dd")).toHaveText(["0분", "1개", "1개"]);
+  await expect(metrics).toContainText("계획 시간은 실제 학습 시간과 달라요.");
   await expect(page.getByRole("link", { name: "확정 결과 확인하기" }).first()).toHaveAttribute("href", `/learn/results?id=${id}`);
+  const shortcuts = page.getByRole("region", { name: "학습 바로가기", exact: true });
+  await expect(shortcuts.getByRole("link", { name: /자료 원본 열기/ })).toHaveAttribute("href", "/learn/materials");
+  await expect(shortcuts.getByRole("link", { name: /답안 쓰기/ })).toHaveAttribute("href", "/learn/tutor");
+  await expect(shortcuts.getByRole("link", { name: /확정 기록 찾기/ })).toHaveAttribute("href", "/learn/results");
+  await expect(shortcuts.getByText("작성 중인 답안이 없어요.", { exact: false })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await checkAccessibility(page,".learning-dashboard",info);
   await page.screenshot({ path: `outputs/dashboard-${info.project.name}.png`, fullPage: true });
@@ -50,6 +65,9 @@ test("대시보드 복수 과정·조회 실패·인출 가림·뒤로가기·�
   await page.getByRole("button", { name: "최신 현황 읽기" }).click();
   await expect(page.getByRole("link", { name: "이 회차 이어가기" })).toHaveAttribute("href", `/learn/tutor?id=${id}`);
   await expect(page.getByRole("heading", { name: "확정된 진도와 다음 행동" })).toHaveCount(0);
+  await expect(metrics).toHaveCount(0);
+  await expect(shortcuts.getByRole("link", { name: /자료 원본 열기|확정 기록 찾기|오늘 복습 시작/ })).toHaveCount(0);
+  await expect(shortcuts.getByRole("link", { name: /답안 제출/ })).toHaveAttribute("href", `/learn/tutor?id=${id}#tutor-answer-area`);
   data = { ...data, asOf: Date.now() - 61_000 };
   await page.getByRole("button", { name: "최신 현황 읽기" }).click();
   await expect(page.getByRole("status")).toContainText("조회한 지 시간이");
@@ -58,5 +76,29 @@ test("대시보드 복수 과정·조회 실패·인출 가림·뒤로가기·�
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pagehide")));
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pageshow")));
   await expect(page.getByRole("alert")).toContainText("HTTP 401");
+  status = 200;
+  data = { ...data, asOf: Date.now(), visibility: "visible", results: [], sessions: [], scopes: [], reviews: [], legacyReviews: 0 };
+  await page.getByRole("button", { name: "최신 현황 읽기" }).click();
+  await expect(page.getByRole("heading", { name: "이어갈 학습이 아직 없어요", exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "자료 등록·확인", exact: true })).toHaveAttribute("href", "/learn/materials");
+  await expect(page.getByRole("link", { name: "오늘 범위 정하기", exact: true })).toHaveAttribute("href", "/learn/library");
+  status = 503;
+  await page.getByRole("button", { name: "최신 현황 읽기" }).click();
+  await expect(page.getByRole("alert")).toContainText("조회 실패는 ‘할 일 없음’을 뜻하지 않아요.");
+  await expect(page.getByRole("heading", { name: "이어갈 학습이 아직 없어요", exact: true })).toHaveCount(0);
+  status = 200;
+  data = { ...data, asOf: Date.now(), scopes: [{ id, version: 1, title: "늦은 응답의 숨겨야 할 원문 제목", course: "시험 과정", date: "2026-10-25", phase: "confirmed", minutes: 30, current: true }] };
+  responseDelay = 250;
+  const oldRead = page.waitForRequest("https://dashboard.local.test/api/dashboard");
+  await page.getByRole("button", { name: "최신 현황 읽기" }).click();
+  await oldRead;
+  await page.evaluate((): void => { window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true })); });
+  responseDelay = 0;
+  status = 401;
+  await page.evaluate((): void => { window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })); });
+  await expect(page.getByRole("alert")).toContainText("HTTP 401");
+  await page.waitForTimeout(300);
+  await expect(page.getByText("늦은 응답의 숨겨야 할 원문 제목", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "학습 바로가기", exact: true })).toHaveCount(0);
   expect(await page.pageErrors()).toEqual([]);
 });

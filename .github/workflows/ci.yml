@@ -7,7 +7,8 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # UI 회귀·격리 DB 준비·실패 종료 검사까지 순차 수행하는 작업 전체 한도입니다.
+    timeout-minutes: 60
     env:
       TZ: UTC
       CI: "true"

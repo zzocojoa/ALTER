@@ -10,7 +10,7 @@ it("인출 화면과 서버 전달 자료에 원문·AI 설명·접힌 이력이
   const explained=finishTutorLesson(beginTutorLesson(tutorStateFixture()),tutorLessonFixture());
   const view=publicTutorView(beginTutorRecall(explained));
   expect(JSON.stringify(view)).not.toContain(explained.start.bundle.sources[0].evidence); expect(view.lesson).toBeNull(); expect(view.sources).toEqual([]);
-  const html=renderToStaticMarkup(createElement(TutorPanel,{view,text:"",busy:false,saved:true,error:"",onText:():void=>{},onSubmit:():void=>{},onAction:():void=>{},onFile:():void=>{},fileNames:[]}));
+  const html=renderToStaticMarkup(createElement(TutorPanel,{aiUnavailable:null,view,text:"",busy:false,saved:true,error:"",onText:():void=>{},onSubmit:():void=>{},onAction:():void=>{},onFile:():void=>{},fileNames:[],composing:false,photoProgress:"",inputBusy:false,saveState:{kind:"idle"},submitting:false,uncertain:false,retryAvailable:false,onRetry:():void=>{},onComposition:():void=>{}}));
   expect(html).not.toContain(tutorLessonFixture().explanation.text); expect(html).not.toContain("<details"); expect(html.match(/data-testid="tutor-question"/g)).toHaveLength(1); expect(html).toContain('id="tutor-answer"'); expect(html).toContain('disabled=""');
   const paused=publicTutorView(pauseTutor(explained));expect(paused.sources).toEqual([]);expect(paused.lesson).toBeNull();
 });
@@ -24,6 +24,6 @@ it("진단의 정답 인용은 전달하지 않고 서버의 판정 근거는 �
   expect(view.diagnosis).toEqual({...output,citations:[]});
   expect(JSON.stringify(view)).not.toContain(output.citations[0].quote);
   expect(state.diagnosis?.citations).toEqual(output.citations);expect(state.diagnoses[0].citations).toEqual(output.citations);expect(JSON.stringify(state)).toBe(before);
-  const html=renderToStaticMarkup(createElement(TutorPanel,{view,text:"",busy:false,saved:true,error:"",onText:():void=>{},onSubmit:():void=>{},onAction:():void=>{},onFile:():void=>{},fileNames:[]}));
+  const html=renderToStaticMarkup(createElement(TutorPanel,{aiUnavailable:null,view,text:"",busy:false,saved:true,error:"",onText:():void=>{},onSubmit:():void=>{},onAction:():void=>{},onFile:():void=>{},fileNames:[],composing:false,photoProgress:"",inputBusy:false,saveState:{kind:"idle"},submitting:false,uncertain:false,retryAvailable:false,onRetry:():void=>{},onComposition:():void=>{}}));
   expect(html).toContain(output.observation);expect(html).toContain("다음 단계 도움 요청");expect(html).not.toContain(output.citations[0].quote);expect(html).not.toContain("<blockquote");
 });

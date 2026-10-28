@@ -9,7 +9,7 @@ import { restorePageOrder } from "../../lib/backup/restore-order";
 import { backupFixtureId } from "../fixtures/backup-files";
 import { backupExportFixture } from "../fixtures/backup-export-api";
 import { checkAccessibility } from "../fixtures/accessibility";
-test("격리 복원 화면의 전송 실패·같은 ID 재개·검증 후 별도 활성화", async ({ page }, info) => {
+for (const scenario of ["정상", "검증 응답 불일치", "활성화 응답 불일치"]) test(`격리 복원 화면의 전송 실패·재개·별도 활성화 · ${scenario}`, async ({ page }, info) => {
   const root = await mkdtemp(path.join(tmpdir(), "alter-restore-browser-"));
   try {
     const fixture = await backupExportFixture(root); const manifest = fixture.manifest; const files: BackupArchiveFile[] = [];
@@ -21,6 +21,7 @@ test("격리 복원 화면의 전송 실패·같은 ID 재개·검증 후 별도
     const hash = createHash("sha256").update(JSON.stringify(manifest)).digest("hex"); const approval = { token: "local-fixture-not-a-credential", backupId: manifest.backupId, manifestSha256: hash, expiresAt: now + 900000 };
     const authorization = { version: 1, purpose: "isolated-backup-restore", challenge, source, backupId: manifest.backupId, manifestSha256: hash, issuedAt: now, expiresAt: now + 900000, restoredExecutionAuthority: "none", googleConsent: "required" };
     const approvalPath = path.join(root, "approval.json"); await writeFile(approvalPath, JSON.stringify({ approval, challenge }));
+    let corruptVerification: boolean = scenario === "검증 응답 불일치"; let corruptActivation: boolean = scenario === "활성화 응답 불일치";
     let runId: string | null = null; let state: string = "receiving"; let fail: boolean = true; const requests: string[] = [];
     const script = await readFile(".sites-runtime/backup-browser/fixture.iife.js", "utf8"); const css = await readFile(".sites-runtime/backup-browser/fixture.css", "utf8");
     await page.route("https://backup.local.test/**", async route => {
@@ -39,15 +40,29 @@ test("격리 복원 화면의 전송 실패·같은 ID 재개·검증 후 별도
         expect(entry).toBeDefined(); expect(createHash("sha256").update(request.postDataBuffer()!).digest("hex")).toBe(entry!.sha256);
       }
       if (location.endsWith("/import")) state = "verifying";
-      if (location.endsWith("/verify/complete")) state = "verified";
-      if (location.endsWith("/activate")) { expect(state).toBe("verified"); state = "activated"; }
+      if (location.endsWith("/verify/complete")) { state = "verified"; await route.fulfill({ json: { run_id: corruptVerification ? backupFixtureId(999) : runId, manifest_sha256: hash, page_count: manifest.pages.length, object_count: manifest.objects.length, row_count: manifest.counts.reduce((sum, entry) => sum + entry.rows, 0), completed_at: now } }); corruptVerification = false; return; }
+      if (location.endsWith("/activate")) { expect(state).toBe("verified"); state = "activated"; await route.fulfill({ json: { run_id: corruptActivation ? backupFixtureId(999) : runId, revision: 1, activated_at: now, external_authority: "unverified" } }); corruptActivation = false; return; }
       await route.fulfill({ json: { state, row_count: manifest.counts.reduce((sum, entry) => sum + entry.rows, 0), page_count: manifest.pages.length, object_count: manifest.objects.length } });
     });
-    await page.goto("https://backup.local.test/restore-target"); await page.getByLabel("완료 백업 TAR").setInputFiles(archivePath); await page.getByLabel("원본에서 받은 복원 승인 JSON").setInputFiles(approvalPath);
-    await page.getByRole("button", { name: "파일 검사 후 복원 실행" }).click(); await expect(page.getByRole("alert")).toContainText("storage_failure"); expect(requests.some(value => value.endsWith("/import"))).toBe(false); expect(requests.some(value => value.endsWith("/activate"))).toBe(false);
-    await page.getByRole("button", { name: "같은 복원 이어가기" }).click(); await expect(page.getByRole("status")).toContainText("기록·출처·원본 대조가 통과", { timeout: 45000 });
+    await page.goto("https://backup.local.test/restore-target"); expect(requests).toHaveLength(0); await expect(page.getByRole("button", { name: "검증된 학습 기록 활성화" })).toHaveCount(0); await page.getByLabel("완료 백업 TAR").setInputFiles(archivePath); await page.getByLabel("원본에서 받은 복원 승인 JSON").setInputFiles(approvalPath);
+    await page.getByRole("button", { name: "파일 검사 후 복원 실행" }).click(); await expect(page.getByRole("alert")).toContainText("HTTP 503"); expect(requests.some(value => value.endsWith("/import"))).toBe(false); expect(requests.some(value => value.endsWith("/activate"))).toBe(false);
+    await page.getByRole("button", { name: "같은 복원 이어가기" }).click();
+    if (scenario === "검증 응답 불일치") {
+      await expect(page.getByRole("alert")).toContainText("검증 결과가 선택한 백업과 다릅니다"); await expect(page.getByRole("button", { name: "검증된 학습 기록 활성화" })).toHaveCount(0);
+      await page.getByRole("button", { name: "같은 복원 이어가기" }).click();
+    }
+    await expect(page.getByRole("status")).toContainText("기록·출처·원본 대조가 통과", { timeout: 45000 });
     expect(requests.filter(value => value === "POST /api/restore/runs")).toHaveLength(1); expect(requests.filter(value => value.includes("/import/pages/")).map(value => value.split("/import/pages/")[1])).toEqual(restorePageOrder(manifest).map(entry => `${entry.table}/${entry.ordinal}`)); expect(requests.some(value => value.endsWith("/activate"))).toBe(false);
-    await page.getByRole("button", { name: "검증된 학습 기록 활성화" }).click(); await expect(page.getByRole("status")).toContainText("AI 예산과 외부 연동 실행 권한은 미확인");
+    await expect(page.getByRole("region", { name: "서버 검증 결과" })).toContainText("isolated-local-test");
+    await page.getByRole("button", { name: "검증된 학습 기록 활성화" }).evaluate(button => { (button as HTMLButtonElement).click(); (button as HTMLButtonElement).click(); });
+    if (scenario === "활성화 응답 불일치") {
+      await expect(page.getByRole("alert")).toContainText("활성화 결과가 선택한 복원 작업과 다릅니다"); await expect(page.getByText("학습 기록 활성화 확인", { exact: true })).toHaveCount(0);
+      await page.getByRole("button", { name: "같은 복원 이어가기" }).click(); await expect(page.getByRole("status")).toContainText("이미 활성화한 복원");
+    } else await expect(page.getByRole("status")).toContainText("AI 예산과 외부 연동 실행 권한은 미확인");
+    expect(requests.filter(value => value.endsWith("/activate"))).toHaveLength(1);
+    await expect(page.getByText("학습 기록 활성화 확인", { exact: true })).toBeVisible(); await expect(page.locator("body")).not.toContainText("local-fixture-not-a-credential");
+    await page.screenshot({ path: info.outputPath("복원-활성화.png"), fullPage: true });
+    const beforeReload: number = requests.length; await page.reload(); expect(requests.length).toBe(beforeReload); await expect(page.getByRole("button", { name: "검증된 학습 기록 활성화" })).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true); await checkAccessibility(page, "main", info); expect(await page.pageErrors()).toEqual([]);
   } finally { await rm(root, { recursive: true }); }
 });

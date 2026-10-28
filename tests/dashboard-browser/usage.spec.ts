@@ -13,7 +13,7 @@ test("비용·미확정 청구·재동의·실제 요청 분리와 뒤로가기 
     if (path === "/fixture.css") { await route.fulfill({ contentType: "text/css", body: css }); return; }
     if (path === "/api/dashboard/usage") { requests += 1; expect(route.request().method()).toBe("GET"); await route.fulfill({ status, json: data }); return; }
     expect(path).toBe("/usage");
-    await route.fulfill({ contentType: "text/html; charset=utf-8", body: '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/fixture.css"><main id="dashboard-fixture"></main><script src="/fixture.js"></script></html>' });
+    await route.fulfill({ contentType: "text/html; charset=utf-8", body: '<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/fixture.css"><div id="dashboard-fixture"></div><script src="/fixture.js"></script></html>' });
   });
   await page.goto("https://usage.local.test/usage");
   await expect(page.getByRole("region", { name: "AI 예산과 결제" })).toContainText("US$5.500000 · 원화 청구 미확정");
