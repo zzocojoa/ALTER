@@ -3,7 +3,6 @@ import { fixtureFunding } from "./ai-funding";
 import { checkAiFunding } from "../../db/repositories/ai-funding";
 import { getExtractionPage, saveExtractionCorrection } from "../../db/repositories/extraction-pages";
 import { confirmExtractionSegments } from "../../db/repositories/extraction-confirmations";
-import { correctedPage } from "../../lib/extraction/confirmation";
 import { dispatchPageVision, recoverPageVision } from "../../lib/extraction/vision-service";
 import { preparePageVisionRequest, visionContext } from "../../lib/extraction/vision";
 import type { VerifiedExtractionPage } from "../../lib/extraction/server";
@@ -57,7 +56,7 @@ export async function checkVisionState(db: D1Database, proof: VerifiedExtraction
   if (generationRequests !== 1) throw new Error("중복 복구가 생성으로 바뀌었어요.");
   const repeated = await dispatchPageVision(runtime, configuration, proof, recovered.page, image, { owner: proof.owner, expectedVersion: recovered.page.version, requestKey: crypto.randomUUID() }, new AbortController().signal);
   if (generationRequests !== 1 || JSON.stringify(repeated.page) !== JSON.stringify(recovered.page)) throw new Error("완료 이미지 중복 입력이 새 생성 또는 결과 버전을 만들었어요.");
-  const correction = correctedPage(repeated.page, { selectionRevision: proof.job.revision, filePage: proof.filePage, expectedVersion: repeated.page.version, resultId: repeated.page.resultId!, segments: [{ id: "s0", text: "원본과 대조한 수정 수식" }] });
+  const correction = { selectionRevision: proof.job.revision, filePage: proof.filePage, expectedVersion: repeated.page.version, resultId: repeated.page.resultId!, segments: [{ id: "s0", text: "원본과 대조한 수정 수식" }] };
   await saveExtractionCorrection(db, { owner: proof.owner, expectedVersion: repeated.page.version, requestKey: crypto.randomUUID() }, proof, repeated.page, correction);
   const corrected = await getExtractionPage(db, proof.owner, page.id);
   await confirmExtractionSegments(db, { owner: proof.owner, expectedVersion: corrected.version, requestKey: crypto.randomUUID() }, proof, corrected, { selectionRevision: proof.job.revision, filePage: proof.filePage, expectedVersion: corrected.version, resultId: corrected.resultId!, segmentIds: ["s0"], printedPage: "iii", comparedWithOriginal: true });

@@ -46,9 +46,11 @@ test("쪽수 저장·페이지 이동은 수정 초안을 보존하고 새 결�
   const label = comparison.getByRole("textbox", { name: "인쇄된 쪽수", exact: true });
   await label.fill("iii");
   await comparison.getByText("추출 내용 수정", { exact: true }).click();
-  const correction = comparison.getByRole("textbox", { name: "구간 1 수정", exact: true }); await correction.fill("아직 저장 전인 정정 문장");
+  const correction = comparison.getByRole("textbox", { name: "구간 1 수정", exact: true });
   const checked = comparison.getByRole("checkbox", { name: "구간 1 확인", exact: true }); await checked.check();
   const compared = comparison.getByRole("checkbox", { name: "선택한 구간을 이 파일 페이지의 원본과 대조했어요.", exact: true }); await compared.check();
+  await correction.fill("아직 저장 전인 정정 문장");
+  await expect(comparison.getByRole("button", { name: "선택 구간 확인 저장", exact: true })).toBeDisabled();
   await comparison.getByRole("button", { name: "쪽수 저장", exact: true }).click(); await expect(label).toBeEnabled();
   await expect(correction).toHaveValue("아직 저장 전인 정정 문장"); await expect(checked).toBeChecked(); await expect(compared).toBeChecked();
   await comparison.getByRole("button", { name: "파일 3페이지 결과", exact: true }).click();

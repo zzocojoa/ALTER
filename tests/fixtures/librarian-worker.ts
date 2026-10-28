@@ -14,7 +14,6 @@ import { createExtractionSource } from "../../db/repositories/extraction-sources
 import { requireExtractionPage } from "../../lib/extraction/server";
 import { materialFileReference } from "../../lib/materials/attachment";
 import { buildSelection } from "../../lib/extraction/selection";
-import { correctedPage } from "../../lib/extraction/confirmation";
 import { createMaterialLink, getMaterialLink, inspectMaterialLink, listConfirmedUnits, readConfirmedUnit } from "../../db/repositories/librarian-links";
 import { createStudyScope, getStudyScope, beginStoredScopeEvaluation, saveScopeEvaluation, confirmStoredScope, readTutorBundle, requireCurrentScope } from "../../db/repositories/study-scopes";
 import { librarianOutputFixture } from "./librarian-output";
@@ -96,7 +95,7 @@ export async function runLibrarianFixture(request: Request, environment: Readonl
   await rejected(() => createStudyScope(DB, BUCKET, cmd(1), { ...scopeValue,id: rollbackId })); await rejected(() => getStudyScope(DB, owner, rollbackId));
   await DB.prepare("DROP TRIGGER fixture_scope_start_failure").run();
   const consumerChecks=await verifyConsumer(DB,BUCKET,owner,scopeValue.id);
-  await saveExtractionCorrection(DB, cmd(confirmed.version), proof, confirmed, correctedPage(confirmed, { selectionRevision: 1, filePage: 1,expectedVersion: confirmed.version,resultId: confirmed.resultId!,segments: [{ id: "s0", text: "수정된 원문" }] }));
+  await saveExtractionCorrection(DB, cmd(confirmed.version), proof, confirmed, { selectionRevision: 1, filePage: 1,expectedVersion: confirmed.version,resultId: confirmed.resultId!,segments: [{ id: "s0", text: "수정된 원문" }] });
   check(!(await inspectMaterialLink(DB, BUCKET, owner, link)).valid, "정정 후 이전 구간을 계속 사용해요.");
   await rejected(() => readTutorBundle(DB, BUCKET, owner, scopeValue.id));
   await DB.prepare("INSERT INTO plan_versions VALUES (?,?,?,?,?,?,?)").bind(owner.userId, crypto.randomUUID(), unit.planId, unit.courseId, 2, JSON.stringify({ objective: "새 목표",unitIds: [unit.unitId],minutesPerWeek: 60 }), Date.now()).run();

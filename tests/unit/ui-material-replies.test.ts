@@ -22,3 +22,7 @@ describe("자료 완료 응답의 증거 경계", (): void => {
     }
   });
 });
+
+it("서버의 승인 거부 항목을 클라이언트에서 잃지 않는다", async (): Promise<void> => {
+  await expect(requireMaterialResponse(Response.json({ error: "reference_conflict", operation: "extraction.vision.fixed-acceptance-only" }, { status: 409 }))).rejects.toMatchObject({ name: "MaterialResponseFailure", code: "reference_conflict", operation: "extraction.vision.fixed-acceptance-only", status: 409 });
+});

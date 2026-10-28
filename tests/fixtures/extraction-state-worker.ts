@@ -1,3 +1,4 @@
+import { checkTranscriptionState, checkFailedTranscription } from "./extraction-transcription-state";
 import { checkVisionState } from "./extraction-vision-state";
 import pdf from "../../lib/materials/pdf-wasm/validator.wasm";
 import jpeg from "../../lib/materials/jpeg-wasm/decoder.wasm";
@@ -16,7 +17,6 @@ import type { ImageMetadata } from "../../lib/extraction/state";
 import { confirmExtractionSegments, setExtractionPrintedPage } from "../../db/repositories/extraction-confirmations";
 import { createExtractionSource, readExtractionSource } from "../../db/repositories/extraction-sources";
 import { resolveExtractionSource } from "../../lib/extraction/source-server";
-import { correctedPage } from "../../lib/extraction/confirmation";
 
 function check(value: boolean, message: string): void { if (!value) throw new Error(message); }
 async function rejected(action: () => Promise<unknown>): Promise<void> { let failed: boolean = false; try { await action(); } catch (error: unknown) { if (!(error instanceof Error)) throw error; failed = true; } check(failed, "거부되어야 하는 저장이 성공했어요."); }
@@ -67,7 +67,7 @@ async function fetch(request: Request, environment: Readonly<{ DB: D1Database; B
   await createExtractionSource(DB, { owner, expectedVersion: confirmed.version, requestKey: crypto.randomUUID() }, proof, confirmed, "s0");
   check(await DB.prepare("SELECT COUNT(*) AS n FROM extraction_sources WHERE owner_id=?").bind(owner.userId).first<number>("n") === 1, "출처가 중복 생성됐어요.");
   check(await readExtractionSource(DB, { realm: "sites", userId: "other" }, sourceId!) === null, "다른 소유자 출처가 노출됐어요.");
-  const correction = correctedPage(confirmed, { selectionRevision: 1, filePage: 1, expectedVersion: confirmed.version, resultId: confirmed.resultId!, segments: [{ id: "s0", text: "수정된 수식" }] });
+  const correction = { selectionRevision: 1, filePage: 1, expectedVersion: confirmed.version, resultId: confirmed.resultId!, segments: [{ id: "s0", text: "수정된 수식" }] };
   await saveExtractionCorrection(DB, { owner, expectedVersion: confirmed.version, requestKey: crypto.randomUUID() }, proof, confirmed, correction);
   const corrected = await getExtractionPage(DB, owner, before.id);
   const staleSource = await resolveExtractionSource(DB, BUCKET, owner, sourceId!);
@@ -90,6 +90,8 @@ async function fetch(request: Request, environment: Readonly<{ DB: D1Database; B
   check(latest.every((page): boolean => page.result === null), "새 선택이 이전 결과를 확정 승계했어요.");
   await rejected(() => saveTextExtraction(DB, { owner, expectedVersion: unknown.version, requestKey: crypto.randomUUID() }, proof, unknown, result)); checks.push("old-selection-cannot-write-or-inherit-results");
   await rejected(() => getExtractionPage(DB, { realm: "sites", userId: "other" }, first.id)); checks.push("other-owner-page-read-denied");
+  checks.push(...await checkTranscriptionState(DB, await requireExtractionPage(DB, BUCKET, owner, transfer.materialId, 2, 1), latest[0]));
+  checks.push(...await checkFailedTranscription(DB, await requireExtractionPage(DB, BUCKET, owner, transfer.materialId, 2, 2), latest[1]));
   check((await DB.prepare("PRAGMA foreign_key_check").all()).results.length === 0, "외래 키가 깨졌어요.");
   return Response.json({ status: "passed", environment: "local-workerd-d1-r2", tests: checks.length, checks });
 }

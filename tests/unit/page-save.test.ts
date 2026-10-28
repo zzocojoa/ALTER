@@ -31,3 +31,12 @@ it("확인 구간은 요청한 결과 판과 쪽수·구간이 모두 같아야 
   expect(savedPageMatches({ ...checked, resultId: nextId }, attempt)).toBe(false);
   expect(savedPageMatches({ ...checked, confirmedSegmentIds: [] }, attempt)).toBe(false);
 });
+
+it("텍스트 저장은 실제 저장된 전체 결과와 판을 확인한다", (): void => {
+  if (page.result === null) throw new Error("합성 원문이 없습니다.");
+  const pending: StoredExtractionPage = { ...page, state: "pending", version: 1, resultId: null, resultVersion: 0, result: null };
+  const attempt = pageSaveAttempt(pending, { kind: "text", result: page.result }, "text-key");
+  expect(savedPageMatches(page, attempt)).toBe(true);
+  expect(savedPageMatches({ ...page, result: { ...page.result, segments: [{ ...page.result.segments[0], text: "다른 내용" }] } }, attempt)).toBe(false);
+  expect(savedPageMatches({ ...page, resultVersion: 0 }, attempt)).toBe(false);
+});

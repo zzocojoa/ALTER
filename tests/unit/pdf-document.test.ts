@@ -1,8 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { OPS } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { openPdfDocument } from "../../app/learn/materials/pdf-document";
 
 const fixture = vi.hoisted(() => ({ version: "6.4.299", destroy: vi.fn(), connectorDestroy: vi.fn(), terminate: vi.fn(), load: vi.fn(), create: vi.fn() }));
-vi.mock("pdfjs-dist", () => ({ get version(): string { return fixture.version; }, PDFWorker: { create: fixture.create }, getDocument: fixture.load }));
+vi.mock("pdfjs-dist", () => ({ get OPS(): typeof OPS { return OPS; }, get version(): string { return fixture.version; }, PDFWorker: { create: fixture.create }, getDocument: fixture.load }));
 const url: string = "/api/materials/00000000-0000-4000-8000-000000000001/file";
 
 beforeEach((): void => {
@@ -20,6 +21,7 @@ describe("인증된 PDF Worker 수명과 원본 고정", (): void => {
   it("동일 버전만 읽고 여러 번 닫아도 한 번 해제한다", async (): Promise<void> => {
     const signal: AbortSignal = new AbortController().signal;
     const handle = await openPdfDocument({ url, pages: 3, signal });
+    expect(handle.imageOperators).toBe(OPS);
     await handle.assertCurrent(signal);
     expect(fixture.load).toHaveBeenCalledWith(expect.objectContaining({ httpHeaders: { "If-Match": '"original-v1"' }, disableAutoFetch: true, disableStream: true }));
     await Promise.all([handle.close(), handle.close()]);

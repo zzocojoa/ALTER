@@ -21,3 +21,6 @@
 [data-alter-ui] .alter-vision-cost { padding: var(--alter-space-4); background: var(--alter-surface-muted); margin-block: var(--alter-space-3); border-radius: var(--alter-radius-control); }
 
 [data-alter-ui] .alter-extraction-save-issue { padding: var(--alter-space-4); margin-block: var(--alter-space-4); border: 1px solid var(--alter-warning); border-radius: var(--alter-radius-control); }
+
+[data-alter-ui] .alter-extraction-actions { display: grid; gap: var(--alter-space-3); list-style: none; padding: 0; }
+[data-alter-ui] .alter-extraction-actions > li { padding: var(--alter-space-4); border: 1px solid var(--alter-border); border-radius: var(--alter-radius-panel); min-width: 0; overflow-wrap: anywhere; }

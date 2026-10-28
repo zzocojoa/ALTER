@@ -16,6 +16,9 @@ export async function materialBrowser(page: Page, initial: MaterialLibrary, api:
     const path: string = new URL(route.request().url()).pathname;
     if (path === "/fixture.js") { await route.fulfill({ contentType: "text/javascript", body: script }); return; }
     if (path === "/fixture.css") { await route.fulfill({ contentType: "text/css", body: css }); return; }
+    if (/^\/pdfjs-6\.4\.299\/(?:worker-entry\.mjs|pdf\.worker\.min\.mjs|(?:standard_fonts|cmaps|wasm|iccs)\/[a-zA-Z0-9_.-]+)$/.test(path)) {
+      await route.fulfill({ contentType: path.endsWith(".mjs") ? "text/javascript" : "application/octet-stream", body: await readFile(`public${path}`) }); return;
+    }
     if (path.startsWith("/api/")) { await api(route); return; }
     expect(path).toBe("/learn/materials");
     await route.fulfill({ contentType: "text/html", body: `<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/fixture.css"><div id="materials-fixture"></div><script id="initial-library" type="application/json">${JSON.stringify(initial).replaceAll("<", "\\u003c")}</script><script src="/fixture.js"></script></html>` });

@@ -1,10 +1,11 @@
 import type { PDFDocumentLoadingTask, PDFDocumentProxy, PDFWorker } from "pdfjs-dist";
+import type { PdfImageOperators } from "@/lib/extraction/pdf-analysis";
 import { requireMaterialResponse } from "./client-api";
 import { originalFailure } from "./original-failure";
 
 export const PDFJS_VERSION = "6.4.299";
 export const PDFJS_ASSETS = `/pdfjs-${PDFJS_VERSION}/`;
-export type PdfDocumentHandle = Readonly<{ document: PDFDocumentProxy; etag: string; assertCurrent: (signal: AbortSignal) => Promise<void>; close: () => Promise<void> }>;
+export type PdfDocumentHandle = Readonly<{ document: PDFDocumentProxy; imageOperators: PdfImageOperators; etag: string; assertCurrent: (signal: AbortSignal) => Promise<void>; close: () => Promise<void> }>;
 export type PdfDocumentInput = Readonly<{ url: string; pages: number; signal: AbortSignal }>;
 
 /** 인증된 원본의 강한 버전 식별자를 매 단계 확인합니다. */
@@ -70,7 +71,7 @@ export async function openPdfDocument(input: PdfDocumentInput): Promise<PdfDocum
     input.signal.throwIfAborted();
     if (document.numPages !== input.pages) throw originalFailure("저장된 페이지 수와 PDF 내용이 달라요. 원본 상태를 확인해 주세요.");
     const assertCurrent = async (signal: AbortSignal): Promise<void> => { signal.throwIfAborted(); if (closed !== null) throw originalFailure("PDF 작업이 종료됐어요. 원본을 다시 열어 주세요."); if (await inspectPdf(input.url, signal) !== etag) throw originalFailure("원본 버전이 변경됐어요. 자료 목록에서 다시 선택해 주세요."); };
-    return { document, etag, assertCurrent, close };
+    return { document, imageOperators: pdf.OPS, etag, assertCurrent, close };
   } catch (error: unknown) {
     try { await close(); } catch (cleanupError: unknown) { throw new AggregateError([error, cleanupError], error instanceof Error ? error.message : "PDF 작업을 종료하지 못했어요."); }
     if (error instanceof Error && error.name === "PasswordException") throw originalFailure("암호화된 PDF는 추출할 수 없어요. 암호가 해제된 원본을 등록해 주세요.");

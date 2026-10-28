@@ -14,12 +14,12 @@ export function PdfRegionPreparation({material,binding,busy,onProcessing,onPrepa
   const abort = useRef<AbortController | null>(null);
   useEffect(() => (): void => { abort.current?.abort(); }, []);
   async function prepare(event: FormEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault(); const data = new FormData(event.currentTarget); const stop = new AbortController(); abort.current = stop; onProcessing(true); onFailure("");
+    event.preventDefault(); if (abort.current !== null || busy) return; const data = new FormData(event.currentTarget); const stop = new AbortController(); abort.current = stop; onProcessing(true); onFailure("");
     try {
       const region = pdfRegion.parse({x:Number(data.get("x"))/100,y:Number(data.get("y"))/100,width:Number(data.get("width"))/100,height:Number(data.get("height"))/100});
       const filePage = Number(data.get("page"));
       const handle = await openPdfDocument({url:material.file.sourceUrl,pages:material.file.pages,signal:stop.signal});
-      try { onPrepared({filePage,image:await preparePdfRegionImage(handle,binding,filePage,region,0,stop.signal)}); }
+      try { const image = await preparePdfRegionImage(handle,binding,filePage,region,0,stop.signal); stop.signal.throwIfAborted(); onPrepared({filePage,image}); }
       finally { await handle.close(); }
     } catch(error:unknown) { onFailure(errorText(error)); }
     finally { abort.current=null;onProcessing(false); }

@@ -46,7 +46,7 @@ test("늦은 원본 응답을 버리고 페이지 이동·반복 열기에서 Wo
       await preview.getByRole("button", { name: "다음 페이지", exact: true }).click();
       await expect(preview.getByText("3페이지를 열었어요.", { exact: true })).toBeVisible();
       if (release === null) throw new Error("지연 원본 응답을 찾지 못했습니다."); (release as () => void)();
-      await preview.getByText("이 페이지의 텍스트", { exact: true }).click();
+      await preview.getByText("PDF 텍스트층 보기", { exact: true }).click();
       await expect(preview.locator(".material-text")).toHaveText("ALTER page 3 ");
       await expect(preview.getByLabel("파일 페이지", { exact: true })).toHaveValue("3");
     }

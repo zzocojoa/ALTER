@@ -27,7 +27,7 @@ export function completedResultDraft(draft: ResultDraft, attempt: PageSaveAttemp
   const intent = attempt.intent;
   return { ...draft, save: { kind: "saved", message },
     printedPage: intent.kind === "label" && (draft.printedPage?.trim() || null) === intent.printedPage ? null : draft.printedPage,
-    correction: intent.kind === "edit" && draft.correction?.resultId === attempt.resultId && JSON.stringify(draft.correction.segments) === JSON.stringify(intent.segments) ? null : draft.correction,
-    confirmation: intent.kind === "edit" || intent.kind === "confirm" ? null : draft.confirmation,
+    correction: (intent.kind === "edit" || intent.kind === "transcribe") && draft.correction?.resultId === attempt.resultId && JSON.stringify(draft.correction.segments) === JSON.stringify(intent.segments) ? null : draft.correction,
+    confirmation: intent.kind === "edit" || intent.kind === "transcribe" || intent.kind === "confirm" ? null : draft.confirmation,
   };
 }
